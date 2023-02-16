@@ -1,0 +1,19 @@
+{
+	"extends": "@hakatashi/eslint-config/typescript",
+	"parserOptions": {
+		"ecmaVersion": 2022,
+		"ecmaFeatures": {
+			"jsx": true
+		},
+		"sourceType": "module"
+	},
+	"rules": {
+		"no-console": "off",
+		"import/extensions": "off",
+		"prefer-destructuring": "off",
+		"react/react-in-jsx-scope": "off",
+		"require-jsdoc": "off",
+		"react/jsx-no-bind": "off",
+		"react/no-unknown-property": "off"
+	}
+}
