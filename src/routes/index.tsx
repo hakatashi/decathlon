@@ -16,24 +16,19 @@ const Home = () => {
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
 	const state = useAuth(getAuth(app));
-	const achievements = useFirestore(collection(db, 'achievement_data'));
+	const achievements = useFirestore(collection(db, 'games'));
+
 	return (
 		<main>
-			<Title>Hello World</Title>
-			<p>{JSON.stringify(achievements.data?.[0], null, '  ')}</p>
 			<Counter/>
-			<p>
-				Visit{' '}
-				<a href="https://start.solidjs.com" target="_blank" rel="noreferrer">
-					start.solidjs.com
-				</a>{' '}
-				to learn how to build SolidStart apps.
+			<pre>{JSON.stringify(achievements, null, '  ')}</pre>
+			<pre>
 				<Switch>
 					<Match when={state.loading}>
 						<p>Loading...</p>
 					</Match>
 					<Match when={state.data}>
-						{JSON.stringify(state.data)}
+						{JSON.stringify(state.data, null, '  ')}
 					</Match>
 					<Match when={state.error}>
 						<Login/>
@@ -42,7 +37,7 @@ const Home = () => {
 						<Login/>
 					</Match>
 				</Switch>
-			</p>
+			</pre>
 		</main>
 	);
 };
