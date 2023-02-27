@@ -1,5 +1,5 @@
 import type {DocumentData, FirestoreError} from 'firebase/firestore';
-import {JSX, Match, Switch} from 'solid-js';
+import {For, JSX, Match, Switch} from 'solid-js';
 
 interface UseFireStoreReturn<T> {
 	data: T;
@@ -7,12 +7,12 @@ interface UseFireStoreReturn<T> {
 	error: FirestoreError | null;
 }
 
-interface Props {
-	data: UseFireStoreReturn<DocumentData[] | undefined>,
-	children: (item: DocumentData[]) => JSX.Element,
+interface Props<T extends DocumentData> {
+	data: UseFireStoreReturn<T[] | undefined>,
+	children: (item: T) => JSX.Element,
 }
 
-const Collection = (props: Props) => (
+const Collection = <T extends DocumentData, >(props: Props<T>) => (
 	<Switch>
 		<Match when={props.data.loading}>
 			<span class="loading">Loading...</span>
@@ -21,8 +21,10 @@ const Collection = (props: Props) => (
 			<span class="load-error">Load error occured.</span>
 		</Match>
 		<Match when={props.data.data} keyed>
-			{(data) => (
-				props.children(data)
+			{(docs) => (
+				<For each={docs}>
+					{(doc) => props.children(doc)}
+				</For>
 			)}
 		</Match>
 		<Match when>

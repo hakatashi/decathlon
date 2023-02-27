@@ -7,12 +7,12 @@ interface UseFireStoreReturn<T> {
 	error: FirestoreError | null;
 }
 
-interface Props {
-	data: UseFireStoreReturn<DocumentData | null | undefined>,
-	children: (item: DocumentData) => JSX.Element,
+interface Props<T extends DocumentData> {
+	data: UseFireStoreReturn<T | null | undefined>,
+	children: (item: T) => JSX.Element,
 }
 
-const Doc = (props: Props) => (
+const Doc = <T extends DocumentData, >(props: Props<T>) => (
 	<Switch>
 		<Match when={props.data.loading}>
 			<span class="loading">Loading...</span>

@@ -1,18 +1,23 @@
 import {Typography, Container} from '@suid/material';
-import {collection, doc, getFirestore, query, where} from 'firebase/firestore';
+import {collection, CollectionReference, doc, DocumentReference, getFirestore, query, where} from 'firebase/firestore';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
-import {For} from 'solid-js';
 import {useParams} from 'solid-start';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
+import type {Game, Contest} from '~/lib/schema';
 
 const Home = () => {
 	const param = useParams();
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
-	const contestRef = doc(db, 'contests', param.id);
+	const contestRef = doc(db, 'contests', param.id) as DocumentReference<Contest>;
 	const contestData = useFirestore(contestRef);
-	const gamesData = useFirestore(query(collection(db, 'games'), where('contest', '==', contestRef)));
+	const gamesData = useFirestore(
+		query(
+			collection(db, 'games') as CollectionReference<Game>,
+			where('contest', '==', contestRef),
+		),
+	);
 
 	return (
 		<main>
@@ -26,20 +31,19 @@ const Home = () => {
 				</Doc>
 				<ol>
 					<Collection data={gamesData}>
-						{(games) => (
-							<For each={games}>
-								{(game) => {
-									const ruleData = useFirestore(game.rule);
-									return (
-										<Doc data={ruleData}>
-											{(rule) => (
-												<li>{rule.name}: {game.maxPoint}点</li>
-											)}
-										</Doc>
-									);
-								}}
-							</For>
-						)}
+						{(game) => {
+							const ruleData = useFirestore(game.rule);
+							return (
+								<li>
+									<Doc data={ruleData}>
+										{(rule) => (
+											<span>{rule.name}:</span>
+										)}
+									</Doc>
+									{game.maxPoint}点
+								</li>
+							);
+						}}
 					</Collection>
 				</ol>
 			</Container>
