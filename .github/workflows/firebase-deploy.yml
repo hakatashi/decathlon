@@ -23,4 +23,4 @@ jobs:
         with:
           args: deploy --except hosting
         env:
-          GCP_SA_KEY: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_TSG_DECATHLON }}'
+          FIREBASE_TOKEN: '${{ secrets.FIREBASE_TOKEN }}'
