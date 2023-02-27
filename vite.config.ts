@@ -9,6 +9,8 @@ export default defineConfig({
 		exclude: [
 			'firebase/firestore',
 			'@firebase/firestore',
+			'firebase/auth',
+			'@firebase/auth',
 		],
 	},
 });
