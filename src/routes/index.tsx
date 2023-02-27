@@ -1,9 +1,9 @@
+import {Button} from '@suid/material';
 import {GoogleAuthProvider, getAuth, signInWithPopup} from 'firebase/auth';
 import {collection, getFirestore} from 'firebase/firestore';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {For, Match, Switch} from 'solid-js';
 import Collection from '~/components/Collection';
-import Counter from '~/components/Counter';
 
 const Login = () => {
 	const app = useFirebaseApp();
@@ -20,7 +20,7 @@ const Home = () => {
 
 	return (
 		<main>
-			<Counter/>
+			<Button variant="contained">Hello world</Button>
 			<Collection data={contestsData}>
 				{(contests) => (
 					<ul>
