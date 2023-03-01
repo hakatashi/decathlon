@@ -65,13 +65,48 @@ const Header = () => {
 					<Match when={authState.loading}>
 						<p>Loading...</p>
 					</Match>
-					<Match when={authState.data}>
-						<IconButton sx={{p: 0}} onClick={(event) => setAnchorEl(event.currentTarget)}>
-							<Avatar
-								alt={authState.data?.displayName ?? 'No name'}
-								src={authState.data?.photoURL ?? ''}
-							/>
-						</IconButton>
+					<Match when={authState.data} keyed>
+						{(user) => (
+							<>
+								<IconButton sx={{p: 0}} onClick={(event) => setAnchorEl(event.currentTarget)}>
+									<Avatar
+										alt={user.displayName ?? 'No name'}
+										src={user.photoURL ?? ''}
+									/>
+								</IconButton>
+								<Menu
+									anchorEl={anchorEl()}
+									open={isAccountMenuOpen()}
+									onClose={handleAccountMenuClose}
+									onClick={handleAccountMenuClose}
+									transformOrigin={{
+										horizontal: 'right',
+										vertical: 'top',
+									}}
+									anchorOrigin={{
+										horizontal: 'right',
+										vertical: 'bottom',
+									}}
+								>
+									<MenuItem component={A} href={`/users/${user.uid}`}>
+										Profile
+									</MenuItem>
+									<Divider/>
+									<MenuItem component={A} href="/settings">
+										<ListItemIcon>
+											<Settings fontSize="small"/>
+										</ListItemIcon>
+										Settings
+									</MenuItem>
+									<MenuItem onClick={handleLogout}>
+										<ListItemIcon>
+											<Logout fontSize="small"/>
+										</ListItemIcon>
+										Logout
+									</MenuItem>
+								</Menu>
+							</>
+						)}
 					</Match>
 					<Match when={authState.error}>
 						<Login/>
@@ -80,37 +115,6 @@ const Header = () => {
 						<Login/>
 					</Match>
 				</Switch>
-				<Menu
-					anchorEl={anchorEl()}
-					open={isAccountMenuOpen()}
-					onClose={handleAccountMenuClose}
-					onClick={handleAccountMenuClose}
-					transformOrigin={{
-						horizontal: 'right',
-						vertical: 'top',
-					}}
-					anchorOrigin={{
-						horizontal: 'right',
-						vertical: 'bottom',
-					}}
-				>
-					<MenuItem>
-						Profile
-					</MenuItem>
-					<Divider/>
-					<MenuItem>
-						<ListItemIcon>
-							<Settings fontSize="small"/>
-						</ListItemIcon>
-						Settings
-					</MenuItem>
-					<MenuItem onClick={handleLogout}>
-						<ListItemIcon>
-							<Logout fontSize="small"/>
-						</ListItemIcon>
-						Logout
-					</MenuItem>
-				</Menu>
 			</Toolbar>
 		</AppBar>
 	);
