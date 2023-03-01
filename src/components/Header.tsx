@@ -1,7 +1,8 @@
-import {Box, AppBar, Avatar, IconButton, Toolbar, Typography, Button} from '@suid/material';
-import {GoogleAuthProvider, getAuth, signInWithPopup} from 'firebase/auth';
+import {Logout, Settings} from '@suid/icons-material';
+import {Box, AppBar, Avatar, IconButton, Toolbar, Typography, Button, Menu, MenuItem, Divider, ListItemIcon} from '@suid/material';
+import {GoogleAuthProvider, getAuth, signInWithPopup, signOut} from 'firebase/auth';
 import {useAuth, useFirebaseApp} from 'solid-firebase';
-import {Match, Switch} from 'solid-js';
+import {createSignal, Match, Switch} from 'solid-js';
 import {A} from 'solid-start';
 
 
@@ -9,12 +10,27 @@ const Login = () => {
 	const app = useFirebaseApp();
 	const signIn = () => signInWithPopup(getAuth(app), new GoogleAuthProvider());
 
-	return <button type="button" onClick={signIn}>Sign In with Google</button>;
+	return (
+		<Button
+			sx={{my: 2, color: 'white', display: 'block'}}
+			onClick={signIn}
+		>
+			Login
+		</Button>
+	);
 };
 
 const Header = () => {
 	const app = useFirebaseApp();
-	const state = useAuth(getAuth(app));
+	const auth = getAuth(app);
+	const authState = useAuth(auth);
+
+	const [anchorEl, setAnchorEl] = createSignal<null | HTMLElement>(null);
+	const isAccountMenuOpen = () => Boolean(anchorEl());
+	const handleAccountMenuClose = () => setAnchorEl(null);
+
+	const handleLogout = () => signOut(auth);
+
 	return (
 		<AppBar position="static">
 			<Toolbar variant="dense">
@@ -46,24 +62,55 @@ const Header = () => {
 					</Button>
 				</Box>
 				<Switch>
-					<Match when={state.loading}>
+					<Match when={authState.loading}>
 						<p>Loading...</p>
 					</Match>
-					<Match when={state.data}>
-						<IconButton sx={{p: 0}}>
+					<Match when={authState.data}>
+						<IconButton sx={{p: 0}} onClick={(event) => setAnchorEl(event.currentTarget)}>
 							<Avatar
-								alt={state.data?.displayName ?? 'No name'}
-								src={state.data?.photoURL ?? ''}
+								alt={authState.data?.displayName ?? 'No name'}
+								src={authState.data?.photoURL ?? ''}
 							/>
 						</IconButton>
 					</Match>
-					<Match when={state.error}>
+					<Match when={authState.error}>
 						<Login/>
 					</Match>
 					<Match when>
 						<Login/>
 					</Match>
 				</Switch>
+				<Menu
+					anchorEl={anchorEl()}
+					open={isAccountMenuOpen()}
+					onClose={handleAccountMenuClose}
+					onClick={handleAccountMenuClose}
+					transformOrigin={{
+						horizontal: 'right',
+						vertical: 'top',
+					}}
+					anchorOrigin={{
+						horizontal: 'right',
+						vertical: 'bottom',
+					}}
+				>
+					<MenuItem>
+						Profile
+					</MenuItem>
+					<Divider/>
+					<MenuItem>
+						<ListItemIcon>
+							<Settings fontSize="small"/>
+						</ListItemIcon>
+						Settings
+					</MenuItem>
+					<MenuItem onClick={handleLogout}>
+						<ListItemIcon>
+							<Logout fontSize="small"/>
+						</ListItemIcon>
+						Logout
+					</MenuItem>
+				</Menu>
 			</Toolbar>
 		</AppBar>
 	);
