@@ -1,0 +1,14 @@
+.athlonHeader {
+	background: #212121;
+	color: white;
+	text-align: center;
+	padding: 6rem 0;
+}
+
+.athlonHeader h2 {
+	text-transform: uppercase;
+	letter-spacing: 2rem;
+	font-size: 2em;
+	font-weight: bold;
+	opacity: 0.3;
+}

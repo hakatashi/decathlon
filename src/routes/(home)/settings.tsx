@@ -119,7 +119,7 @@ const Home = () => {
 								Submit
 							</Button>
 						</Stack>
-					 )}
+					)}
 				</Doc>
 			</Container>
 		</main>
