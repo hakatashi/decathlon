@@ -6,6 +6,6 @@ module.exports = {
 		sourceType: 'module',
 	},
 	rules: {
-		'import/no-unresolved': 'ignore',
+		'import/no-unresolved': 'off',
 	},
 };
