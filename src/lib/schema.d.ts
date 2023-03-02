@@ -1,5 +1,11 @@
 import type {DocumentReference, Timestamp} from 'firebase/firestore';
 
+export interface User {
+	displayName: string,
+	photoURL: string,
+	slug: string,
+}
+
 export interface Contest {
 	name: string,
 	startAt: Timestamp,

@@ -1,10 +1,18 @@
 import {Logout, Settings} from '@suid/icons-material';
 import {Box, AppBar, Avatar, IconButton, Toolbar, Typography, Button, Menu, MenuItem, Divider, ListItemIcon} from '@suid/material';
 import {GoogleAuthProvider, getAuth, signInWithPopup, signOut} from 'firebase/auth';
-import {useAuth, useFirebaseApp} from 'solid-firebase';
-import {createSignal, Match, Switch} from 'solid-js';
+import {doc, DocumentReference, FirestoreError, getFirestore, setDoc} from 'firebase/firestore';
+import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
+import {createEffect, createSignal, Match, Show, Switch} from 'solid-js';
 import {A} from 'solid-start';
+import Doc from '~/components/Doc';
+import type {User} from '~/lib/schema';
 
+interface UseFireStoreReturn<T> {
+	data: T;
+	loading: boolean;
+	error: FirestoreError | null;
+}
 
 const Login = () => {
 	const app = useFirebaseApp();
@@ -23,13 +31,40 @@ const Login = () => {
 const Header = () => {
 	const app = useFirebaseApp();
 	const auth = getAuth(app);
+	const db = getFirestore(app);
+
 	const authState = useAuth(auth);
 
-	const [anchorEl, setAnchorEl] = createSignal<null | HTMLElement>(null);
+	const [anchorEl, setAnchorEl] = createSignal<HTMLElement | null>(null);
+	const [userData, setUserData] = createSignal<UseFireStoreReturn<User | null | undefined> | null>(null);
 	const isAccountMenuOpen = () => Boolean(anchorEl());
 	const handleAccountMenuClose = () => setAnchorEl(null);
 
 	const handleLogout = () => signOut(auth);
+
+	createEffect(() => {
+		if (authState.data) {
+			const userRef = doc(db, 'users', authState.data.uid) as DocumentReference<User>;
+			setUserData(useFirestore(userRef));
+		}
+	});
+
+	createEffect(() => {
+		// create user doc if not exists
+		if (
+			userData()?.loading === false &&
+			userData()?.error === null &&
+			userData()?.data === null &&
+			authState.data !== null
+		) {
+			const userRef = doc(db, 'users', authState.data.uid) as DocumentReference<User>;
+			setDoc(userRef, {
+				displayName: authState.data.displayName ?? '',
+				photoURL: authState.data.photoURL ?? '',
+				slug: authState.data.uid,
+			});
+		}
+	});
 
 	return (
 		<AppBar position="static">
@@ -56,8 +91,8 @@ const Header = () => {
 					<Button
 						sx={{my: 2, color: 'white', display: 'block'}}
 					>
-						<A href="/">
-							Index
+						<A href="/contests">
+							Contests
 						</A>
 					</Button>
 				</Box>
@@ -88,6 +123,19 @@ const Header = () => {
 										vertical: 'bottom',
 									}}
 								>
+									<MenuItem>
+										<Show when={userData()} keyed>
+											{
+												(userDoc) => (
+													<Doc data={userDoc}>
+														{({displayName}) => (
+															<span>{displayName}</span>
+														)}
+													</Doc>
+												)
+											}
+										</Show>
+									</MenuItem>
 									<MenuItem component={A} href={`/users/${user.uid}`}>
 										Profile
 									</MenuItem>
