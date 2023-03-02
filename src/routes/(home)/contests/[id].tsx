@@ -7,28 +7,28 @@ import styles from './[id].module.css';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import {athlonNames} from '~/lib/const';
-import type {Game, Contest} from '~/lib/schema';
+import type {Game, Athlon} from '~/lib/schema';
 
 const Home = () => {
 	const param = useParams();
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
-	const contestRef = doc(db, 'contests', param.id) as DocumentReference<Contest>;
-	const contestData = useFirestore(contestRef);
+	const athlonRef = doc(db, 'athlons', param.id) as DocumentReference<Athlon>;
+	const athlonData = useFirestore(athlonRef);
 	const gamesData = useFirestore(
 		query(
 			collection(db, 'games') as CollectionReference<Game>,
-			where('contest', '==', contestRef),
+			where('athlon', '==', athlonRef),
 		),
 	);
 
 	return (
 		<main>
 			<div class={styles.athlonHeader}>
-				<Doc data={contestData}>
-					{(contest) => (
+				<Doc data={athlonData}>
+					{(athlon) => (
 						<Typography variant="h1">
-							{contest.name}
+							{athlon.name}
 						</Typography>
 					)}
 				</Doc>

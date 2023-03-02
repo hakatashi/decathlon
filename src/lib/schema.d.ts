@@ -7,7 +7,7 @@ export interface User {
 	slackId: string,
 }
 
-export interface Contest {
+export interface Athlon {
 	name: string,
 	startAt: Timestamp,
 	endAt: Timestamp,

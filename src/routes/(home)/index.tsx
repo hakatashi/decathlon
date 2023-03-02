@@ -4,30 +4,30 @@ import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {A} from 'solid-start';
 import Collection from '~/components/Collection';
 import {formatTimestamp} from '~/lib/date';
-import type {Contest} from '~/lib/schema';
+import type {Athlon} from '~/lib/schema';
 
 const Home = () => {
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
-	const contestsData = useFirestore(collection(db, 'contests') as CollectionReference<Contest>);
+	const athlonsData = useFirestore(collection(db, 'athlons') as CollectionReference<Athlon>);
 
 	return (
 		<main>
 			<Container maxWidth="xl">
 				<ul>
-					<Collection data={contestsData}>
-						{(contest) => (
-							<A href={`/contests/${contest.id}`}>
+					<Collection data={athlonsData}>
+						{(athlon) => (
+							<A href={`/athlons/${athlon.id}`}>
 								<Card sx={{margin: '3rem'}}>
 									<CardContent>
 										<Typography variant="h1">
-											{contest.name}
+											{athlon.name}
 										</Typography>
 										<Typography variant="h5" component="h2">
-											{formatTimestamp(contest.startAt)} - {formatTimestamp(contest.endAt)}
+											{formatTimestamp(athlon.startAt)} - {formatTimestamp(athlon.endAt)}
 										</Typography>
 										<Typography variant="body2">
-											{contest.description}
+											{athlon.description}
 										</Typography>
 									</CardContent>
 									<CardActions>
