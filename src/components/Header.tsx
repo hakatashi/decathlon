@@ -1,7 +1,7 @@
 import {Logout, Settings} from '@suid/icons-material';
 import {Box, AppBar, Avatar, IconButton, Toolbar, Typography, Button, Menu, MenuItem, Divider, ListItemIcon} from '@suid/material';
-import {GoogleAuthProvider, getAuth, signInWithPopup, signOut, OAuthProvider} from 'firebase/auth';
-import {doc, DocumentReference, FirestoreError, getFirestore, setDoc} from 'firebase/firestore';
+import {getAuth, signInWithPopup, signOut, OAuthProvider} from 'firebase/auth';
+import {doc, DocumentReference, getFirestore} from 'firebase/firestore';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createSignal, Match, Show, Switch} from 'solid-js';
 import {A} from 'solid-start';

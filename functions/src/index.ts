@@ -6,8 +6,8 @@ initializeApp();
 const db = getFirestore();
 
 // eslint-disable-next-line import/prefer-default-export
-export const onUserCreated = auth.user().onCreate((user) => {
-	db.runTransaction(async (transaction) => {
+export const onUserCreated = auth.user().onCreate(async (user) => {
+	await db.runTransaction(async (transaction) => {
 		const userRef = db.collection('users').doc(user.uid);
 		const userData = await transaction.get(userRef);
 		if (userData.exists) {
