@@ -4,7 +4,8 @@
     "dev": "solid-start dev",
     "build": "solid-start build",
     "start": "solid-start start",
-    "lint": "eslint --ignore-path .gitignore . --fix"
+    "lint": "eslint --ignore-path .gitignore . --fix",
+    "install": "cd functions && npm install"
   },
   "type": "module",
   "devDependencies": {
