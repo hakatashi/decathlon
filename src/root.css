@@ -15,6 +15,14 @@ a {
   color: inherit;
 }
 
+.load-error {
+  display: inline-block;
+  word-break: break-all;
+  color: red;
+  font-size: 0.5em;
+  line-height: 1.2em;
+}
+
 @media (min-width: 480px) {
   h1 {
     max-width: none;

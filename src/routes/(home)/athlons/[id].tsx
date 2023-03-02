@@ -1,5 +1,5 @@
-import {Typography, Container} from '@suid/material';
-import {collection, CollectionReference, doc, DocumentReference, getFirestore, query, where} from 'firebase/firestore';
+import {Typography, Container, List, ListItem, ListItemAvatar, Avatar, ListItemText} from '@suid/material';
+import {collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, where} from 'firebase/firestore';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {Show} from 'solid-js';
 import {useParams} from 'solid-start';
@@ -19,11 +19,12 @@ const Home = () => {
 		query(
 			collection(db, 'games') as CollectionReference<Game>,
 			where('athlon', '==', athlonRef),
+			orderBy('order'),
 		),
 	);
 
 	return (
-		<main>
+		<main class={styles.contest}>
 			<div class={styles.athlonHeader}>
 				<Doc data={athlonData}>
 					{(athlon) => (
@@ -38,24 +39,41 @@ const Home = () => {
 					)}
 				</Show>
 			</div>
-			<Container maxWidth="xl">
-				<ol>
+			<Container maxWidth="sm">
+				<Typography
+					component="h2"
+					textAlign="center"
+					letterSpacing={30}
+					fontSize={20}
+					fontWeight="bold"
+					mt={5}
+					mb={1}
+				>
+					競技一覧
+				</Typography>
+				<List sx={{bgcolor: 'background.paper'}}>
 					<Collection data={gamesData}>
-						{(game) => {
+						{(game, index) => {
 							const ruleData = useFirestore(game.rule);
+							const hasScore = ruleData?.data?.users?.some((user) => user.id === 'ZnYLOVTDhWVxlKt2vxhmCDmvqrJ3');
+
 							return (
-								<li>
+								<ListItem>
+									<ListItemAvatar>
+										<Avatar>
+											{index() + 1}
+										</Avatar>
+									</ListItemAvatar>
 									<Doc data={ruleData}>
 										{(rule) => (
-											<span>{rule.name}:</span>
+											<ListItemText primary={rule.name} secondary={`${game.maxPoint}点`}/>
 										)}
 									</Doc>
-									{game.maxPoint}点
-								</li>
+								</ListItem>
 							);
 						}}
 					</Collection>
-				</ol>
+				</List>
 			</Container>
 		</main>
 	);
