@@ -1,6 +1,6 @@
 import {Button, Container, Divider, Stack, TextField, Typography} from '@suid/material';
 import {getAuth} from 'firebase/auth';
-import {doc, DocumentReference, getFirestore} from 'firebase/firestore';
+import {doc, DocumentReference, getFirestore, setDoc, updateDoc} from 'firebase/firestore';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createSignal, JSX, Show} from 'solid-js';
 import Doc from '~/components/Doc';
@@ -17,6 +17,7 @@ const Home = () => {
 	const [photoURL, setPhotoURL] = createSignal<string | undefined>(undefined);
 	const [displayName, setDisplayName] = createSignal<string | undefined>(undefined);
 	const [slug, setSlug] = createSignal<string | undefined>(undefined);
+	const [isLoading, setIsLoading] = createSignal<boolean>(undefined);
 
 	createEffect(() => {
 		if (authState.data) {
@@ -53,6 +54,18 @@ const Home = () => {
 		}
 	};
 
+	const handleSubmit: JSX.EventHandler<HTMLButtonElement, MouseEvent> = async (event) => {
+		event.preventDefault();
+		setIsLoading(true);
+		const userRef = doc(db, 'users', authState?.data?.uid ?? '') as DocumentReference<User>;
+		await updateDoc(userRef, {
+			displayName: displayName(),
+			photoURL: photoURL(),
+			slug: slug(),
+		});
+		setIsLoading(false);
+	};
+
 	return (
 		<main>
 			<Container maxWidth="xl">
@@ -65,11 +78,15 @@ const Home = () => {
 				<Divider sx={{margin: '2rem 0'}}/>
 				<Doc data={userData()}>
 					{({displayName: currentDisplayName, slug: currentSlug}) => (
-						<Stack spacing={4}>
+						<Stack spacing={4} alignItems="flex-start">
 							<Show when={typeof displayName() === 'string'}>
 								<TextField
 									label="Display Name"
 									defaultValue={currentDisplayName}
+									value={displayName()}
+									onChange={(_event, value) => {
+										setDisplayName(value);
+									}}
 								/>
 							</Show>
 							<Show when={typeof slug() === 'string'}>
@@ -82,11 +99,11 @@ const Home = () => {
 									}}
 								/>
 							</Show>
-							<div>
+							<Stack spacing={1}>
 								<Typography variant="caption">
 									Icon
 								</Typography>
-								<img src={photoURL()}/>
+								<img src={photoURL()} style={{width: '10rem', height: '10rem', 'object-fit': 'contain'}}/>
 								<Button variant="contained" component="label">
 									<span>Select File</span>
 									<input
@@ -97,9 +114,9 @@ const Home = () => {
 										onChange={handlePhotoInputChange}
 									/>
 								</Button>
-							</div>
-							<Button>
-								Send
+							</Stack>
+							<Button component="button" onClick={handleSubmit} disabled={isLoading()}>
+								Submit
 							</Button>
 						</Stack>
 					 )}
