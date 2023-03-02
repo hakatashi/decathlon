@@ -2,10 +2,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function isValidUser(user) {
-      return user.size() == 3
+      return user.size() == 4
         && user.displayName is string
         && user.photoURL is string
-        && user.slug is string;
+        && user.slug is string
+        && user.slackId is string;
     }
 
     match /users/{userId} {

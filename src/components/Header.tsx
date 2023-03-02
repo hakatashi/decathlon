@@ -1,6 +1,6 @@
 import {Logout, Settings} from '@suid/icons-material';
 import {Box, AppBar, Avatar, IconButton, Toolbar, Typography, Button, Menu, MenuItem, Divider, ListItemIcon} from '@suid/material';
-import {GoogleAuthProvider, getAuth, signInWithPopup, signOut} from 'firebase/auth';
+import {GoogleAuthProvider, getAuth, signInWithPopup, signOut, OAuthProvider} from 'firebase/auth';
 import {doc, DocumentReference, FirestoreError, getFirestore, setDoc} from 'firebase/firestore';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createSignal, Match, Show, Switch} from 'solid-js';
@@ -8,9 +8,15 @@ import {A} from 'solid-start';
 import Doc from '~/components/Doc';
 import type {UseFireStoreReturn, User} from '~/lib/schema';
 
+const slackProvider = new OAuthProvider('oidc.slack');
+const scopes = ['openid', 'profile', 'email'];
+for (const scope of scopes) {
+	slackProvider.addScope(scope);
+}
+
 const Login = () => {
 	const app = useFirebaseApp();
-	const signIn = () => signInWithPopup(getAuth(app), new GoogleAuthProvider());
+	const signIn = () => signInWithPopup(getAuth(app), slackProvider);
 
 	return (
 		<Button
@@ -52,10 +58,14 @@ const Header = () => {
 			authState.data !== null
 		) {
 			const userRef = doc(db, 'users', authState.data.uid) as DocumentReference<User>;
+			const slackId = authState.data.providerData
+				.find((provider) => provider.providerId === 'oidc.slack')
+				?.uid;
 			setDoc(userRef, {
 				displayName: authState.data.displayName ?? '',
 				photoURL: authState.data.photoURL ?? '',
 				slug: authState.data.uid,
+				slackId: slackId ?? '',
 			});
 		}
 	});

@@ -4,6 +4,7 @@ export interface User {
 	displayName: string,
 	photoURL: string,
 	slug: string,
+	slackId: string,
 }
 
 export interface Contest {
