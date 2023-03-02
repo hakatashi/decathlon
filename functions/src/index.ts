@@ -1,9 +1,28 @@
-import * as functions from 'firebase-functions';
+import {initializeApp} from 'firebase-admin/app';
+import {getFirestore} from 'firebase-admin/firestore';
+import {auth} from 'firebase-functions';
 
-// // Start writing Firebase Functions
-// // https://firebase.google.com/docs/functions/typescript
-//
-// export const helloWorld = functions.https.onRequest((request, response) => {
-//   functions.logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+initializeApp();
+const db = getFirestore();
+
+// eslint-disable-next-line import/prefer-default-export
+export const onUserCreated = auth.user().onCreate((user) => {
+	db.runTransaction(async (transaction) => {
+		const userRef = db.collection('users').doc(user.uid);
+		const userData = await transaction.get(userRef);
+		if (userData.exists) {
+			return;
+		}
+
+		const slackId = user.providerData
+			.find((provider) => provider.providerId === 'oidc.slack')
+			?.uid;
+
+		userRef.set({
+			displayName: user.displayName ?? '',
+			photoURL: user.photoURL ?? '',
+			slug: user.uid,
+			slackId: slackId ?? '',
+		});
+	});
+});

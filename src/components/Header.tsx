@@ -49,27 +49,6 @@ const Header = () => {
 		}
 	});
 
-	createEffect(() => {
-		// create user doc if not exists
-		if (
-			userData()?.loading === false &&
-			userData()?.error === null &&
-			userData()?.data === null &&
-			authState.data !== null
-		) {
-			const userRef = doc(db, 'users', authState.data.uid) as DocumentReference<User>;
-			const slackId = authState.data.providerData
-				.find((provider) => provider.providerId === 'oidc.slack')
-				?.uid;
-			setDoc(userRef, {
-				displayName: authState.data.displayName ?? '',
-				photoURL: authState.data.photoURL ?? '',
-				slug: authState.data.uid,
-				slackId: slackId ?? '',
-			});
-		}
-	});
-
 	return (
 		<AppBar position="static">
 			<Toolbar variant="dense">

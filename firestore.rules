@@ -11,9 +11,12 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read;
-      allow create, update: if request.auth != null
-                            && request.auth.uid == userId
-                            && isValidUser(request.resource.data);
+      allow update: if request.auth != null
+                    && request.auth.uid == userId
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys()
+                         .hasOnly(["displayName", "photoURL", "slug"])
+                    && isValidUser(request.resource.data);
     }
 
     match /contests/{document=**} {
