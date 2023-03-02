@@ -1,12 +1,28 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isValidUser(user) {
+      return user.size() == 3
+        && user.displayName is string
+        && user.photoURL is string
+        && user.slug is string;
+    }
+
+    match /users/{userId} {
+      allow read;
+      allow create, update: if request.auth != null
+                            && request.auth.uid == userId
+                            && isValidUser(request.resource.data);
+    }
+
     match /contests/{document=**} {
       allow read;
     }
+
     match /games/{document=**} {
       allow read;
     }
+
     match /gameRules/{document=**} {
       allow read;
     }
