@@ -1,11 +1,6 @@
 import type {DocumentData, FirestoreError} from 'firebase/firestore';
 import {For, JSX, Match, Switch} from 'solid-js';
-
-interface UseFireStoreReturn<T> {
-	data: T;
-	loading: boolean;
-	error: FirestoreError | null;
-}
+import {UseFireStoreReturn} from '~/lib/schema';
 
 interface Props<T extends DocumentData> {
 	data: UseFireStoreReturn<T[] | undefined>,

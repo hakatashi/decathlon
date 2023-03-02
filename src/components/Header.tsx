@@ -6,13 +6,7 @@ import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createSignal, Match, Show, Switch} from 'solid-js';
 import {A} from 'solid-start';
 import Doc from '~/components/Doc';
-import type {User} from '~/lib/schema';
-
-interface UseFireStoreReturn<T> {
-	data: T;
-	loading: boolean;
-	error: FirestoreError | null;
-}
+import type {UseFireStoreReturn, User} from '~/lib/schema';
 
 const Login = () => {
 	const app = useFirebaseApp();
@@ -91,7 +85,7 @@ const Header = () => {
 					<Button
 						sx={{my: 2, color: 'white', display: 'block'}}
 					>
-						<A href="/contests">
+						<A href="/">
 							Contests
 						</A>
 					</Button>

@@ -1,4 +1,4 @@
-import type {DocumentReference, Timestamp} from 'firebase/firestore';
+import type {DocumentReference, FirestoreError, Timestamp} from 'firebase/firestore';
 
 export interface User {
 	displayName: string,
@@ -21,4 +21,10 @@ export interface Game {
 
 export interface GameRule {
 	name: string,
+}
+
+interface UseFireStoreReturn<T> {
+	data: T;
+	loading: boolean;
+	error: FirestoreError | null;
 }
