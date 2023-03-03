@@ -1,8 +1,8 @@
-import {Typography, Container, List, ListItem, ListItemAvatar, Avatar, ListItemText} from '@suid/material';
+import {Typography, Container, List, ListItem, ListItemAvatar, Avatar, ListItemText, Box} from '@suid/material';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, where} from 'firebase/firestore';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {Show} from 'solid-js';
-import {useParams} from 'solid-start';
+import {A, useParams} from 'solid-start';
 import styles from './[id].module.css';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
@@ -57,7 +57,7 @@ const Home = () => {
 							const hasScore = ruleData?.data?.users?.some((user) => user.id === 'ZnYLOVTDhWVxlKt2vxhmCDmvqrJ3');
 
 							return (
-								<ListItem>
+								<ListItem component={A} href={`/athlons/${param.id}/${game.rule.id}`}>
 									<ListItemAvatar>
 										<Avatar>
 											{index() + 1}
