@@ -23,6 +23,10 @@ export interface Game {
 
 export interface GameRule {
 	name: string,
+	users: {
+		id: string,
+		point: number,
+	}[],
 }
 
 interface UseFireStoreReturn<T> {

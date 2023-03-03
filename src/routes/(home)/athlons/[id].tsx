@@ -47,7 +47,6 @@ const Home = () => {
 					fontSize={20}
 					fontWeight="bold"
 					mt={5}
-					mb={1}
 				>
 					競技一覧
 				</Typography>
