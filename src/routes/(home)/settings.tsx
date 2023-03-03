@@ -68,17 +68,26 @@ const Home = () => {
 
 	return (
 		<main>
-			<Container maxWidth="xl">
+			<Container maxWidth="md">
 				<Typography
 					component="h1"
 					variant="h2"
+					mt={6}
+					mb={6}
 				>
 					Settings
 				</Typography>
-				<Divider sx={{margin: '2rem 0'}}/>
 				<Doc data={userData()}>
-					{({displayName: currentDisplayName, slug: currentSlug}) => (
-						<Stack spacing={4} alignItems="flex-start">
+					{({displayName: currentDisplayName, slug: currentSlug, slackId}) => (
+						<Stack spacing={4}>
+							<TextField
+								label="Slack ID"
+								defaultValue={slackId}
+								disabled
+								InputProps={{
+									readOnly: true,
+								}}
+							/>
 							<Show when={typeof displayName() === 'string'}>
 								<TextField
 									label="Display Name"
@@ -99,7 +108,7 @@ const Home = () => {
 									}}
 								/>
 							</Show>
-							<Stack spacing={1}>
+							<Stack spacing={1} alignItems="flex-start">
 								<Typography variant="caption">
 									Icon
 								</Typography>
@@ -115,12 +124,18 @@ const Home = () => {
 									/>
 								</Button>
 							</Stack>
-							<Button component="button" onClick={handleSubmit} disabled={isLoading()}>
-								Submit
-							</Button>
 						</Stack>
 					)}
 				</Doc>
+				<Button
+					component="button"
+					onClick={handleSubmit}
+					disabled={isLoading()}
+					size="large"
+					sx={{mt: 3}}
+				>
+					Submit
+				</Button>
 			</Container>
 		</main>
 	);
