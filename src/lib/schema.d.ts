@@ -18,6 +18,7 @@ export interface Athlon {
 export interface Game {
 	rule: DocumentReference<GameRule>,
 	maxPoint: number,
+	weight?: number,
 	order: number,
 }
 

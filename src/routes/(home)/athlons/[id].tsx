@@ -65,7 +65,7 @@ const Home = () => {
 									</ListItemAvatar>
 									<Doc data={ruleData}>
 										{(rule) => (
-											<ListItemText primary={rule.name} secondary={`${game.maxPoint}点`}/>
+											<ListItemText primary={rule.name} secondary={`${game.maxPoint * (game.weight ?? 1)}点`}/>
 										)}
 									</Doc>
 								</ListItem>
