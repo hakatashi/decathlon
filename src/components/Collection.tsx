@@ -1,3 +1,4 @@
+import {Skeleton} from '@suid/material';
 import type {DocumentData} from 'firebase/firestore';
 import {For, JSX, Match, Switch} from 'solid-js';
 import {UseFireStoreReturn} from '~/lib/schema';
@@ -11,7 +12,7 @@ interface Props<T extends DocumentData> {
 const Collection = <T extends DocumentData, >(props: Props<T>) => (
 	<Switch>
 		<Match when={props.data.loading}>
-			<span class="loading">Loading...</span>
+			<Skeleton variant="text"/>
 		</Match>
 		<Match when={props.data.error}>
 			<span class="load-error">{props.data.error?.toString()}</span>

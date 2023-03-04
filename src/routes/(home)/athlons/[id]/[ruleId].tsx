@@ -1,16 +1,53 @@
-import {Typography, Container, Breadcrumbs, Link, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Stack, TextField} from '@suid/material';
+import {Typography, Container, Breadcrumbs, Link, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Stack, TextField, Box} from '@suid/material';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, DocumentReference, getDoc, getFirestore, orderBy, query, setDoc, where} from 'firebase/firestore';
 import {getStorage, ref} from 'firebase/storage';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
-import {createEffect, createSignal, For, Show} from 'solid-js';
+import {createSignal, For, Show} from 'solid-js';
 import {A, useParams} from 'solid-start';
 import {useAthlon} from '../[id]';
 import styles from './[ruleId].module.css';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import {useStorageBytes} from '~/lib/firebase';
-import type {Game, GameRule, Score, UseFireStoreReturn} from '~/lib/schema';
+import type {Game, GameRule, Score} from '~/lib/schema';
+
+interface Props {
+	onClose: () => void,
+	open: boolean,
+	scoreInputNote: string,
+	defaultValue?: number,
+}
+
+const ScoreRecordDialog = (props: Props) => (
+	<Dialog
+		open={props.open}
+		onClose={props.onClose}
+		aria-labelledby="alert-dialog-title"
+		aria-describedby="alert-dialog-description"
+	>
+		<DialogTitle id="alert-dialog-title">
+			スコアを記録する
+		</DialogTitle>
+		<DialogContent>
+			<DialogContentText id="alert-dialog-description">
+				<p>{props.scoreInputNote}</p>
+				<TextField
+					label="Score"
+					variant="standard"
+					inputProps={{inputMode: 'numeric', pattern: '[0-9]*'}}
+					defaultValue={props.defaultValue}
+					required
+				/>
+			</DialogContentText>
+		</DialogContent>
+		<DialogActions>
+			<Button onClick={props.onClose}>
+				送信
+			</Button>
+		</DialogActions>
+	</Dialog>
+);
 
 const AthlonGame = () => {
 	const param = useParams();
@@ -150,61 +187,20 @@ const AthlonGame = () => {
 								<Doc
 									data={scoreData}
 									fallback={
-										<Dialog
+										<ScoreRecordDialog
 											open={open()}
+											scoreInputNote={game.scoreInputNote}
 											onClose={handleClose}
-											aria-labelledby="alert-dialog-title"
-											aria-describedby="alert-dialog-description"
-										>
-											<DialogTitle id="alert-dialog-title">
-												スコアを記録する
-											</DialogTitle>
-											<DialogContent>
-												<DialogContentText id="alert-dialog-description">
-													<p>{game.scoreInputNote}</p>
-													<TextField
-														label="Score"
-														variant="standard"
-														inputProps={{inputMode: 'numeric', pattern: '[0-9]*'}}
-														required
-													/>
-												</DialogContentText>
-											</DialogContent>
-											<DialogActions>
-												<Button onClick={handleClose}>
-													送信
-												</Button>
-											</DialogActions>
-										</Dialog>
+										/>
 									}
 								>
 									{(score) => (
-										<Dialog
+										<ScoreRecordDialog
 											open={open()}
+											scoreInputNote={game.scoreInputNote}
 											onClose={handleClose}
-											aria-labelledby="alert-dialog-title"
-											aria-describedby="alert-dialog-description"
-										>
-											<DialogTitle id="alert-dialog-title">
-												スコアを記録する
-											</DialogTitle>
-											<DialogContent>
-												<DialogContentText id="alert-dialog-description">
-													<p>{game.scoreInputNote}</p>
-													<TextField
-														label="Score"
-														variant="standard"
-														inputProps={{inputMode: 'numeric', pattern: '[0-9]*'}}
-														required
-													/>
-												</DialogContentText>
-											</DialogContent>
-											<DialogActions>
-												<Button onClick={handleClose}>
-													送信
-												</Button>
-											</DialogActions>
-										</Dialog>
+											defaultValue={score.rawScore}
+										/>
 									)}
 								</Doc>
 							</>
