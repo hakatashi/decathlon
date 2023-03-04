@@ -11,44 +11,56 @@ import styles from './index.module.css';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import {useStorageBytes} from '~/lib/firebase';
-import type {Game, GameRule, Score} from '~/lib/schema';
+import type {Athlon, Game, GameRule, Score} from '~/lib/schema';
 
 interface Props {
-	onClose: () => void,
+	onSubmit: (score: number) => void,
 	open: boolean,
 	scoreInputNote: string,
 	defaultValue?: number,
 }
 
-const ScoreRecordDialog = (props: Props) => (
-	<Dialog
-		open={props.open}
-		onClose={props.onClose}
-		aria-labelledby="alert-dialog-title"
-		aria-describedby="alert-dialog-description"
-	>
-		<DialogTitle id="alert-dialog-title">
-			スコアを記録する
-		</DialogTitle>
-		<DialogContent>
-			<DialogContentText id="alert-dialog-description">
-				<p>{props.scoreInputNote}</p>
-				<TextField
-					label="Score"
-					variant="standard"
-					inputProps={{inputMode: 'numeric', pattern: '[0-9]*'}}
-					defaultValue={props.defaultValue}
-					required
-				/>
-			</DialogContentText>
-		</DialogContent>
-		<DialogActions>
-			<Button onClick={props.onClose}>
-				送信
-			</Button>
-		</DialogActions>
-	</Dialog>
-);
+const ScoreRecordDialog = (props: Props) => {
+	const [score, setScore] = createSignal<string>('');
+
+	return (
+		<Dialog
+			open={props.open}
+			onClose={props.onSubmit}
+			aria-labelledby="alert-dialog-title"
+			aria-describedby="alert-dialog-description"
+		>
+			<DialogTitle id="alert-dialog-title">
+				スコアを記録する
+			</DialogTitle>
+			<DialogContent>
+				<DialogContentText id="alert-dialog-description">
+					<p>{props.scoreInputNote}</p>
+					<TextField
+						label="Score"
+						variant="standard"
+						inputProps={{inputMode: 'numeric', pattern: '[0-9]*'}}
+						defaultValue={props.defaultValue}
+						required
+						value={score()}
+						onChange={(event, value) => {
+							setScore(value);
+						}}
+					/>
+				</DialogContentText>
+			</DialogContent>
+			<DialogActions>
+				<Button
+					onClick={() => {
+						props.onSubmit(score());
+					}}
+				>
+					送信
+				</Button>
+			</DialogActions>
+		</Dialog>
+	);
+};
 
 const AthlonGame = () => {
 	const param = useParams();
@@ -74,10 +86,6 @@ const AthlonGame = () => {
 
 	const handleClickOpen = () => {
 		setOpen(true);
-	};
-
-	const handleClose = () => {
-		setOpen(false);
 	};
 
 	return (
@@ -182,6 +190,18 @@ const AthlonGame = () => {
 						const scoreRef = doc(db, 'games', game.id, 'scores', uid) as DocumentReference<Score>;
 						const scoreData = useFirestore(scoreRef);
 
+						const handleScoreSubmit = async (score: number) => {
+							if (athlonData?.data?.id) {
+								console.log(db, 'games', game.id, 'scores', uid);
+								await setDoc(scoreRef, {
+									athlon: doc(db, 'athlons', athlonData?.data?.id),
+									rawScore: parseFloat(score),
+									tiebreakScore: 0,
+								});
+							}
+							setOpen(false);
+						};
+
 						return (
 							<>
 								<Button size="large" sx={{my: 3}} variant="contained" component={A} href="./leaderboard">
@@ -195,7 +215,7 @@ const AthlonGame = () => {
 										<ScoreRecordDialog
 											open={open()}
 											scoreInputNote={game.scoreInputNote}
-											onClose={handleClose}
+											onSubmit={handleScoreSubmit}
 										/>
 									}
 								>
@@ -203,7 +223,7 @@ const AthlonGame = () => {
 										<ScoreRecordDialog
 											open={open()}
 											scoreInputNote={game.scoreInputNote}
-											onClose={handleClose}
+											onSubmit={handleScoreSubmit}
 											defaultValue={score.rawScore}
 										/>
 									)}

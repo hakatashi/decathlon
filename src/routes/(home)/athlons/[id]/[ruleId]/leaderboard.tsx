@@ -1,11 +1,12 @@
-import {Typography, Container, Breadcrumbs, Link} from '@suid/material';
+import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody} from '@suid/material';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, query, where} from 'firebase/firestore';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {A, useParams} from 'solid-start';
 import {useAthlon} from '../../[id]';
+import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
-import type {Game, GameRule} from '~/lib/schema';
+import type {Game, GameRule, Score} from '~/lib/schema';
 
 const Leaderboard = () => {
 	const param = useParams();
@@ -61,6 +62,51 @@ const Leaderboard = () => {
 					</Doc>
 					<Typography color="text.primary">Leaderboard</Typography>
 				</Breadcrumbs>
+				<Collection data={gameData}>
+					{(game) => {
+						const scoresData = useFirestore(
+							collection(db, 'games', game.id, 'scores') as CollectionReference<Score>,
+						);
+						return (
+							<TableContainer component={Paper}>
+								<Table>
+									<TableHead>
+										<TableRow>
+											<TableCell>#</TableCell>
+											<TableCell>User</TableCell>
+											<TableCell align="right">Raw Score</TableCell>
+											<TableCell align="right">Tiebreak Score</TableCell>
+											<TableCell align="right">Point</TableCell>
+										</TableRow>
+									</TableHead>
+									<TableBody>
+										<Collection data={scoresData}>
+											{(score, index) => (
+												<TableRow>
+													<TableCell>
+														{index() + 1}
+													</TableCell>
+													<TableCell>
+														{score.id}
+													</TableCell>
+													<TableCell align="right">
+														{score.rawScore}
+													</TableCell>
+													<TableCell align="right">
+														{score.tiebreakScore}
+													</TableCell>
+													<TableCell align="right">
+														???
+													</TableCell>
+												</TableRow>
+											)}
+										</Collection>
+									</TableBody>
+								</Table>
+							</TableContainer>
+						);
+					}}
+				</Collection>
 			</Container>
 		</main>
 	);
