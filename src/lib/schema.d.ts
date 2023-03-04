@@ -29,7 +29,7 @@ export interface Game extends DocumentData {
 	}[],
 }
 
-export interface Score {
+export interface Score extends DocumentData {
 	athlon: DocumentReference<Athlon>,
 	rawScore: number,
 	tiebreakScore: number,
