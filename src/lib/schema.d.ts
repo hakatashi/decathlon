@@ -21,10 +21,17 @@ export interface Game {
 	weight?: number,
 	order: number,
 	description: string,
+	links: {
+		label: string,
+		url: string,
+		isMain: boolean,
+	}[],
 }
 
 export interface GameRule {
 	name: string,
+	icon: string,
+	description: string,
 	users: {
 		id: string,
 		point: number,

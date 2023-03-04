@@ -1,0 +1,28 @@
+.header {
+  background: #EEE;
+}
+
+.ruleArea {
+  height: 30vmin;
+  padding-bottom: 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+.ruleDescription {
+  flex: 0 1 40rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.ruleIcon {
+  flex: 0 0 30vmin;
+  width: 30vmin;
+  height: 30vmin;
+}
+
+.ruleIcon svg path {
+  fill: #555;
+}
