@@ -1,4 +1,4 @@
-import type {DocumentReference, FirestoreError, Timestamp} from 'firebase/firestore';
+import type {DocumentData, DocumentReference, FirestoreError, Timestamp} from 'firebase/firestore';
 
 export interface User {
 	displayName: string,
@@ -15,8 +15,9 @@ export interface Athlon {
 	id: string,
 }
 
-export interface Game {
+export interface Game extends DocumentData {
 	rule: DocumentReference<GameRule>,
+	scoreInputNote: string,
 	maxPoint: number,
 	weight?: number,
 	order: number,
@@ -26,6 +27,12 @@ export interface Game {
 		url: string,
 		isMain: boolean,
 	}[],
+}
+
+export interface Score {
+	athlon: DocumentReference<Athlon>,
+	rawScore: number,
+	tiebreakScore: number,
 }
 
 export interface GameRule {

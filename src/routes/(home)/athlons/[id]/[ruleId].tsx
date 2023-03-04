@@ -1,15 +1,16 @@
-import {Typography, Container, Breadcrumbs, Link, Button} from '@suid/material';
-import {collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, where} from 'firebase/firestore';
+import {Typography, Container, Breadcrumbs, Link, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Stack, TextField} from '@suid/material';
+import {getAuth} from 'firebase/auth';
+import {collection, CollectionReference, doc, DocumentReference, getDoc, getFirestore, orderBy, query, setDoc, where} from 'firebase/firestore';
 import {getStorage, ref} from 'firebase/storage';
-import {useFirebaseApp, useFirestore} from 'solid-firebase';
-import {For, Show} from 'solid-js';
+import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
+import {createEffect, createSignal, For, Show} from 'solid-js';
 import {A, useParams} from 'solid-start';
 import {useAthlon} from '../[id]';
 import styles from './[ruleId].module.css';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import {useStorageBytes} from '~/lib/firebase';
-import type {Game, GameRule} from '~/lib/schema';
+import type {Game, GameRule, Score, UseFireStoreReturn} from '~/lib/schema';
 
 const AthlonGame = () => {
 	const param = useParams();
@@ -17,6 +18,8 @@ const AthlonGame = () => {
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
 	const storage = getStorage(app);
+	const auth = getAuth(app);
+
 	const ruleRef = doc(db, 'gameRules', param.ruleId) as DocumentReference<GameRule>;
 
 	const ruleData = useFirestore(ruleRef);
@@ -27,7 +30,17 @@ const AthlonGame = () => {
 			where('rule', '==', ruleRef),
 		),
 	);
+	const authState = useAuth(auth);
 
+	const [open, setOpen] = createSignal<boolean>(false);
+
+	const handleClickOpen = () => {
+		setOpen(true);
+	};
+
+	const handleClose = () => {
+		setOpen(false);
+	};
 
 	return (
 		<main>
@@ -79,24 +92,35 @@ const AthlonGame = () => {
 									>
 										{rule.description}
 									</Typography>
-									<Collection data={gameData}>
-										{(game) => (
-											<For each={game.links}>
-												{(link) => (
-													<Button
-														size="large"
-														variant={link.isMain ? 'contained' : 'outlined'}
-														component="a"
-														target="_blank"
-														rel="noopener noreferer"
-														href={link.url}
-													>
-														{link.label}
-													</Button>
-												)}
-											</For>
-										)}
-									</Collection>
+									<Stack direction="raw">
+										<Collection data={gameData}>
+											{(game) => (
+												<For each={game.links}>
+													{(link) => (
+														<Button
+															size="large"
+															variant={link.isMain ? 'contained' : 'outlined'}
+															component="a"
+															target="_blank"
+															rel="noopener noreferer"
+															href={link.url}
+															sx={{mr: 1}}
+														>
+															{link.label}
+														</Button>
+													)}
+												</For>
+											)}
+										</Collection>
+										<Button
+											size="large"
+											variant="contained"
+											color="secondary"
+											onClick={handleClickOpen}
+										>
+											スコアを記録する
+										</Button>
+									</Stack>
 								</div>
 								<span class={styles.ruleIcon}>
 									<Show when={iconData.data} keyed>
@@ -112,9 +136,80 @@ const AthlonGame = () => {
 			</div>
 			<Container maxWidth="lg">
 				<Collection data={gameData}>
-					{(game) => (
-						<div style={{'white-space': 'pre-wrap'}}>{game.description}</div>
-					)}
+					{(game) => {
+						const uid = authState.data?.uid;
+						if (!uid) {
+							return <span>Loading...</span>;
+						}
+						const scoreRef = doc(db, 'games', game.id, 'scores', uid) as DocumentReference<Score>;
+						const scoreData = useFirestore(scoreRef);
+
+						return (
+							<>
+								<div style={{'white-space': 'pre-wrap'}}>{game.description}</div>
+								<Doc
+									data={scoreData}
+									fallback={
+										<Dialog
+											open={open()}
+											onClose={handleClose}
+											aria-labelledby="alert-dialog-title"
+											aria-describedby="alert-dialog-description"
+										>
+											<DialogTitle id="alert-dialog-title">
+												スコアを記録する
+											</DialogTitle>
+											<DialogContent>
+												<DialogContentText id="alert-dialog-description">
+													<p>{game.scoreInputNote}</p>
+													<TextField
+														label="Score"
+														variant="standard"
+														inputProps={{inputMode: 'numeric', pattern: '[0-9]*'}}
+														required
+													/>
+												</DialogContentText>
+											</DialogContent>
+											<DialogActions>
+												<Button onClick={handleClose}>
+													送信
+												</Button>
+											</DialogActions>
+										</Dialog>
+									}
+								>
+									{(score) => (
+										<Dialog
+											open={open()}
+											onClose={handleClose}
+											aria-labelledby="alert-dialog-title"
+											aria-describedby="alert-dialog-description"
+										>
+											<DialogTitle id="alert-dialog-title">
+												スコアを記録する
+											</DialogTitle>
+											<DialogContent>
+												<DialogContentText id="alert-dialog-description">
+													<p>{game.scoreInputNote}</p>
+													<TextField
+														label="Score"
+														variant="standard"
+														inputProps={{inputMode: 'numeric', pattern: '[0-9]*'}}
+														required
+													/>
+												</DialogContentText>
+											</DialogContent>
+											<DialogActions>
+												<Button onClick={handleClose}>
+													送信
+												</Button>
+											</DialogActions>
+										</Dialog>
+									)}
+								</Doc>
+							</>
+						);
+					}}
 				</Collection>
 			</Container>
 		</main>

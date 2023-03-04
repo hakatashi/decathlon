@@ -1,9 +1,12 @@
+/* eslint-disable react/require-default-props */
+
 import type {DocumentData} from 'firebase/firestore';
-import {JSX, Match, Switch} from 'solid-js';
+import {JSX, Match, Show, Switch} from 'solid-js';
 import {UseFireStoreReturn} from '~/lib/schema';
 
 interface Props<T extends DocumentData> {
 	data: UseFireStoreReturn<T | null | undefined> | null | undefined,
+	fallback?: JSX.Element,
 	children: (item: T) => JSX.Element,
 }
 
@@ -16,7 +19,7 @@ const Doc = <T extends DocumentData, >(props: Props<T>) => (
 			<span class="loading">Loading...</span>
 		</Match>
 		<Match when={props.data?.error}>
-			<span class="load-error">Load error occured.</span>
+			<span class="load-error">{props.data?.error?.toString()}</span>
 		</Match>
 		<Match when={props.data?.data} keyed>
 			{(data) => (
@@ -24,7 +27,9 @@ const Doc = <T extends DocumentData, >(props: Props<T>) => (
 			)}
 		</Match>
 		<Match when>
-			<span class="load-error">Load error occured.</span>
+			<Show when={props.fallback} keyed>
+				{(fallback) => fallback}
+			</Show>
 		</Match>
 	</Switch>
 );
