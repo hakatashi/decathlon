@@ -35,7 +35,7 @@ export interface Score {
 	tiebreakScore: number,
 }
 
-export interface GameRule {
+export interface GameRule extends DocumentData {
 	name: string,
 	icon: string,
 	description: string,

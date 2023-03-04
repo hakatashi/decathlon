@@ -1,12 +1,13 @@
-import {Typography, Container, Breadcrumbs, Link, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Stack, TextField, Box} from '@suid/material';
+import {EmojiEvents} from '@suid/icons-material';
+import {Typography, Container, Breadcrumbs, Link, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Stack, TextField, Box, Icon} from '@suid/material';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, DocumentReference, getDoc, getFirestore, orderBy, query, setDoc, where} from 'firebase/firestore';
 import {getStorage, ref} from 'firebase/storage';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createSignal, For, Show} from 'solid-js';
 import {A, useParams} from 'solid-start';
-import {useAthlon} from '../[id]';
-import styles from './[ruleId].module.css';
+import {useAthlon} from '../../[id]';
+import styles from './index.module.css';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import {useStorageBytes} from '~/lib/firebase';
@@ -183,6 +184,10 @@ const AthlonGame = () => {
 
 						return (
 							<>
+								<Button size="large" sx={{my: 3}} variant="contained" component={A} href="./leaderboard">
+									<EmojiEvents sx={{mr: 1}}/>
+									Show Leaderboard
+								</Button>
 								<div style={{'white-space': 'pre-wrap'}}>{game.description}</div>
 								<Doc
 									data={scoreData}
