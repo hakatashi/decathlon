@@ -1,0 +1,34 @@
+.home {
+  width: 100%;
+  height: 100%;
+  background: #607d8b;
+}
+
+.logo {
+  width: 100%;
+  height: 70vh;
+}
+
+.logoRotation {
+  transform: rotate(3deg);
+  animation: rotation 250s infinite linear;
+}
+
+.title {
+  color: white;
+  font-size: 5vmin;
+  font-family: monospace;
+  text-transform: uppercase;
+  text-align: center;
+  margin: 0;
+  letter-spacing: 0.7em;
+}
+
+@keyframes rotation {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

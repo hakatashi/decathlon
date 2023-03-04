@@ -20,6 +20,7 @@ export interface Game {
 	maxPoint: number,
 	weight?: number,
 	order: number,
+	description: string,
 }
 
 export interface GameRule {
