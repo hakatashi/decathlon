@@ -2,6 +2,7 @@ import {Button, Container, Stack, TextField, Typography} from '@suid/material';
 import {getAuth} from 'firebase/auth';
 import {doc, DocumentReference, getFirestore, updateDoc} from 'firebase/firestore';
 import {getStorage, ref as storageRef, uploadBytes} from 'firebase/storage';
+import {nanoid} from 'nanoid';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createSignal, JSX, Show} from 'solid-js';
 import Doc from '~/components/Doc';
@@ -64,7 +65,7 @@ const Settings = () => {
 
 		// Upload profile image
 		const imageFileData = imageFile();
-		const profilePictureRef = storageRef(storage, `users/${authState?.data?.uid}/profilePicture`);
+		const profilePictureRef = storageRef(storage, `users/${authState?.data?.uid}/profilePicture_${nanoid()}`);
 		if (imageFileData) {
 			await uploadBytes(profilePictureRef, imageFileData);
 			setPhotoURL(`https://storage.googleapis.com/${app.options.storageBucket}/${profilePictureRef.fullPath}`);
