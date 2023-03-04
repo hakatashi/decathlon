@@ -23,12 +23,11 @@ service cloud.firestore {
       allow read;
     }
 
-    function isValidGameScore(user) {
-      return user.size() == 4
-        && user.displayName is string
-        && user.photoURL is string
-        && user.slug is string
-        && user.slackId is string;
+    function isValidGameScore(score) {
+      return score.size() == 3
+        && score.rawScore is number
+        && score.tiebreakScore is number
+        && score.athlon is path;
     }
 
     match /games/{document=**} {
