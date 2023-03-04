@@ -4,12 +4,15 @@ import {Outlet, useLocation} from 'solid-start';
 import Header from '~/components/Header';
 
 const RootLayout = () => {
-	const location = useLocation();
-	const isRoot = location.pathname === '/';
+	const isRoot = () => {
+		const location = useLocation();
+		return location.pathname === '/';
+	};
+
 	return (
 		<div
 			style={
-				isRoot
+				isRoot()
 					? {
 						display: 'flex',
 						'flex-direction': 'column',
@@ -19,7 +22,7 @@ const RootLayout = () => {
 		>
 			<Header/>
 			<Outlet/>
-			<Show when={!isRoot}>
+			<Show when={!isRoot()}>
 				<Stack
 					direction="row"
 					spacing={2}
