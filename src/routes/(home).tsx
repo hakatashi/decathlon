@@ -1,13 +1,15 @@
 import {Divider, Link, Stack, Typography} from '@suid/material';
+import {Show} from 'solid-js';
 import {Outlet, useLocation} from 'solid-start';
 import Header from '~/components/Header';
 
 const RootLayout = () => {
 	const location = useLocation();
+	const isRoot = location.pathname === '/';
 	return (
 		<div
 			style={
-				location.pathname === '/'
+				isRoot
 					? {
 						display: 'flex',
 						'flex-direction': 'column',
@@ -17,25 +19,27 @@ const RootLayout = () => {
 		>
 			<Header/>
 			<Outlet/>
-			<Divider sx={{m: 3}}/>
-			<Stack
-				direction="row"
-				spacing={2}
-				justifyContent="center"
-			>
-				<Typography variant="body2">decathlon by @hakatashi</Typography>
-				<Divider orientation="vertical" flexItem/>
-				<Typography variant="body2">
-					<Link
-						target="_blank"
-						rel="noopener noreferrer"
-						underline="hover"
-						href="https://github.com/hakatashi/decathlon"
-					>
-						GitHub
-					</Link>
-				</Typography>
-			</Stack>
+			<Show when={!isRoot}>
+				<Stack
+					direction="row"
+					spacing={2}
+					justifyContent="center"
+					mt={5}
+				>
+					<Typography variant="body2">decathlon by @hakatashi</Typography>
+					<Divider orientation="vertical" flexItem/>
+					<Typography variant="body2">
+						<Link
+							target="_blank"
+							rel="noopener noreferrer"
+							underline="hover"
+							href="https://github.com/hakatashi/decathlon"
+						>
+							GitHub
+						</Link>
+					</Typography>
+				</Stack>
+			</Show>
 		</div>
 	);
 };
