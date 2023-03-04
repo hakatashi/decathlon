@@ -42,6 +42,7 @@ const AthlonGame = () => {
 								<Link
 									underline="hover"
 									color="inherit"
+									component={A}
 									href={`/athlons/${athlon.id}`}
 								>
 									{athlon.name}
@@ -57,7 +58,7 @@ const AthlonGame = () => {
 				</Container>
 				<Doc data={ruleData}>
 					{(rule) => {
-						const iconData = useStorageBytes(ref(storage, 'assets/icons/sprinter.svg'));
+						const iconData = useStorageBytes(ref(storage, `assets/icons/${rule.icon}.svg`));
 						const textDecoder = new TextDecoder();
 
 						return (
@@ -97,11 +98,13 @@ const AthlonGame = () => {
 										)}
 									</Collection>
 								</div>
-								<Show when={iconData.data} keyed>
-									{(data) => (
-										<span class={styles.ruleIcon} innerHTML={textDecoder.decode(data)}/>
-									)}
-								</Show>
+								<span class={styles.ruleIcon}>
+									<Show when={iconData.data} keyed>
+										{(data) => (
+											<span innerHTML={textDecoder.decode(data)}/>
+										)}
+									</Show>
+								</span>
 							</div>
 						);
 					}}
