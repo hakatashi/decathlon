@@ -23,8 +23,22 @@ service cloud.firestore {
       allow read;
     }
 
+    function isValidGameScore(user) {
+      return user.size() == 4
+        && user.displayName is string
+        && user.photoURL is string
+        && user.slug is string
+        && user.slackId is string;
+    }
+
     match /games/{document=**} {
       allow read;
+      match /scores/{userId} {
+        allow read;
+        allow write: if request.auth != null
+                     && request.auth.uid == userId
+                     && isValidGameScore(request.resource.data);
+      }
     }
 
     match /gameRules/{document=**} {
