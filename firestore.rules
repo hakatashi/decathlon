@@ -1,6 +1,12 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isFiniteFloat(val) {
+      return val is float
+        && !math.isInfinite(val)
+        && !math.isNaN(val);
+    }
+
     function isValidUser(user) {
       return user.size() == 4
         && user.displayName is string
@@ -23,20 +29,27 @@ service cloud.firestore {
       allow read;
     }
 
-    function isValidGameScore(score) {
+    function isValidGameScore(score, game) {
       return score.size() == 3
-        && score.rawScore is number
-        && score.tiebreakScore is number
-        && score.athlon is path;
+        && isFiniteFloat(score.rawScore)
+        && score.rawScore >= 0
+        && isFiniteFloat(score.tiebreakScore)
+        && score.athlon is path
+        && game.athlon == score.athlon
+        && score.rawScore <= get(game.athlon).data.maxRawScore;
     }
 
-    match /games/{document=**} {
+    match /games/{gameId} {
       allow read;
+
       match /scores/{userId} {
         allow read;
         allow write: if request.auth != null
                      && request.auth.uid == userId
-                     && isValidGameScore(request.resource.data);
+                     && isValidGameScore(
+                          request.resource.data,
+                          get(/databases/(default)/documents/games/$(gameId)).data
+                        );
       }
     }
 
