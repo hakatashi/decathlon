@@ -11,6 +11,7 @@
   "devDependencies": {
     "@hakatashi/eslint-config": "^1.19.0",
     "@suid/vite-plugin": "^0.1.1",
+    "@types/lodash": "^4.14.191",
     "@types/node": "^18.11.18",
     "esbuild": "^0.14.54",
     "eslint": "^8.34.0",
@@ -27,6 +28,7 @@
     "@suid/material": "^0.10.2",
     "dayjs": "^1.11.7",
     "firebase": "^9.17.1",
+    "lodash": "^4.17.21",
     "solid-firebase": "^0.1.7",
     "solid-js": "^1.6.11",
     "solid-start": "^0.2.21",

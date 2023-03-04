@@ -18,7 +18,7 @@ export const onUserCreated = auth.user().onCreate(async (user) => {
 			.find((provider) => provider.providerId === 'oidc.slack')
 			?.uid;
 
-		userRef.set({
+		transaction.set(userRef, {
 			displayName: user.displayName ?? '',
 			photoURL: user.photoURL ?? '',
 			slug: user.uid,

@@ -1,9 +1,9 @@
-import type {DocumentData, FirestoreError} from 'firebase/firestore';
+import type {DocumentData} from 'firebase/firestore';
 import {JSX, Match, Switch} from 'solid-js';
 import {UseFireStoreReturn} from '~/lib/schema';
 
 interface Props<T extends DocumentData> {
-	data: UseFireStoreReturn<T | null | undefined> | null,
+	data: UseFireStoreReturn<T | null | undefined> | null | undefined,
 	children: (item: T) => JSX.Element,
 }
 

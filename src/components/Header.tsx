@@ -74,8 +74,8 @@ const Header = () => {
 					<Button
 						sx={{my: 2, color: 'white', display: 'block'}}
 					>
-						<A href="/">
-							Contests
+						<A href="/athlons">
+							Athlons
 						</A>
 					</Button>
 				</Box>

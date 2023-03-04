@@ -7,7 +7,7 @@ export interface User {
 	slackId: string,
 }
 
-export interface Contest {
+export interface Athlon {
 	name: string,
 	startAt: Timestamp,
 	endAt: Timestamp,
@@ -18,10 +18,17 @@ export interface Contest {
 export interface Game {
 	rule: DocumentReference<GameRule>,
 	maxPoint: number,
+	weight?: number,
+	order: number,
+	description: string,
 }
 
 export interface GameRule {
 	name: string,
+	users: {
+		id: string,
+		point: number,
+	}[],
 }
 
 interface UseFireStoreReturn<T> {

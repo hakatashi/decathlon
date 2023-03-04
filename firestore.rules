@@ -19,7 +19,7 @@ service cloud.firestore {
                     && isValidUser(request.resource.data);
     }
 
-    match /contests/{document=**} {
+    match /athlons/{document=**} {
       allow read;
     }
 

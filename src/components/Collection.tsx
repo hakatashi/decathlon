@@ -1,10 +1,11 @@
-import type {DocumentData, FirestoreError} from 'firebase/firestore';
+import type {DocumentData} from 'firebase/firestore';
 import {For, JSX, Match, Switch} from 'solid-js';
 import {UseFireStoreReturn} from '~/lib/schema';
 
 interface Props<T extends DocumentData> {
 	data: UseFireStoreReturn<T[] | undefined>,
-	children: (item: T) => JSX.Element,
+	// eslint-disable-next-line no-unused-vars
+	children: (item: T, index: () => number) => JSX.Element,
 }
 
 const Collection = <T extends DocumentData, >(props: Props<T>) => (
@@ -13,12 +14,12 @@ const Collection = <T extends DocumentData, >(props: Props<T>) => (
 			<span class="loading">Loading...</span>
 		</Match>
 		<Match when={props.data.error}>
-			<span class="load-error">Load error occured.</span>
+			<span class="load-error">{props.data.error?.toString()}</span>
 		</Match>
 		<Match when={props.data.data} keyed>
 			{(docs) => (
 				<For each={docs}>
-					{(doc) => props.children(doc)}
+					{(doc, index) => props.children(doc, index)}
 				</For>
 			)}
 		</Match>

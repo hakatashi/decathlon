@@ -1,47 +1,27 @@
-import {Button, Card, CardActions, CardContent, Typography, Container} from '@suid/material';
-import {collection, CollectionReference, getFirestore} from 'firebase/firestore';
-import {useFirebaseApp, useFirestore} from 'solid-firebase';
-import {A} from 'solid-start';
-import Collection from '~/components/Collection';
-import {formatTimestamp} from '~/lib/date';
-import type {Contest} from '~/lib/schema';
+import range from 'lodash/range';
+import {Index} from 'solid-js';
+import styles from './index.module.css';
 
-const Home = () => {
-	const app = useFirebaseApp();
-	const db = getFirestore(app);
-	const contestsData = useFirestore(collection(db, 'contests') as CollectionReference<Contest>);
-
-	return (
-		<main>
-			<Container maxWidth="xl">
-				<ul>
-					<Collection data={contestsData}>
-						{(contest) => (
-							<A href={`/contests/${contest.id}`}>
-								<Card sx={{margin: '3rem'}}>
-									<CardContent>
-										<Typography variant="h1">
-											{contest.name}
-										</Typography>
-										<Typography variant="h5" component="h2">
-											{formatTimestamp(contest.startAt)} - {formatTimestamp(contest.endAt)}
-										</Typography>
-										<Typography variant="body2">
-											{contest.description}
-										</Typography>
-									</CardContent>
-									<CardActions>
-										<Button>Learn More</Button>
-									</CardActions>
-								</Card>
-							</A>
-						)}
-					</Collection>
-				</ul>
-				<pre/>
-			</Container>
-		</main>
-	);
-};
+const Home = () => (
+	<main class={styles.home}>
+		<svg viewBox="-225 -225 450 450" class={styles.logo}>
+			<g class={styles.logoRotation}>
+				<circle cx={0} cy={0} r={100} stroke="white" fill="transparent"/>
+				<Index each={range(9)}>
+					{(i) => (
+						<circle
+							cx={Math.sin(Math.PI * 2 / 9 * i()) * 151.98}
+							cy={Math.cos(Math.PI * 2 / 9 * i()) * 151.98}
+							r={51.98}
+							stroke="white"
+							fill="transparent"
+						/>
+					)}
+				</Index>
+			</g>
+		</svg>
+		<h1 class={styles.title}>TSG Decathlon Portal</h1>
+	</main>
+);
 
 export default Home;
