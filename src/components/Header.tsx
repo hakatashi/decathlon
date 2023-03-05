@@ -87,10 +87,14 @@ const Header = () => {
 						{(user) => (
 							<>
 								<IconButton sx={{p: 0}} onClick={(event) => setAnchorEl(event.currentTarget)}>
-									<Avatar
-										alt={user.displayName ?? 'No name'}
-										src={user.photoURL ?? ''}
-									/>
+									<Doc data={userData()}>
+										{({displayName, photoURL}) => (
+											<Avatar
+												alt={displayName ?? 'No name'}
+												src={photoURL ?? ''}
+											/>
+										)}
+									</Doc>
 								</IconButton>
 								<Menu
 									anchorEl={anchorEl()}
@@ -107,17 +111,11 @@ const Header = () => {
 									}}
 								>
 									<MenuItem>
-										<Show when={userData()} keyed>
-											{
-												(userDoc) => (
-													<Doc data={userDoc}>
-														{({displayName}) => (
-															<span>{displayName}</span>
-														)}
-													</Doc>
-												)
-											}
-										</Show>
+										<Doc data={userData()}>
+											{({displayName}) => (
+												<span>{displayName}</span>
+											)}
+										</Doc>
 									</MenuItem>
 									<MenuItem component={A} href={`/users/${user.uid}`}>
 										Profile

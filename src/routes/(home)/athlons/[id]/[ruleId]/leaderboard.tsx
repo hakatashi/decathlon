@@ -1,4 +1,6 @@
+/* eslint-disable array-plural/array-plural */
 import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Avatar, Stack} from '@suid/material';
+import {blue} from '@suid/material/colors';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, where} from 'firebase/firestore';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
@@ -89,9 +91,10 @@ const Leaderboard = () => {
 											{(score, index) => {
 												const userRef = doc(db, 'users', score.id) as DocumentReference<User>;
 												const userData = useFirestore(userRef);
+												const isMe = authState?.data?.uid === score.id;
 
 												return (
-													<TableRow>
+													<TableRow sx={isMe ? {backgroundColor: blue[50]} : {}} >
 														<TableCell>
 															{index() + 1}
 														</TableCell>
