@@ -1,6 +1,6 @@
 import {initializeApp} from 'firebase-admin/app';
 import {getFirestore} from 'firebase-admin/firestore';
-import {auth} from 'firebase-functions';
+import {auth, firestore, logger} from 'firebase-functions';
 
 initializeApp();
 const db = getFirestore();
@@ -26,3 +26,10 @@ export const onUserCreated = auth.user().onCreate(async (user) => {
 		});
 	});
 });
+
+export const onScoreChanged = firestore
+	.document('games/{gameId}/scores/{userId}')
+	.onWrite((change, context) => {
+		logger.info(context.params.gameId);
+		logger.info(context.params.userId);
+	});
