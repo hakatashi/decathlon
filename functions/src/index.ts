@@ -153,7 +153,10 @@ export const onScoreChanged = firestore
 				};
 			});
 
-			const pointSum = sum(games.map(({point}) => point));
+			const pointSum = sum(games.map(({gameId, point}) => {
+				const game = gamesMap.get(gameId);
+				return point * (game?.weight ?? 1);
+			}));
 
 			return {
 				userId,
