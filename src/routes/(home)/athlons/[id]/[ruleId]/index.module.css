@@ -2,27 +2,20 @@
   background: #EEE;
 }
 
-.ruleArea {
-  padding-bottom: 1rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.ruleDescription {
-  flex: 0 1 40rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;
-}
-
 .ruleIcon {
   flex: 0 0 30vmin;
-  width: 30vmin;
   height: 30vmin;
+}
+
+.ruleIcon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .ruleIcon svg path, .ruleIcon svg polygon, .ruleIcon svg polyline {
   fill: #555;
+}
+
+.gameDescription a {
+  color: #2196f3;
 }

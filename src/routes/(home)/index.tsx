@@ -1,5 +1,7 @@
+import {Divider, Link, Stack, Typography} from '@suid/material';
 import range from 'lodash/range';
 import {Index} from 'solid-js';
+import {A} from 'solid-start';
 import styles from './index.module.css';
 
 const Home = () => (
@@ -21,6 +23,25 @@ const Home = () => (
 			</g>
 		</svg>
 		<h1 class={styles.title}>TSG Decathlon Portal</h1>
+		<Stack
+			direction="row"
+			spacing={2}
+			justifyContent="center"
+			mt={5}
+		>
+			<Typography variant="h3">decathlon by @hakatashi</Typography>
+			<Divider orientation="vertical" flexItem sx={{bgcolor: 'white'}}/>
+			<Typography variant="h3">
+				<Link
+					underline="hover"
+					component={A}
+					href="/athlons"
+					color="inherit"
+				>
+					CONTESTS
+				</Link>
+			</Typography>
+		</Stack>
 	</main>
 );
 

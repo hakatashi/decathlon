@@ -3,8 +3,10 @@ import {Typography, Container, Breadcrumbs, Link, Button, Dialog, DialogTitle, D
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, DocumentReference, getDoc, getFirestore, orderBy, query, setDoc, where} from 'firebase/firestore';
 import {getStorage, ref} from 'firebase/storage';
+import remarkGfm from 'remark-gfm';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createSignal, For, Show} from 'solid-js';
+import SolidMarkdown from 'solid-markdown';
 import {A, useParams} from 'solid-start';
 import {useAthlon} from '../../[id]';
 import styles from './index.module.css';
@@ -128,12 +130,13 @@ const AthlonGame = () => {
 									spacing={2}
 									pb={2}
 									justifyContent="center"
+									alignItems="center"
 									flexDirection="row-reverse"
 								>
-									<Grid item xs={4} class={styles.ruleIcon}>
+									<Grid item xs={6} md={4} class={styles.ruleIcon}>
 										<Show when={iconData.data} keyed>
 											{(data) => (
-												<span innerHTML={textDecoder.decode(data)}/>
+												<div style={{width: '100%', height: '100%'}} innerHTML={textDecoder.decode(data)}/>
 											)}
 										</Show>
 									</Grid>
@@ -220,7 +223,12 @@ const AthlonGame = () => {
 									<EmojiEvents sx={{mr: 1}}/>
 									Show Leaderboard
 								</Button>
-								<div style={{'white-space': 'pre-wrap'}}>{game.description}</div>
+								<SolidMarkdown
+									class={styles.gameDescription}
+									children={game.description}
+									remarkPlugins={[remarkGfm]}
+									linkTarget="_blank"
+								/>
 								<Doc
 									data={scoreData}
 									fallback={
