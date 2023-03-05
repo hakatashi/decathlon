@@ -1,5 +1,6 @@
 /* eslint-disable array-plural/array-plural */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 
 import {initializeApp} from 'firebase-admin/app';
 import {DocumentReference, getFirestore} from 'firebase-admin/firestore';
