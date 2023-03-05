@@ -5,7 +5,7 @@ import {collection, CollectionReference, doc, DocumentReference, getDoc, getFire
 import {getStorage, ref} from 'firebase/storage';
 import remarkGfm from 'remark-gfm';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
-import {createSignal, For, Show} from 'solid-js';
+import {createEffect, createSignal, For, Show} from 'solid-js';
 import SolidMarkdown from 'solid-markdown';
 import {A, useParams} from 'solid-start';
 import {useAthlon} from '../../[id]';
@@ -76,6 +76,8 @@ const AthlonGame = () => {
 	const auth = getAuth(app);
 
 	const ruleRef = doc(db, 'gameRules', param.ruleId) as DocumentReference<GameRule>;
+
+	const [myScore, setMyScore] = createSignal<string>('N/A');
 
 	const ruleData = useFirestore(ruleRef);
 	const gameData = useFirestore(
@@ -184,6 +186,12 @@ const AthlonGame = () => {
 												スコアを記録する
 											</Button>
 										</Stack>
+										<Typography
+											variant="body2"
+											my={3}
+										>
+											Your score: {myScore()}
+										</Typography>
 									</Grid>
 								</Grid>
 							);
@@ -216,6 +224,12 @@ const AthlonGame = () => {
 						const handleCloseDialog = () => {
 							setOpen(false);
 						};
+
+						createEffect(() => {
+							if (typeof scoreData.data?.rawScore === 'number') {
+								setMyScore(scoreData.data.rawScore.toString());
+							}
+						});
 
 						return (
 							<>

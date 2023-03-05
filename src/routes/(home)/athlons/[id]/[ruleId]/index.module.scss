@@ -25,7 +25,7 @@
 }
 
 .ruleIcon svg {
-	path, polygon, polyline {
+	path, polygon, polyline, rect {
 		fill: #555;
 		transform-origin: center;
 		@for $i from 1 through 32 {
