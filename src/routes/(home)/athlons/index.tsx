@@ -14,16 +14,16 @@ const Athlons = () => {
 	return (
 		<main>
 			<Container maxWidth="xl">
-				<ul>
+				<ul style={{padding: '0'}}>
 					<Collection data={athlonsData}>
 						{(athlon) => (
 							<A href={`/athlons/${athlon.id}`}>
-								<Card sx={{margin: '3rem'}}>
+								<Card component="li" sx={{my: 5}}>
 									<CardContent>
-										<Typography variant="h1">
+										<Typography variant="h2">
 											{athlon.name}
 										</Typography>
-										<Typography variant="h5" component="h2">
+										<Typography variant="h5" component="h3">
 											{formatTimestamp(athlon.startAt)} - {formatTimestamp(athlon.endAt)}
 										</Typography>
 										<Typography variant="body2">

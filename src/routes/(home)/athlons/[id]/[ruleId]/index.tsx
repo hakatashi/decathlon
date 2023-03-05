@@ -9,7 +9,7 @@ import {createSignal, For, Show} from 'solid-js';
 import SolidMarkdown from 'solid-markdown';
 import {A, useParams} from 'solid-start';
 import {useAthlon} from '../../[id]';
-import styles from './index.module.css';
+import styles from './index.module.scss';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import {useStorageBytes} from '~/lib/firebase';

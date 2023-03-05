@@ -1,0 +1,52 @@
+@use 'sass:math';
+
+.header {
+	background: #EEE;
+}
+
+.ruleIcon {
+	flex: 0 0 30vmin;
+	height: 30vmin;
+}
+
+.ruleIcon svg {
+	width: 100%;
+	height: 100%;
+	animation: fadeIn 0.25s cubic-bezier(0,.6,0,1);
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+.ruleIcon svg {
+	path, polygon, polyline {
+		fill: #555;
+		transform-origin: center;
+		@for $i from 1 through 32 {
+			&:nth-child(#{$i}) {
+				animation: moveIn#{$i} 0.25s cubic-bezier(0,.6,0,1);
+			}
+		}
+	}
+}
+
+@for $i from 1 through 32 {
+	@keyframes moveIn#{$i} {
+		from {
+			transform: translate(math.sin($i * 77deg) * 10px, math.cos($i * 77deg) * 10px);
+		}
+		to {
+			transform: translateX(0px);
+		}
+	}
+}
+
+.gameDescription a {
+	color: #2196f3;
+}
