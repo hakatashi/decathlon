@@ -7,12 +7,27 @@ export interface User {
 	slackId: string,
 }
 
+export interface RankingEntry {
+	userId: string,
+	point: number,
+	rank: number,
+	games: {
+		gameId: string,
+		hasScore: boolean,
+		point: number,
+		rawScore: number,
+		tiebreakScore: number,
+		rank: number | null,
+	}[],
+}
+
 export interface Athlon {
 	name: string,
 	startAt: Timestamp,
 	endAt: Timestamp,
 	description: string,
 	id: string,
+	ranking: RankingEntry[],
 }
 
 export interface ScoreConfigurationScore {
@@ -30,9 +45,11 @@ export interface ScoreConfigurationScoreAndRank {
 export type ScoreConfiguration = ScoreConfigurationScore | ScoreConfigurationScoreAndRank;
 
 export interface Game extends DocumentData {
+	athlon: DocumentReference<Athlon>,
 	rule: DocumentReference<GameRule>,
 	scoreInputNote: string,
 	maxPoint: number,
+	maxRawScore: number,
 	weight?: number,
 	order: number,
 	description: string,
