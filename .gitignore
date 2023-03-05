@@ -24,3 +24,5 @@ gitignore
 Thumbs.db
 
 *firebase-adminsdk*.json
+*.log
+db-dump

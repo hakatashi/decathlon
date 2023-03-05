@@ -1,9 +1,9 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isFiniteFloat(val) {
-      return val is float
-        && !math.isInfinite(val)
+    function isFiniteNumber(val) {
+      return val is number
+        // && !math.isInfinite(val)
         && !math.isNaN(val);
     }
 
@@ -31,12 +31,12 @@ service cloud.firestore {
 
     function isValidGameScore(score, game) {
       return score.size() == 3
-        && isFiniteFloat(score.rawScore)
+        && isFiniteNumber(score.rawScore)
         && score.rawScore >= 0
-        && isFiniteFloat(score.tiebreakScore)
+        && isFiniteNumber(score.tiebreakScore)
         && score.athlon is path
         && game.athlon == score.athlon
-        && score.rawScore <= get(game.athlon).data.maxRawScore;
+        && score.rawScore <= game.maxRawScore;
     }
 
     match /games/{gameId} {
