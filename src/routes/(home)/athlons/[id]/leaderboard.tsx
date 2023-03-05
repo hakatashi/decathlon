@@ -1,10 +1,11 @@
 /* eslint-disable array-plural/array-plural */
+import {Star} from '@suid/icons-material';
 import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Avatar, Stack} from '@suid/material';
 import {blue} from '@suid/material/colors';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, where} from 'firebase/firestore';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
-import {For} from 'solid-js';
+import {For, Show} from 'solid-js';
 import {A, useParams} from 'solid-start';
 import {useAthlon} from '../[id]';
 import {calculateScore} from '~/../lib/scores';
@@ -110,6 +111,17 @@ const Leaderboard = () => {
 														<For each={userEntry.games}>
 															{(game) => (
 																<TableCell align="right">
+																	<Show when={game.rank === 0}>
+																		<Star
+																			color="secondary"
+																			sx={{
+																				verticalAlign: 'text-bottom',
+																				width: 0.07,
+																				height: 0.07,
+																				mr: 0.3,
+																			}}
+																		/>
+																	</Show>
 																	{game.point.toFixed(2)}
 																</TableCell>
 															)}
