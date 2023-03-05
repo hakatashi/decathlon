@@ -74,7 +74,18 @@ const Leaderboard = () => {
 													const ruleData = useFirestore(game.rule);
 													return (
 														<TableCell align="right">
-															<Doc data={ruleData}>{(rule) => rule.name}</Doc>
+															<Doc data={ruleData}>
+																{(rule) => (
+																	<Link
+																		underline="hover"
+																		color="inherit"
+																		component={A}
+																		href={`/athlons/${athlon.id}/${rule.id}`}
+																	>
+																		{rule.name}
+																	</Link>
+																)}
+															</Doc>
 														</TableCell>
 													);
 												}}
