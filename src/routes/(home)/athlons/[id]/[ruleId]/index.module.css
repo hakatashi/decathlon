@@ -3,10 +3,10 @@
 }
 
 .ruleArea {
-  height: 30vmin;
   padding-bottom: 1rem;
   display: flex;
   justify-content: center;
+  align-items: center;
 }
 
 .ruleDescription {

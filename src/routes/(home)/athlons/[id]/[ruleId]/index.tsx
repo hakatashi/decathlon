@@ -1,5 +1,5 @@
 import {EmojiEvents} from '@suid/icons-material';
-import {Typography, Container, Breadcrumbs, Link, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Stack, TextField, Box, Icon} from '@suid/material';
+import {Typography, Container, Breadcrumbs, Link, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Stack, TextField, Box, Icon, Grid} from '@suid/material';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, DocumentReference, getDoc, getFirestore, orderBy, query, setDoc, where} from 'firebase/firestore';
 import {getStorage, ref} from 'firebase/storage';
@@ -117,71 +117,76 @@ const AthlonGame = () => {
 							)}
 						</Doc>
 					</Breadcrumbs>
-				</Container>
-				<Doc data={ruleData}>
-					{(rule) => {
-						const iconData = useStorageBytes(ref(storage, `assets/icons/${rule.icon}.svg`));
-						const textDecoder = new TextDecoder();
+					<Doc data={ruleData}>
+						{(rule) => {
+							const iconData = useStorageBytes(ref(storage, `assets/icons/${rule.icon}.svg`));
+							const textDecoder = new TextDecoder();
 
-						return (
-							<div class={styles.ruleArea}>
-								<div class={styles.ruleDescription}>
-									<Typography
-										color="text.primary"
-										variant="h3"
-										component="h2"
-										fontWeight="bold"
-									>
-										{rule.name}
-									</Typography>
-									<Typography
-										color="text.primary"
-										variant="body1"
-										my={3}
-									>
-										{rule.description}
-									</Typography>
-									<Stack direction="raw">
-										<Collection data={gameData}>
-											{(game) => (
-												<For each={game.links}>
-													{(link) => (
-														<Button
-															size="large"
-															variant={link.isMain ? 'contained' : 'outlined'}
-															component="a"
-															target="_blank"
-															rel="noopener noreferer"
-															href={link.url}
-															sx={{mr: 1}}
-														>
-															{link.label}
-														</Button>
-													)}
-												</For>
+							return (
+								<Grid
+									container
+									spacing={2}
+									pb={2}
+									justifyContent="center"
+									flexDirection="row-reverse"
+								>
+									<Grid item xs={4} class={styles.ruleIcon}>
+										<Show when={iconData.data} keyed>
+											{(data) => (
+												<span innerHTML={textDecoder.decode(data)}/>
 											)}
-										</Collection>
-										<Button
-											size="large"
-											variant="contained"
-											color="secondary"
-											onClick={handleClickOpen}
+										</Show>
+									</Grid>
+									<Grid item xs={12} md={8}>
+										<Typography
+											color="text.primary"
+											variant="h3"
+											component="h2"
+											fontWeight="bold"
 										>
-											スコアを記録する
-										</Button>
-									</Stack>
-								</div>
-								<span class={styles.ruleIcon}>
-									<Show when={iconData.data} keyed>
-										{(data) => (
-											<span innerHTML={textDecoder.decode(data)}/>
-										)}
-									</Show>
-								</span>
-							</div>
-						);
-					}}
-				</Doc>
+											{rule.name}
+										</Typography>
+										<Typography
+											color="text.primary"
+											variant="body1"
+											my={3}
+										>
+											{rule.description}
+										</Typography>
+										<Stack direction="row" flexWrap="wrap" gap={1}>
+											<Collection data={gameData}>
+												{(game) => (
+													<For each={game.links}>
+														{(link) => (
+															<Button
+																size="large"
+																variant={link.isMain ? 'contained' : 'outlined'}
+																component="a"
+																target="_blank"
+																rel="noopener noreferer"
+																href={link.url}
+															>
+																{link.label}
+															</Button>
+														)}
+													</For>
+												)}
+											</Collection>
+											<Button
+												size="large"
+												variant="contained"
+												color="secondary"
+												onClick={handleClickOpen}
+											>
+												スコアを記録する
+											</Button>
+										</Stack>
+									</Grid>
+								</Grid>
+							);
+						}}
+					</Doc>
+				</Container>
 			</div>
 			<Container maxWidth="lg">
 				<Collection data={gameData}>
