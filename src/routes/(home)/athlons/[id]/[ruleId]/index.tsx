@@ -11,7 +11,7 @@ import styles from './index.module.css';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import {useStorageBytes} from '~/lib/firebase';
-import type {Athlon, Game, GameRule, Score} from '~/lib/schema';
+import type {Game, GameRule, Score} from '~/lib/schema';
 
 interface Props {
 	onSubmit: (score: number) => void,

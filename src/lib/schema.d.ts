@@ -15,6 +15,20 @@ export interface Athlon {
 	id: string,
 }
 
+export interface ScoreConfigurationScore {
+	type: 'score',
+	scoreWeight: number,
+}
+
+export interface ScoreConfigurationScoreAndRank {
+	type: 'score-and-rank',
+	scoreWeight: number,
+	rankRatio: number,
+	rankWeight: number,
+}
+
+export type ScoreConfiguration = ScoreConfigurationScore | ScoreConfigurationScoreAndRank;
+
 export interface Game extends DocumentData {
 	rule: DocumentReference<GameRule>,
 	scoreInputNote: string,
@@ -22,6 +36,7 @@ export interface Game extends DocumentData {
 	weight?: number,
 	order: number,
 	description: string,
+	scoreConfiguration: ScoreConfiguration,
 	links: {
 		label: string,
 		url: string,

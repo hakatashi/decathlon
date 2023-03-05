@@ -1,12 +1,13 @@
 import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Avatar, Stack} from '@suid/material';
 import {getAuth} from 'firebase/auth';
-import {collection, CollectionReference, doc, DocumentReference, getFirestore, query, where} from 'firebase/firestore';
+import {collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, where} from 'firebase/firestore';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {A, useParams} from 'solid-start';
 import {useAthlon} from '../../[id]';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import type {Game, GameRule, Score, User} from '~/lib/schema';
+import {calculateScore} from '~/lib/scores';
 
 const Leaderboard = () => {
 	const param = useParams();
@@ -65,8 +66,12 @@ const Leaderboard = () => {
 				<Collection data={gameData}>
 					{(game) => {
 						const scoresData = useFirestore(
-							collection(db, 'games', game.id, 'scores') as CollectionReference<Score>,
+							query(
+								collection(db, 'games', game.id, 'scores') as CollectionReference<Score>,
+								orderBy('rawScore', 'desc'),
+							),
 						);
+
 						return (
 							<TableContainer component={Paper}>
 								<Table>
@@ -111,7 +116,14 @@ const Leaderboard = () => {
 															{score.tiebreakScore}
 														</TableCell>
 														<TableCell align="right">
-															???
+															<strong>
+																{calculateScore(
+																	score.rawScore,
+																	index(),
+																	game.maxPoint,
+																	game.scoreConfiguration,
+																).toFixed(2)}
+															</strong>
 														</TableCell>
 													</TableRow>
 												);
