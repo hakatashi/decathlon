@@ -4,12 +4,17 @@ import {blue} from '@suid/material/colors';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, where} from 'firebase/firestore';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
+import {For, Show} from 'solid-js';
 import {A, useParams} from 'solid-start';
 import {useAthlon} from '../../[id]';
 import {calculateScore} from '~/../lib/scores';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import type {Game, GameRule, Score, User} from '~/lib/schema';
+
+interface RankedScore extends Score {
+	rank: number,
+}
 
 const Leaderboard = () => {
 	const param = useParams();
@@ -94,51 +99,74 @@ const Leaderboard = () => {
 										</TableRow>
 									</TableHead>
 									<TableBody>
-										<Collection data={scoresData}>
-											{(score, index) => {
-												const userRef = doc(db, 'users', score.id) as DocumentReference<User>;
-												const userData = useFirestore(userRef);
-												const isMe = authState?.data?.uid === score.id;
+										<Show when={scoresData.data} keyed>
+											{(scores) => {
+												let previousRawScore: number | null = null;
+												let previousTiebreakScore: number | null = null;
+												let previousRank = 0;
+												const rankedScores = scores.map((score, index) => {
+													let rank = index;
+													if (score.rawScore === previousRawScore && score.tiebreakScore === previousTiebreakScore) {
+														rank = previousRank;
+													} else {
+														previousRank = index;
+													}
+
+													previousRawScore = score.rawScore;
+													previousTiebreakScore = score.tiebreakScore;
+
+													return {...score, id: score.id, rank} as RankedScore;
+												});
 
 												return (
-													<TableRow sx={isMe ? {backgroundColor: blue[50]} : {}} >
-														<TableCell>
-															{index() + 1}
-														</TableCell>
-														<TableCell>
-															<Doc data={userData}>
-																{(user) => (
-																	<Stack direction="row" alignItems="center">
-																		<Avatar
-																			alt={user.displayName}
-																			src={user.photoURL}
-																			sx={{width: 30, height: 30, mr: 1}}
-																		/>
-																		<span>{user.displayName}</span>
-																	</Stack>
-																)}
-															</Doc>
-														</TableCell>
-														<TableCell align="right">
-															{score.rawScore}
-														</TableCell>
-														<TableCell align="right">
-															{score.tiebreakScore}
-														</TableCell>
-														<TableCell align="right">
-															<strong>
-																{calculateScore(
-																	score.rawScore,
-																	index(),
-																	game.maxPoint,
-																	game.scoreConfiguration,
-																).toFixed(2)}
-															</strong>
-														</TableCell>
-													</TableRow>
+													<For each={rankedScores}>
+														{(score) => {
+															const userRef = doc(db, 'users', score.id) as DocumentReference<User>;
+															const userData = useFirestore(userRef);
+															const isMe = authState?.data?.uid === score.id;
+
+															return (
+																<TableRow sx={isMe ? {backgroundColor: blue[50]} : {}} >
+																	<TableCell>
+																		{score.rank + 1}
+																	</TableCell>
+																	<TableCell>
+																		<Doc data={userData}>
+																			{(user) => (
+																				<Stack direction="row" alignItems="center">
+																					<Avatar
+																						alt={user.displayName}
+																						src={user.photoURL}
+																						sx={{width: 30, height: 30, mr: 1}}
+																					/>
+																					<span>{user.displayName}</span>
+																				</Stack>
+																			)}
+																		</Doc>
+																	</TableCell>
+																	<TableCell align="right">
+																		{score.rawScore}
+																	</TableCell>
+																	<TableCell align="right">
+																		{score.tiebreakScore}
+																	</TableCell>
+																	<TableCell align="right">
+																		<strong>
+																			{calculateScore(
+																				score.rawScore,
+																				score.rank,
+																				game.maxPoint,
+																				game.scoreConfiguration,
+																			).toFixed(2)}
+																		</strong>
+																	</TableCell>
+																</TableRow>
+															);
+														 }}
+													</For>
 												);
 											}}
-										</Collection>
+										</Show>
 									</TableBody>
 								</Table>
 							</TableContainer>
