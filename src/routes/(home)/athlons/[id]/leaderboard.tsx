@@ -4,8 +4,9 @@ import {blue} from '@suid/material/colors';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, where} from 'firebase/firestore';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
+import {For} from 'solid-js';
 import {A, useParams} from 'solid-start';
-import {useAthlon} from '../../[id]';
+import {useAthlon} from '../[id]';
 import {calculateScore} from '~/../lib/scores';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
@@ -18,16 +19,14 @@ const Leaderboard = () => {
 	const db = getFirestore(app);
 	const auth = getAuth(app);
 
-	const ruleRef = doc(db, 'gameRules', param.ruleId) as DocumentReference<GameRule>;
-
-	const ruleData = useFirestore(ruleRef);
-	const gameData = useFirestore(
+	const gamesData = useFirestore(
 		query(
 			collection(db, 'games') as CollectionReference<Game>,
 			where('athlon', '==', doc(db, 'athlons', param.id)),
-			where('rule', '==', ruleRef),
+			orderBy('order'),
 		),
 	);
+
 	const authState = useAuth(auth);
 
 	return (
@@ -39,28 +38,14 @@ const Leaderboard = () => {
 					</Link>
 					<Doc data={athlonData}>
 						{(athlon) => (
-							<>
-								<Link
-									underline="hover"
-									color="inherit"
-									component={A}
-									href={`/athlons/${athlon.id}`}
-								>
-									{athlon.name}
-								</Link>
-								<Doc data={ruleData}>
-									{(rule) => (
-										<Link
-											underline="hover"
-											color="inherit"
-											component={A}
-											href={`/athlons/${athlon.id}/${rule.id}`}
-										>
-											{rule.name}
-										</Link>
-									)}
-								</Doc>
-							</>
+							<Link
+								underline="hover"
+								color="inherit"
+								component={A}
+								href={`/athlons/${athlon.id}`}
+							>
+								{athlon.name}
+							</Link>
 						)}
 					</Doc>
 					<Typography color="text.primary">Leaderboard</Typography>
@@ -72,14 +57,9 @@ const Leaderboard = () => {
 				>
 					Leaderboard
 				</Typography>
-				<Collection data={gameData}>
-					{(game) => {
-						const scoresData = useFirestore(
-							query(
-								collection(db, 'games', game.id, 'scores') as CollectionReference<Score>,
-								orderBy('rawScore', 'desc'),
-							),
-						);
+				<Doc data={athlonData}>
+					{(athlon) => {
+						const ranking = athlon.ranking;
 
 						return (
 							<TableContainer component={Paper}>
@@ -88,22 +68,30 @@ const Leaderboard = () => {
 										<TableRow>
 											<TableCell>#</TableCell>
 											<TableCell>User</TableCell>
-											<TableCell align="right">Raw Score</TableCell>
-											<TableCell align="right">Tiebreak Score</TableCell>
+											<Collection data={gamesData}>
+												{(game) => {
+													const ruleData = useFirestore(game.rule);
+													return (
+														<TableCell align="right">
+															<Doc data={ruleData}>{(rule) => rule.name}</Doc>
+														</TableCell>
+													);
+												}}
+											</Collection>
 											<TableCell align="right">Point</TableCell>
 										</TableRow>
 									</TableHead>
 									<TableBody>
-										<Collection data={scoresData}>
-											{(score, index) => {
-												const userRef = doc(db, 'users', score.id) as DocumentReference<User>;
+										<For each={ranking}>
+											{(userEntry) => {
+												const userRef = doc(db, 'users', userEntry.userId) as DocumentReference<User>;
 												const userData = useFirestore(userRef);
-												const isMe = authState?.data?.uid === score.id;
+												const isMe = authState?.data?.uid === userEntry.userId;
 
 												return (
 													<TableRow sx={isMe ? {backgroundColor: blue[50]} : {}} >
 														<TableCell>
-															{index() + 1}
+															{userEntry.rank + 1}
 														</TableCell>
 														<TableCell>
 															<Doc data={userData}>
@@ -119,35 +107,32 @@ const Leaderboard = () => {
 																)}
 															</Doc>
 														</TableCell>
-														<TableCell align="right">
-															{score.rawScore}
-														</TableCell>
-														<TableCell align="right">
-															{score.tiebreakScore}
-														</TableCell>
+														<For each={userEntry.games}>
+															{(game) => (
+																<TableCell align="right">
+																	{game.point.toFixed(2)}
+																</TableCell>
+															)}
+														</For>
 														<TableCell align="right">
 															<strong>
-																{calculateScore(
-																	score.rawScore,
-																	index(),
-																	game.maxPoint,
-																	game.scoreConfiguration,
-																).toFixed(2)}
+																{userEntry.point.toFixed(2)}
 															</strong>
 														</TableCell>
 													</TableRow>
 												);
 											}}
-										</Collection>
+										</For>
 									</TableBody>
 								</Table>
 							</TableContainer>
 						);
 					}}
-				</Collection>
+				</Doc>
 			</Container>
 		</main>
 	);
 };
 
 export default Leaderboard;
+

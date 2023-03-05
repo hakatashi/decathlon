@@ -15,18 +15,20 @@ import type {Game, GameRule, Score} from '~/lib/schema';
 
 interface Props {
 	onSubmit: (score: number) => void,
+	onClose: () => void,
 	open: boolean,
+	maxRawScore: number,
 	scoreInputNote: string,
 	defaultValue?: number,
 }
 
 const ScoreRecordDialog = (props: Props) => {
-	const [score, setScore] = createSignal<string>('');
+	const [score, setScore] = createSignal<string>(props.defaultValue?.toString() ?? '');
 
 	return (
 		<Dialog
 			open={props.open}
-			onClose={props.onSubmit}
+			onClose={props.onClose}
 			aria-labelledby="alert-dialog-title"
 			aria-describedby="alert-dialog-description"
 		>
@@ -39,7 +41,8 @@ const ScoreRecordDialog = (props: Props) => {
 					<TextField
 						label="Score"
 						variant="standard"
-						inputProps={{inputMode: 'numeric', pattern: '[0-9]*'}}
+						type="number"
+						inputProps={{inputMode: 'numeric', pattern: '[0-9]*', max: props.maxRawScore, min: 0}}
 						defaultValue={props.defaultValue}
 						required
 						value={score()}
@@ -52,7 +55,7 @@ const ScoreRecordDialog = (props: Props) => {
 			<DialogActions>
 				<Button
 					onClick={() => {
-						props.onSubmit(score());
+						props.onSubmit(parseFloat(score()));
 					}}
 				>
 					送信
@@ -202,6 +205,10 @@ const AthlonGame = () => {
 							setOpen(false);
 						};
 
+						const handleCloseDialog = () => {
+							setOpen(false);
+						};
+
 						return (
 							<>
 								<Button size="large" sx={{my: 3}} variant="contained" component={A} href="./leaderboard">
@@ -215,7 +222,9 @@ const AthlonGame = () => {
 										<ScoreRecordDialog
 											open={open()}
 											scoreInputNote={game.scoreInputNote}
+											maxRawScore={game.maxRawScore}
 											onSubmit={handleScoreSubmit}
+											onClose={handleCloseDialog}
 										/>
 									}
 								>
@@ -223,7 +232,9 @@ const AthlonGame = () => {
 										<ScoreRecordDialog
 											open={open()}
 											scoreInputNote={game.scoreInputNote}
+											maxRawScore={game.maxRawScore}
 											onSubmit={handleScoreSubmit}
+											onClose={handleCloseDialog}
 											defaultValue={score.rawScore}
 										/>
 									)}

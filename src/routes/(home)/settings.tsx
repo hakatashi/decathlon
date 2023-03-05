@@ -86,8 +86,7 @@ const Settings = () => {
 				<Typography
 					component="h1"
 					variant="h2"
-					mt={6}
-					mb={6}
+					my={6}
 				>
 					Settings
 				</Typography>

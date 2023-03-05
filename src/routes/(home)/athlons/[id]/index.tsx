@@ -1,4 +1,5 @@
-import {Typography, Container, List, ListItem, ListItemAvatar, Avatar, ListItemText, Box} from '@suid/material';
+import {EmojiEvents} from '@suid/icons-material';
+import {Typography, Container, List, ListItem, ListItemAvatar, Avatar, ListItemText, Box, Button} from '@suid/material';
 import {collection, CollectionReference, doc, getFirestore, orderBy, query, where} from 'firebase/firestore';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {Show} from 'solid-js';
@@ -40,6 +41,10 @@ const Home = () => {
 				</Show>
 			</div>
 			<Container maxWidth="sm">
+				<Button size="large" sx={{my: 3}} variant="contained" component={A} href="./leaderboard">
+					<EmojiEvents sx={{mr: 1}}/>
+					Show Leaderboard
+				</Button>
 				<Typography
 					component="h2"
 					textAlign="center"
