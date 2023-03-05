@@ -172,7 +172,7 @@ export const onScoreChanged = firestore
 
 		let previousPoint: number | null = null;
 		let previousRank = 0;
-		const ranking = sortBy(userScoreEntries, 'point').map((userScoreEntry, index) => {
+		const ranking = sortBy(userScoreEntries, 'point').reverse().map((userScoreEntry, index) => {
 			let rank = index;
 			if (userScoreEntry.point === previousPoint) {
 				rank = previousRank;
