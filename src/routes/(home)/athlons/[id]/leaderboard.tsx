@@ -34,8 +34,8 @@ const Leaderboard = () => {
 		<main>
 			<Container maxWidth="lg">
 				<Breadcrumbs aria-label="breadcrumb" sx={{pt: 3, pb: 3}}>
-					<Link component={A} underline="hover" color="inherit" href="/">
-						Decathlon
+					<Link component={A} underline="hover" color="inherit" href="/athlons">
+						Athlons
 					</Link>
 					<Doc data={athlonData}>
 						{(athlon) => (
