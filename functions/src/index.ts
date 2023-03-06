@@ -37,19 +37,24 @@ export const onScoreChanged = firestore
 		const changedGameId = context.params.gameId;
 
 		const gamesRef = db.collection('games') as CollectionReference<Game>;
-		const gameDoc = await gamesRef.doc(changedGameId).get();
-		const athlon = gameDoc.get('athlon') as DocumentReference<Athlon>;
-		const gameDocs = await (db.collection('games') as CollectionReference<Game>)
-			.where('athlon', '==', athlon)
-			.orderBy('order', 'asc')
-			.get();
-		const scoreDocs = await (db.collectionGroup('scores') as CollectionGroup<Score>)
-			.where('athlon', '==', athlon)
-			.get();
 
-		const ranking = calculateRanking(gameDocs, scoreDocs);
+		await db.runTransaction(async (transaction) => {
+			const gameDoc = await transaction.get(gamesRef.doc(changedGameId));
+			const athlon = gameDoc.get('athlon') as DocumentReference<Athlon>;
+			const gameDocs = await transaction.get(
+				(db.collection('games') as CollectionReference<Game>)
+					.where('athlon', '==', athlon)
+					.orderBy('order', 'asc'),
+			);
+			const scoreDocs = await transaction.get(
+				(db.collectionGroup('scores') as CollectionGroup<Score>)
+					.where('athlon', '==', athlon),
+			);
 
-		await athlon.update({
-			ranking,
+			const ranking = calculateRanking(gameDocs, scoreDocs);
+
+			transaction.update(athlon, {
+				ranking,
+			});
 		});
 	});
