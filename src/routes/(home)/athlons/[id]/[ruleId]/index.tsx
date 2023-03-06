@@ -201,10 +201,26 @@ const AthlonGame = () => {
 			</div>
 			<Container maxWidth="lg">
 				<Collection data={gameData}>
+					{(game) => (
+						<>
+							<Button size="large" sx={{my: 3}} variant="contained" component={A} href="./leaderboard">
+								<EmojiEvents sx={{mr: 1}}/>
+								Show Leaderboard
+							</Button>
+							<SolidMarkdown
+								class={styles.gameDescription}
+								children={game.description}
+								remarkPlugins={[remarkGfm]}
+								linkTarget="_blank"
+							/>
+						</>
+					)}
+				</Collection>
+				<Collection data={gameData}>
 					{(game) => {
 						const uid = authState.data?.uid;
 						if (!uid) {
-							return <span>Loading...</span>;
+							return null;
 						}
 						const scoreRef = doc(db, 'games', game.id, 'scores', uid) as DocumentReference<Score>;
 						const scoreData = useFirestore(scoreRef);
@@ -232,41 +248,29 @@ const AthlonGame = () => {
 						});
 
 						return (
-							<>
-								<Button size="large" sx={{my: 3}} variant="contained" component={A} href="./leaderboard">
-									<EmojiEvents sx={{mr: 1}}/>
-									Show Leaderboard
-								</Button>
-								<SolidMarkdown
-									class={styles.gameDescription}
-									children={game.description}
-									remarkPlugins={[remarkGfm]}
-									linkTarget="_blank"
-								/>
-								<Doc
-									data={scoreData}
-									fallback={
-										<ScoreRecordDialog
-											open={open()}
-											scoreInputNote={game.scoreInputNote}
-											maxRawScore={game.maxRawScore}
-											onSubmit={handleScoreSubmit}
-											onClose={handleCloseDialog}
-										/>
-									}
-								>
-									{(score) => (
-										<ScoreRecordDialog
-											open={open()}
-											scoreInputNote={game.scoreInputNote}
-											maxRawScore={game.maxRawScore}
-											onSubmit={handleScoreSubmit}
-											onClose={handleCloseDialog}
-											defaultValue={score.rawScore}
-										/>
-									)}
-								</Doc>
-							</>
+							<Doc
+								data={scoreData}
+								fallback={
+									<ScoreRecordDialog
+										open={open()}
+										scoreInputNote={game.scoreInputNote}
+										maxRawScore={game.maxRawScore}
+										onSubmit={handleScoreSubmit}
+										onClose={handleCloseDialog}
+									/>
+								}
+							>
+								{(score) => (
+									<ScoreRecordDialog
+										open={open()}
+										scoreInputNote={game.scoreInputNote}
+										maxRawScore={game.maxRawScore}
+										onSubmit={handleScoreSubmit}
+										onClose={handleCloseDialog}
+										defaultValue={score.rawScore}
+									/>
+								)}
+							</Doc>
 						);
 					}}
 				</Collection>

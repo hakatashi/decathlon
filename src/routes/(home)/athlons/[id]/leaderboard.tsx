@@ -133,7 +133,11 @@ const Leaderboard = () => {
 																			}}
 																		/>
 																	</Show>
-																	{game.point.toFixed(2)}
+																	{
+																		game.hasScore
+																			? game.point.toFixed(2)
+																			: '-'
+																	}
 																</TableCell>
 															)}
 														</For>
