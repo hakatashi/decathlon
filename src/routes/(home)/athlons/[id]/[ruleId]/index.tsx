@@ -12,6 +12,7 @@ import {useAthlon} from '../../[id]';
 import styles from './index.module.scss';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
+import PageTitle from '~/components/PageTitle';
 import {useStorageBytes} from '~/lib/firebase';
 import type {Game, GameRule, Score} from '~/lib/schema';
 
@@ -91,12 +92,17 @@ const AthlonGame = () => {
 
 	const [open, setOpen] = createSignal<boolean>(false);
 
-	const handleClickOpen = () => {
-		setOpen(true);
-	};
-
 	return (
 		<main>
+			<Doc data={athlonData}>
+				{(athlon) => (
+					<Doc data={ruleData}>
+						{(rule) => (
+							<PageTitle>[{athlon.name}] {rule.name}</PageTitle>
+						)}
+					</Doc>
+				)}
+			</Doc>
 			<div class={styles.header}>
 				<Container maxWidth="lg">
 					<Breadcrumbs aria-label="breadcrumb" sx={{pt: 3, pb: 3}}>
@@ -177,14 +183,6 @@ const AthlonGame = () => {
 													</For>
 												)}
 											</Collection>
-											<Button
-												size="large"
-												variant="contained"
-												color="secondary"
-												onClick={handleClickOpen}
-											>
-												スコアを記録する
-											</Button>
 										</Stack>
 										<Typography
 											variant="body2"

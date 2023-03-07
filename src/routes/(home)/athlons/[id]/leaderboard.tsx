@@ -8,10 +8,10 @@ import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {For, Show} from 'solid-js';
 import {A, useParams} from 'solid-start';
 import {useAthlon} from '../[id]';
-import {calculateScore} from '~/../lib/scores';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
-import type {Game, GameRule, Score, User} from '~/lib/schema';
+import PageTitle from '~/components/PageTitle';
+import type {Game, User} from '~/lib/schema';
 
 const Leaderboard = () => {
 	const param = useParams();
@@ -32,6 +32,11 @@ const Leaderboard = () => {
 
 	return (
 		<main>
+			<Doc data={athlonData}>
+				{(athlon) => (
+					<PageTitle>[{athlon.name}] Leaderboard</PageTitle>
+				)}
+			</Doc>
 			<Container maxWidth="lg">
 				<Breadcrumbs aria-label="breadcrumb" sx={{pt: 3, pb: 3}}>
 					<Link component={A} underline="hover" color="inherit" href="/athlons">

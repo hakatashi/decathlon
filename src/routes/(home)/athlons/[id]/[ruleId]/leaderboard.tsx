@@ -10,6 +10,7 @@ import {useAthlon} from '../../[id]';
 import {calculateScore} from '~/../lib/scores';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
+import PageTitle from '~/components/PageTitle';
 import type {Game, GameRule, Score, User} from '~/lib/schema';
 
 interface RankedScore extends Score {
@@ -37,6 +38,15 @@ const Leaderboard = () => {
 
 	return (
 		<main>
+			<Doc data={athlonData}>
+				{(athlon) => (
+					<Doc data={ruleData}>
+						{(rule) => (
+							<PageTitle>[{athlon.name}] Leaderboard of {rule.name}</PageTitle>
+						)}
+					</Doc>
+				)}
+			</Doc>
 			<Container maxWidth="lg">
 				<Breadcrumbs aria-label="breadcrumb" sx={{pt: 3, pb: 3}}>
 					<Link component={A} underline="hover" color="inherit" href="/athlons">
