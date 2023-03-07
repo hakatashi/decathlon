@@ -8,6 +8,7 @@ import {useAthlon} from '../[id]';
 import styles from './index.module.css';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
+import PageTitle from '~/components/PageTitle';
 import {athlonNames} from '~/lib/const';
 import type {Game} from '~/lib/schema';
 
@@ -26,6 +27,11 @@ const Home = () => {
 
 	return (
 		<main class={styles.contest}>
+			<Doc data={athlonData}>
+				{(athlon) => (
+					<PageTitle>{athlon.name}</PageTitle>
+				)}
+			</Doc>
 			<div class={styles.athlonHeader}>
 				<Doc data={athlonData}>
 					{(athlon) => (

@@ -6,6 +6,7 @@ import {nanoid} from 'nanoid';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createSignal, JSX, Show} from 'solid-js';
 import Doc from '~/components/Doc';
+import PageTitle from '~/components/PageTitle';
 import type {UseFireStoreReturn, User} from '~/lib/schema';
 
 const Settings = () => {
@@ -82,6 +83,7 @@ const Settings = () => {
 
 	return (
 		<main>
+			<PageTitle>Settings</PageTitle>
 			<Container maxWidth="md">
 				<Typography
 					component="h1"
