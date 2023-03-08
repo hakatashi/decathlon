@@ -28,9 +28,10 @@
 	path, polygon, polyline, rect {
 		fill: #555;
 		transform-origin: center;
+		transform-box: fill-box;
 		@for $i from 1 through 32 {
 			&:nth-child(#{$i}) {
-				animation: moveIn#{$i} 0.25s cubic-bezier(0,.6,0,1);
+				animation: moveIn#{$i} 0.25s cubic-bezier(0,.6,0,1) both;
 			}
 		}
 	}
@@ -39,10 +40,10 @@
 @for $i from 1 through 32 {
 	@keyframes moveIn#{$i} {
 		from {
-			transform: translate(math.sin($i * 77deg) * 10px, math.cos($i * 77deg) * 10px);
+			transform: translate(math.sin($i * 77deg) * 10px, math.cos($i * 73deg) * 10px) rotate(10deg * (($i % 5) - 2));
 		}
 		to {
-			transform: translateX(0px);
+			transform: translateX(0px) rotate(0deg);
 		}
 	}
 }
