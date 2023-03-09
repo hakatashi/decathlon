@@ -21,7 +21,6 @@ const Settings = () => {
 	const [imageFile, setImageFile] = createSignal<File | undefined>(undefined);
 	const [photoURL, setPhotoURL] = createSignal<string | undefined>(undefined);
 	const [displayName, setDisplayName] = createSignal<string | undefined>(undefined);
-	const [slug, setSlug] = createSignal<string | undefined>(undefined);
 	const [isLoading, setIsLoading] = createSignal<boolean>(false);
 
 	createEffect(() => {
@@ -35,13 +34,6 @@ const Settings = () => {
 		const loadedPhotoURL = userData()?.data?.photoURL;
 		if (loadedPhotoURL) {
 			setPhotoURL(loadedPhotoURL);
-		}
-	});
-
-	createEffect(() => {
-		const loadedSlug = userData()?.data?.slug;
-		if (loadedSlug) {
-			setSlug(loadedSlug);
 		}
 	});
 
@@ -76,7 +68,6 @@ const Settings = () => {
 		await updateDoc(userRef, {
 			displayName: displayName(),
 			photoURL: photoURL(),
-			slug: slug(),
 		});
 		setIsLoading(false);
 	};
@@ -93,11 +84,11 @@ const Settings = () => {
 					Settings
 				</Typography>
 				<Doc data={userData()}>
-					{({displayName: currentDisplayName, slug: currentSlug, slackId}) => (
+					{({displayName: currentDisplayName}) => (
 						<Stack spacing={4}>
 							<TextField
-								label="Slack ID"
-								defaultValue={slackId}
+								label="User ID"
+								defaultValue={authState.data?.uid}
 								disabled
 								InputProps={{
 									readOnly: true,
@@ -110,16 +101,6 @@ const Settings = () => {
 									value={displayName()}
 									onChange={(_event, value) => {
 										setDisplayName(value);
-									}}
-								/>
-							</Show>
-							<Show when={typeof slug() === 'string'}>
-								<TextField
-									label="ID"
-									defaultValue={currentSlug}
-									value={slug()}
-									onChange={(_event, value) => {
-										setSlug(value);
 									}}
 								/>
 							</Show>
