@@ -1,11 +1,11 @@
 /* eslint-disable array-plural/array-plural */
 import {Star} from '@suid/icons-material';
-import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Avatar, Stack} from '@suid/material';
+import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Avatar, Stack, FormControlLabel, Switch} from '@suid/material';
 import {blue} from '@suid/material/colors';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, where} from 'firebase/firestore';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
-import {For, Show} from 'solid-js';
+import {createSignal, For, Show} from 'solid-js';
 import {A, useParams} from 'solid-start';
 import {useAthlon} from '../[id]';
 import Collection from '~/components/Collection';
@@ -29,6 +29,8 @@ const Leaderboard = () => {
 	);
 
 	const authState = useAuth(auth);
+
+	const [showRawScore, setShowRawScore] = createSignal<boolean>(false);
 
 	return (
 		<main>
@@ -63,6 +65,17 @@ const Leaderboard = () => {
 				>
 					Leaderboard
 				</Typography>
+				<FormControlLabel
+					control={
+						<Switch
+							checked={showRawScore()}
+							onChange={(_event, value) => {
+								setShowRawScore(value);
+							}}
+						/>
+					}
+					label="Show Raw Score"
+				/>
 				<Doc data={athlonData}>
 					{(athlon) => {
 						const ranking = athlon.ranking;
@@ -125,26 +138,36 @@ const Leaderboard = () => {
 															</Doc>
 														</TableCell>
 														<For each={userEntry.games}>
-															{(game) => (
-																<TableCell align="right">
-																	<Show when={game.rank === 0}>
-																		<Star
-																			color="secondary"
-																			sx={{
-																				verticalAlign: 'text-bottom',
-																				width: 0.07,
-																				height: 0.07,
-																				mr: 0.3,
-																			}}
-																		/>
-																	</Show>
-																	{
-																		game.hasScore
-																			? game.point.toFixed(2)
-																			: '-'
+															{(game) => {
+																const getScore = () => {
+																	if (!game.hasScore) {
+																		return '-';
 																	}
-																</TableCell>
-															)}
+
+																	if (showRawScore()) {
+																		return game.rawScore.toString();
+																	}
+
+																	return game.point.toFixed(2);
+																};
+
+																return (
+																	<TableCell align="right">
+																		<Show when={game.rank === 0}>
+																			<Star
+																				color="secondary"
+																				sx={{
+																					verticalAlign: 'text-bottom',
+																					width: 0.07,
+																					height: 0.07,
+																					mr: 0.3,
+																				}}
+																			/>
+																		</Show>
+																		{getScore()}
+																	</TableCell>
+																);
+															}}
 														</For>
 														<TableCell align="right">
 															<strong>
