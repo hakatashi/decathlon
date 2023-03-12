@@ -117,7 +117,7 @@ const Header = () => {
 											)}
 										</Doc>
 									</MenuItem>
-									<MenuItem component={A} href={`/users/${user.uid}`}>
+									<MenuItem component={A} href={`/athletes/${user.uid}`}>
 										Profile
 									</MenuItem>
 									<Divider/>

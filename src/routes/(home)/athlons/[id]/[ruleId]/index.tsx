@@ -225,10 +225,10 @@ const AthlonGame = () => {
 
 						const handleScoreSubmit = async (score: number) => {
 							if (athlonData?.data?.id) {
-								console.log(db, 'games', game.id, 'scores', uid);
 								await setDoc(scoreRef, {
 									athlon: doc(db, 'athlons', athlonData?.data?.id),
-									rawScore: parseFloat(score),
+									rawScore: score,
+									user: uid,
 									tiebreakScore: 0,
 								});
 							}

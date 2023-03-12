@@ -65,6 +65,7 @@ export interface Score extends DocumentData {
 	athlon: DocumentReference<Athlon>,
 	rawScore: number,
 	tiebreakScore: number,
+	user: string,
 }
 
 export interface GameRule extends DocumentData {
