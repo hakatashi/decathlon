@@ -2,7 +2,7 @@ import {EmojiEvents} from '@suid/icons-material';
 import {Typography, Container, List, ListItem, ListItemAvatar, Avatar, ListItemText, Box, Button} from '@suid/material';
 import {collection, CollectionReference, doc, getFirestore, orderBy, query, where} from 'firebase/firestore';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
-import {Show} from 'solid-js';
+import {For, Show} from 'solid-js';
 import {A, useParams} from 'solid-start';
 import {useAthlon} from '../[id]';
 import styles from './index.module.css';
@@ -42,7 +42,13 @@ const Home = () => {
 				</Doc>
 				<Show when={athlonNames.get(gamesData?.data?.length)} keyed>
 					{(athlonName) => (
-						<Typography variant="h3" component="h2">{athlonName}</Typography>
+						<Typography variant="h3" component="h2" class={styles.athlonName}>
+							<For each={Array.from(athlonName)} >
+								{(char) => (
+									<span>{char}</span>
+								)}
+							</For>
+						</Typography>
 					)}
 				</Show>
 			</div>

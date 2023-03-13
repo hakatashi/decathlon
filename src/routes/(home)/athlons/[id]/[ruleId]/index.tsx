@@ -1,7 +1,7 @@
 import {EmojiEvents} from '@suid/icons-material';
-import {Typography, Container, Breadcrumbs, Link, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Stack, TextField, Box, Icon, Grid} from '@suid/material';
+import {Typography, Container, Breadcrumbs, Link, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Stack, TextField, Grid} from '@suid/material';
 import {getAuth} from 'firebase/auth';
-import {collection, CollectionReference, doc, DocumentReference, getDoc, getFirestore, orderBy, query, setDoc, where} from 'firebase/firestore';
+import {collection, CollectionReference, doc, DocumentReference, getFirestore, query, setDoc, where} from 'firebase/firestore';
 import {getStorage, ref} from 'firebase/storage';
 import remarkGfm from 'remark-gfm';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';

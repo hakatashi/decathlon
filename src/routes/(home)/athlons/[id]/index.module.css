@@ -5,10 +5,17 @@
 	padding: 6rem 0;
 }
 
-.athlonHeader h2 {
+h2.athlonName {
 	text-transform: uppercase;
-	letter-spacing: 2rem;
 	font-size: 2em;
 	font-weight: bold;
 	opacity: 0.3;
+
+	display: flex;
+	justify-content: center;
+}
+
+h2.athlonName > span {
+	flex: 0 1 3rem;
+	text-align: center;
 }
