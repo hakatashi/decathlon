@@ -1,6 +1,6 @@
 import {createWindowSize} from '@solid-primitives/resize-observer';
 import TextareaAutosize from '@suid/base/TextareaAutosize';
-import {Button} from '@suid/material';
+import {Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Modal, Typography} from '@suid/material';
 import {doc, DocumentReference, getFirestore} from 'firebase/firestore';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, JSX, onCleanup, onMount, Show} from 'solid-js';
@@ -44,9 +44,8 @@ const TypingJapanese = () => {
 		const savedText = localStorage.getItem(`typing-japanese_${gameId}_autosave`);
 		if (savedText !== null) {
 			setText(savedText);
+			textareaEl()?.focus();
 		}
-
-		textareaEl()?.focus();
 	});
 
 	createEffect(() => {
@@ -167,6 +166,20 @@ const TypingJapanese = () => {
 					</TextareaAutosize>
 				</div>
 			</div>
+
+			<Dialog
+				open={phase() === 'finished'}
+			>
+				<DialogTitle>
+					競技は終了しました
+				</DialogTitle>
+				<DialogContent>
+					<DialogContentText>
+						<CircularProgress color="primary"/>
+						スコアを送信しています⋯⋯
+					</DialogContentText>
+				</DialogContent>
+			</Dialog>
 		</main>
 	);
 };

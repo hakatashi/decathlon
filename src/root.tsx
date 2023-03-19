@@ -1,7 +1,6 @@
 // @refresh reload
-import {Typography} from '@suid/material';
 import {FirebaseProvider} from 'solid-firebase';
-import {Show, Suspense} from 'solid-js';
+import {Match, Suspense, Switch} from 'solid-js';
 import {
 	Body,
 	ErrorBoundary,
@@ -45,10 +44,15 @@ const Root = () => (
 			<Suspense>
 				<ErrorBoundary
 					fallback={(error) => (
-						<Show when={error instanceof PageNotFoundError}>
-							<HttpStatusCode code={404}/>
-							<Typography variant="h1">Page Not Found</Typography>
-						</Show>
+						<Switch>
+							<Match when={error instanceof PageNotFoundError}>
+								<HttpStatusCode code={404}/>
+								<h1>Page Not Found</h1>
+							</Match>
+							<Match when>
+								<ErrorMessage error={error}/>
+							</Match>
+						</Switch>
 					)}
 				>
 					<Routes>
