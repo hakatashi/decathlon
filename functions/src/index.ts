@@ -4,6 +4,7 @@ import {initializeApp} from 'firebase-admin/app';
 import {DocumentReference, getFirestore} from 'firebase-admin/firestore';
 import type {CollectionReference, CollectionGroup} from 'firebase-admin/firestore';
 import {auth, firestore, https} from 'firebase-functions';
+import mdiff from 'mdiff';
 import type {Athlon, Game, Score} from '../../src/lib/schema';
 import {calculateRanking} from './scores';
 
@@ -73,4 +74,13 @@ export const submitTypingJapaneseScore = https.onCall(async (data, context) => {
 	assert(gameData);
 
 	assert(gameData.rule && gameData.rule.path === 'gameRules/typing-japanese');
+
+	const {correctText} = gameData.configuration;
+	assert(typeof correctText === 'string');
+
+	const trimmedSubmissionText = submissionText.slice(0, correctText.length);
+	const diff = mdiff(correctText, trimmedSubmissionText);
+	const lcs = diff.getLcs();
+
+	return lcs;
 });
