@@ -1,0 +1,41 @@
+.app {
+	width: 100%;
+	height: 100%;
+	display: flex;
+}
+
+.pdf {
+	flex: 1 1 0;
+}
+
+.inputAreaWrap {
+	flex: 1 1 0;
+
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+
+	line-height: 1.8;
+	font-size: 1vw;
+}
+
+.inputArea {
+	flex: 1 1 0;
+	width: 44em;
+	margin: 3rem 0;
+	padding: 0;
+
+	border-top: none;
+	border-bottom: none;
+	border-left: 1px solid #CCC;
+	border-right: 1px solid #CCC;
+	outline: none;
+
+	line-height: 1.8;
+	font-family: 'BIZ UDGothic', monospace;
+	font-size: 1vw;
+	letter-spacing: 0.1em;
+
+	resize: none;
+}

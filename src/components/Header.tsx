@@ -3,7 +3,7 @@ import {Box, AppBar, Avatar, IconButton, Toolbar, Typography, Button, Menu, Menu
 import {getAuth, signInWithPopup, signOut, OAuthProvider} from 'firebase/auth';
 import {doc, DocumentReference, getFirestore} from 'firebase/firestore';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
-import {createEffect, createSignal, Match, Show, Switch} from 'solid-js';
+import {createEffect, createSignal, Match, Switch} from 'solid-js';
 import {A} from 'solid-start';
 import Doc from '~/components/Doc';
 import type {UseFireStoreReturn, User} from '~/lib/schema';
@@ -51,7 +51,7 @@ const Header = () => {
 
 	return (
 		<AppBar position="static">
-			<Toolbar variant="dense">
+			<Toolbar>
 				<Typography
 					component="h1"
 					variant="h5"

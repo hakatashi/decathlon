@@ -38,7 +38,6 @@ const Athlons = () => {
 						)}
 					</Collection>
 				</ul>
-				<pre/>
 			</Container>
 		</main>
 	);

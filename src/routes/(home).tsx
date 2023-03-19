@@ -28,6 +28,7 @@ const RootLayout = () => {
 					spacing={2}
 					justifyContent="center"
 					mt={5}
+					pb={2}
 				>
 					<Typography variant="body2">decathlon by @hakatashi</Typography>
 					<Divider orientation="vertical" flexItem/>

@@ -1,0 +1,15 @@
+.wrap {
+	height: 100vh;
+	width: 100vw;
+	display: flex;
+	flex-direction: column;
+}
+
+.header {
+	flex-grow: 0;
+	flex-shrink: 0;
+}
+
+.mainArea {
+	flex: 1 1 0;
+}
