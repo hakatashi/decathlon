@@ -53,6 +53,10 @@ service cloud.firestore {
                           get(/databases/(default)/documents/games/$(gameId)).data
                         );
       }
+
+      match /submissions/{userId} {
+        allow read;
+      }
     }
 
     match /gameRules/{document=**} {
