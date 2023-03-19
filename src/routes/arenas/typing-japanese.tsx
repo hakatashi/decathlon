@@ -117,7 +117,7 @@ const TypingJapanese = () => {
 		return (size.width / 2 - 50) / 800;
 	});
 
-	const [text, setText] = createSignal<string>('こんにちは');
+	const [text, setText] = createSignal<string>('');
 	const [phase, setPhase] = createSignal<'loading' | 'waiting' | 'playing' | 'finished'>('loading');
 	const [config, setConfig] = createSignal<Config>({});
 	const [textareaEl, setTextareaEl] = createSignal<HTMLTextAreaElement | null>(null);
