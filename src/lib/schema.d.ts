@@ -54,6 +54,7 @@ export interface Game extends DocumentData {
 	order: number,
 	description: string,
 	scoreConfiguration: ScoreConfiguration,
+	configuration: {[key: string]: any},
 	links: {
 		label: string,
 		url: string,

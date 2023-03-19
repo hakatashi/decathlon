@@ -1,9 +1,11 @@
 // @refresh reload
+import {Typography} from '@suid/material';
 import {FirebaseProvider} from 'solid-firebase';
-import {Suspense} from 'solid-js';
+import {Show, Suspense} from 'solid-js';
 import {
 	Body,
 	ErrorBoundary,
+	ErrorMessage,
 	FileRoutes,
 	Head,
 	Html,
@@ -13,6 +15,8 @@ import {
 	Scripts,
 	Title,
 } from 'solid-start';
+import {HttpStatusCode} from 'solid-start/server';
+import PageNotFoundError from './lib/PageNotFoundError';
 import './root.css';
 
 const firebaseConfig = {
@@ -39,7 +43,14 @@ const Root = () => (
 		</Head>
 		<Body>
 			<Suspense>
-				<ErrorBoundary>
+				<ErrorBoundary
+					fallback={(error) => (
+						<Show when={error instanceof PageNotFoundError}>
+							<HttpStatusCode code={404}/>
+							<Typography variant="h1">Page Not Found</Typography>
+						</Show>
+					)}
+				>
 					<Routes>
 						<FileRoutes/>
 					</Routes>
