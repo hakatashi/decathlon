@@ -5,7 +5,7 @@ import {DocumentReference, getFirestore} from 'firebase-admin/firestore';
 import type {CollectionReference, CollectionGroup} from 'firebase-admin/firestore';
 import {auth, firestore, https} from 'firebase-functions';
 import mdiff from 'mdiff';
-import type {Athlon, Game, Score} from '../../src/lib/schema';
+import type {Athlon, Game, Score, TypingJapaneseSubmission} from '../../src/lib/schema';
 import {calculateRanking} from './scores';
 
 initializeApp();
@@ -63,9 +63,11 @@ export const onScoreChanged = firestore
 
 export const submitTypingJapaneseScore = https.onCall(async (data, context) => {
 	const {gameId, submissionText} = data;
+	const uid = context.auth?.uid;
 
 	assert(typeof gameId === 'string');
 	assert(typeof submissionText === 'string');
+	assert(typeof uid === 'string');
 
 	const gameDoc = await (db.collection('games') as CollectionReference<Game>).doc(gameId).get();
 	assert(gameDoc.exists);
@@ -78,9 +80,54 @@ export const submitTypingJapaneseScore = https.onCall(async (data, context) => {
 	const {correctText} = gameData.configuration;
 	assert(typeof correctText === 'string');
 
+	const submissionRef = db.doc(`games/${gameId}/submissions/${uid}`) as DocumentReference<TypingJapaneseSubmission>;
+	const submissionData = await submissionRef.get();
+	assert(!submissionData.exists, 'You already submitted score for this game.');
+
 	const trimmedSubmissionText = submissionText.slice(0, correctText.length);
 	const diff = mdiff(correctText, trimmedSubmissionText);
 	const lcs = diff.getLcs();
+	const score = lcs === null ? 0 : lcs.length;
+
+	const diffTokens = [] as {
+		pos: number,
+		type: 'common' | 'deletion' | 'addition',
+		token: string,
+	}[];
+
+	diff.scanCommon((_startA, _endA, startB, endB) => {
+		diffTokens.push({
+			pos: (startB + endB) / 2,
+			type: 'common',
+			token: trimmedSubmissionText.slice(startB, endB),
+		});
+	});
+
+	diff.scanDiff((startA, endA, startB, endB) => {
+		if (startA !== endA) {
+			diffTokens.push({
+				pos: endB,
+				type: 'deletion',
+				token: correctText.slice(startA, endA),
+			});
+		}
+		if (startB !== endB) {
+			diffTokens.push({
+				pos: (startB + endB) / 2,
+				type: 'addition',
+				token: trimmedSubmissionText.slice(startB, endB),
+			});
+		}
+	});
+
+	diffTokens.sort((a, b) => a.pos - b.pos);
+
+	await submissionRef.set({
+		athlon: gameData.athlon,
+		score,
+		submissionText,
+		diffTokens: diffTokens.map(({type, token}) => ({type, token})),
+	});
 
 	return lcs;
 });
