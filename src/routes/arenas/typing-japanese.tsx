@@ -204,7 +204,7 @@ const TypingJapanese = () => {
 	};
 
 	const handleKeydown = (event: KeyboardEvent) => {
-		if (event.key === 'Enter') {
+		if (event.key === 'Enter' && phase() === 'waiting') {
 			event.preventDefault();
 			handleStartGame();
 		}
