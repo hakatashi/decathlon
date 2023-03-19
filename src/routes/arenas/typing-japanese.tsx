@@ -190,7 +190,7 @@ const TypingJapanese = () => {
 		localStorage.setItem(`typing-japanese_${gameId}_autosave`, text());
 	});
 
-	const handleClickStart: JSX.EventHandler<HTMLButtonElement, MouseEvent> = () => {
+	const handleStartGame = () => {
 		if (phase() !== 'waiting' || !config().enabled) {
 			return;
 		}
@@ -202,6 +202,19 @@ const TypingJapanese = () => {
 
 		textareaEl()?.focus();
 	};
+
+	const handleKeydown = (event: KeyboardEvent) => {
+		if (event.key === 'Enter') {
+			event.preventDefault();
+			handleStartGame();
+		}
+	};
+
+	window.addEventListener('keydown', handleKeydown);
+	onCleanup(() => {
+		window.removeEventListener('keydown', handleKeydown);
+	});
+
 
 	return (
 		<main class={styles.app}>
@@ -228,7 +241,7 @@ const TypingJapanese = () => {
 					<Button
 						class={styles.startButton}
 						disabled={!config().enabled}
-						onClick={handleClickStart}
+						onClick={handleStartGame}
 						variant="contained"
 						size="large"
 						sx={{position: 'absolute'}}
