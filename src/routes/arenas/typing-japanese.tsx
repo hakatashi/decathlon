@@ -10,6 +10,32 @@ import styles from './typing-japanese.module.css';
 import PageNotFoundError from '~/lib/PageNotFoundError';
 import {Game} from '~/lib/schema';
 
+interface onGameFinishedDialogProps {
+	text: string,
+}
+
+const OnGameFinishedDialog = (props: onGameFinishedDialogProps) => {
+	onMount(() => {
+		console.log(props.text);
+	});
+
+	return (
+		<Dialog
+			open
+		>
+			<DialogTitle>
+				競技は終了しました
+			</DialogTitle>
+			<DialogContent>
+				<DialogContentText>
+					<CircularProgress color="primary"/>
+					スコアを送信しています⋯⋯
+				</DialogContentText>
+			</DialogContent>
+		</Dialog>
+	);
+};
+
 interface Config {
 	enabled?: boolean,
 	duration?: number,
@@ -132,7 +158,13 @@ const TypingJapanese = () => {
 			<iframe
 				class={styles.pdf}
 				style={{visibility: phase() === 'playing' || phase() === 'finished' ? 'visible' : 'hidden'}}
-				src={`https://www.goukaku.ne.jp/image/sample/0307kfng4ysd/65-BSJ-Q.pdf#zoom=${Math.floor(zoom() * 100)}&scrollbar=0&pagemode=none&toolbar=0&navpanes=0`}
+				src={`${config()?.textUrl}#${new URLSearchParams({
+					zoom: Math.floor(zoom() * 100).toString(),
+					scrollbar: '0',
+					pagemode: 'none',
+					toolbar: '0',
+					navpanes: '0',
+				})}()`}
 			/>
 
 			<div class={styles.inputAreaWrap}>
@@ -167,19 +199,9 @@ const TypingJapanese = () => {
 				</div>
 			</div>
 
-			<Dialog
-				open={phase() === 'finished'}
-			>
-				<DialogTitle>
-					競技は終了しました
-				</DialogTitle>
-				<DialogContent>
-					<DialogContentText>
-						<CircularProgress color="primary"/>
-						スコアを送信しています⋯⋯
-					</DialogContentText>
-				</DialogContent>
-			</Dialog>
+			<Show when={phase() === 'finished'}>
+				<OnGameFinishedDialog text={text()}/>
+			</Show>
 		</main>
 	);
 };

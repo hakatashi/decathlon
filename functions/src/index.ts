@@ -1,8 +1,9 @@
 
+import assert from 'assert';
 import {initializeApp} from 'firebase-admin/app';
 import {DocumentReference, getFirestore} from 'firebase-admin/firestore';
 import type {CollectionReference, CollectionGroup} from 'firebase-admin/firestore';
-import {auth, firestore} from 'firebase-functions';
+import {auth, firestore, https} from 'firebase-functions';
 import type {Athlon, Game, Score} from '../../src/lib/schema';
 import {calculateRanking} from './scores';
 
@@ -58,3 +59,18 @@ export const onScoreChanged = firestore
 			});
 		});
 	});
+
+export const submitTypingJapaneseScore = https.onCall(async (data, context) => {
+	const {gameId, submissionText} = data;
+
+	assert(typeof gameId === 'string');
+	assert(typeof submissionText === 'string');
+
+	const gameDoc = await (db.collection('games') as CollectionReference<Game>).doc(gameId).get();
+	assert(gameDoc.exists);
+
+	const gameData = gameDoc.data();
+	assert(gameData);
+
+	assert(gameData.rule && gameData.rule.path === 'gameRules/typing-japanese');
+});
