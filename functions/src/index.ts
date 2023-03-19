@@ -62,7 +62,10 @@ export const onScoreChanged = firestore
 	});
 
 const normalizeTypingJapaneseText = (input: string) => (
-	input.normalize('NFKC').replaceAll(/\s/g, '')
+	input.normalize('NFKC')
+		.replaceAll(',', '、')
+		.replaceAll('.', '。')
+		.replaceAll(/\s/g, '')
 );
 
 export const submitTypingJapaneseScore = https.onCall(async (data, context) => {
@@ -95,7 +98,6 @@ export const submitTypingJapaneseScore = https.onCall(async (data, context) => {
 	);
 	const diff = mdiff(correctText, trimmedSubmissionText);
 	const lcs = diff.getLcs();
-	const score = lcs === null ? 0 : lcs.length;
 
 	const diffTokens = [] as {
 		pos: number,
@@ -111,6 +113,7 @@ export const submitTypingJapaneseScore = https.onCall(async (data, context) => {
 		});
 	});
 
+	let additionCount = 0;
 	diff.scanDiff((startA, endA, startB, endB) => {
 		if (startA !== endA) {
 			diffTokens.push({
@@ -125,10 +128,13 @@ export const submitTypingJapaneseScore = https.onCall(async (data, context) => {
 				type: 'addition',
 				token: trimmedSubmissionText.slice(startB, endB),
 			});
+			additionCount += endB - startB;
 		}
 	});
 
 	diffTokens.sort((a, b) => a.pos - b.pos);
+
+	const score = lcs === null ? 0 : Math.max(0, lcs.length - additionCount);
 
 	await submissionRef.set({
 		athlon: gameData.athlon,
