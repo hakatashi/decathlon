@@ -61,6 +61,10 @@ export const onScoreChanged = firestore
 		});
 	});
 
+const normalizeTypingJapaneseText = (input: string) => (
+	input.normalize('NFKC').replaceAll(/\s/g, '')
+);
+
 export const submitTypingJapaneseScore = https.onCall(async (data, context) => {
 	const {gameId, submissionText} = data;
 	const uid = context.auth?.uid;
@@ -77,14 +81,18 @@ export const submitTypingJapaneseScore = https.onCall(async (data, context) => {
 
 	assert(gameData.rule && gameData.rule.path === 'gameRules/typing-japanese');
 
-	const {correctText} = gameData.configuration;
+	const correctText = normalizeTypingJapaneseText(
+		gameData.configuration.correctText,
+	);
 	assert(typeof correctText === 'string');
 
 	const submissionRef = db.doc(`games/${gameId}/submissions/${uid}`) as DocumentReference<TypingJapaneseSubmission>;
 	const submissionData = await submissionRef.get();
 	assert(!submissionData.exists, 'You already submitted score for this game.');
 
-	const trimmedSubmissionText = submissionText.slice(0, correctText.length);
+	const trimmedSubmissionText = normalizeTypingJapaneseText(
+		submissionText.slice(0, correctText.length),
+	);
 	const diff = mdiff(correctText, trimmedSubmissionText);
 	const lcs = diff.getLcs();
 	const score = lcs === null ? 0 : lcs.length;
