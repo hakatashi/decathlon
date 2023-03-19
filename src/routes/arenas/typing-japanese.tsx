@@ -132,12 +132,22 @@ const TypingJapanese = () => {
 		}
 	});
 
+	const [submissionData, setSubmissionData] = createSignal<UseFireStoreReturn<TypingJapaneseSubmission | null | undefined> | null>(null);
+
+	createEffect(() => {
+		const authState = useAuthState();
+		if (authState?.data?.uid) {
+			const submissionRef = doc(db, 'games', gameId, 'submissions', authState.data.uid) as DocumentReference<TypingJapaneseSubmission>;
+			setSubmissionData(useFirestore(submissionRef));
+		}
+	});
+
 	createEffect(() => {
 		if (gameData.data === null || gameData.error) {
 			throw new PageNotFoundError();
 		}
 
-		if (gameData.data) {
+		if (gameData.data && submissionData() && !submissionData()?.loading) {
 			if (gameData.data.rule.path !== 'gameRules/typing-japanese') {
 				throw new PageNotFoundError();
 			}
@@ -153,6 +163,10 @@ const TypingJapanese = () => {
 			const startTime = startTimeString ? parseFloat(startTimeString) : null;
 			if (savedConfig.enabled && startTime !== null) {
 				setPhase('playing');
+			}
+
+			if (submissionData()?.data !== null) {
+				setPhase('finished');
 			}
 
 			if (
