@@ -90,6 +90,8 @@ export const submitTypingJapaneseScore = https.onCall(async (data, context) => {
 	assert(typeof correctText === 'string');
 
 	const submissionRef = db.doc(`games/${gameId}/submissions/${uid}`) as DocumentReference<TypingJapaneseSubmission>;
+	const scoreRef = db.doc(`games/${gameId}/scores/${uid}`) as DocumentReference<Score>;
+
 	const submissionData = await submissionRef.get();
 	assert(!submissionData.exists, 'You already submitted score for this game.');
 
@@ -143,5 +145,12 @@ export const submitTypingJapaneseScore = https.onCall(async (data, context) => {
 		diffTokens: diffTokens.map(({type, token}) => ({type, token})),
 	});
 
-	return lcs;
+	await scoreRef.set({
+		athlon: gameData.athlon,
+		rawScore: score,
+		tiebreakScore: 0,
+		user: uid,
+	});
+
+	return score;
 });
