@@ -1,32 +1,13 @@
 import {Logout, Settings} from '@suid/icons-material';
 import {Box, AppBar, Avatar, IconButton, Toolbar, Typography, Button, Menu, MenuItem, Divider, ListItemIcon} from '@suid/material';
-import {getAuth, signInWithPopup, signOut, OAuthProvider} from 'firebase/auth';
+import {getAuth, signOut} from 'firebase/auth';
 import {doc, DocumentReference, getFirestore} from 'firebase/firestore';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createSignal, Match, Switch} from 'solid-js';
 import {A} from 'solid-start';
+import LoginButton from './LoginButton';
 import Doc from '~/components/Doc';
 import type {UseFireStoreReturn, User} from '~/lib/schema';
-
-const slackProvider = new OAuthProvider('oidc.slack');
-const scopes = ['openid', 'profile', 'email'];
-for (const scope of scopes) {
-	slackProvider.addScope(scope);
-}
-
-const Login = () => {
-	const app = useFirebaseApp();
-	const signIn = () => signInWithPopup(getAuth(app), slackProvider);
-
-	return (
-		<Button
-			sx={{my: 2, color: 'white', display: 'block'}}
-			onClick={signIn}
-		>
-			Login
-		</Button>
-	);
-};
 
 const Header = () => {
 	const app = useFirebaseApp();
@@ -138,10 +119,10 @@ const Header = () => {
 						)}
 					</Match>
 					<Match when={authState.error}>
-						<Login/>
+						<LoginButton/>
 					</Match>
 					<Match when>
-						<Login/>
+						<LoginButton/>
 					</Match>
 				</Switch>
 			</Toolbar>

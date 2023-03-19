@@ -1,4 +1,4 @@
-import {AppBar, Avatar, Button, IconButton, Toolbar, Typography} from '@suid/material';
+import {AppBar, Avatar, IconButton, Toolbar, Typography} from '@suid/material';
 import {getAuth} from 'firebase/auth';
 import {doc, DocumentReference, getFirestore} from 'firebase/firestore';
 import {useFirebaseApp, useAuth, useFirestore} from 'solid-firebase';
@@ -6,6 +6,7 @@ import {createContext, createEffect, createSignal, Show, useContext} from 'solid
 import {Outlet} from 'solid-start';
 import styles from './arenas.module.css';
 import Doc from '~/components/Doc';
+import LoginRequiredDialog from '~/components/LoginRequiredDialog';
 import type {UseFireStoreReturn, User} from '~/lib/schema';
 
 type UseAuthReturn = ReturnType<typeof useAuth>;
@@ -54,9 +55,14 @@ const ArenasLayout = () => {
 						</IconButton>
 					</Toolbar>
 				</AppBar>
-				<div class={styles.mainArea}>
-					<Outlet/>
-				</div>
+				<Show
+					when={authState.data}
+					fallback={<LoginRequiredDialog/>}
+				>
+					<div class={styles.mainArea}>
+						<Outlet/>
+					</div>
+				</Show>
 			</div>
 		</AuthStateContext.Provider>
 	);
