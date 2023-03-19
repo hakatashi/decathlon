@@ -53,3 +53,17 @@
 
 	resize: none;
 }
+
+.onGameFinishedDialog .addition {
+	color: #4CAF50;
+	background-color: #c8e6c9;
+}
+
+.onGameFinishedDialog .deletion {
+	color: #F44336;
+	background-color: #ffcdd2;
+}
+
+.onGameFinishedDialog .common {
+	color: inherit;
+}

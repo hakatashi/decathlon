@@ -2,36 +2,93 @@ import {createWindowSize} from '@solid-primitives/resize-observer';
 import TextareaAutosize from '@suid/base/TextareaAutosize';
 import {Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Modal, Typography} from '@suid/material';
 import {doc, DocumentReference, getFirestore} from 'firebase/firestore';
+import {getFunctions, httpsCallable} from 'firebase/functions';
+import last from 'lodash/last';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
-import {createEffect, createMemo, createSignal, JSX, onCleanup, onMount, Show} from 'solid-js';
-import {Link, useSearchParams} from 'solid-start';
-import {setHeaderText} from '../arenas';
+import {createEffect, createMemo, createSignal, For, JSX, onCleanup, onMount, Show} from 'solid-js';
+import {A, Link, useSearchParams} from 'solid-start';
+import {setHeaderText, useAuthState} from '../arenas';
 import styles from './typing-japanese.module.css';
+import Doc from '~/components/Doc';
 import PageNotFoundError from '~/lib/PageNotFoundError';
-import {Game} from '~/lib/schema';
+import {Game, TypingJapaneseSubmission, UseFireStoreReturn} from '~/lib/schema';
 
 interface onGameFinishedDialogProps {
 	text: string,
+	gameId: string,
 }
 
 const OnGameFinishedDialog = (props: onGameFinishedDialogProps) => {
-	onMount(() => {
-		console.log(props.text);
+	const app = useFirebaseApp();
+	const db = getFirestore(app);
+
+	const functions = getFunctions();
+	const submitTypingJapaneseScore = httpsCallable(functions, 'submitTypingJapaneseScore');
+
+	const [submissionData, setSubmissionData] = createSignal<UseFireStoreReturn<TypingJapaneseSubmission | null | undefined> | null>(null);
+
+	createEffect(() => {
+		const authState = useAuthState();
+		if (authState?.data?.uid) {
+			const submissionRef = doc(db, 'games', props.gameId, 'submissions', authState.data.uid) as DocumentReference<TypingJapaneseSubmission>;
+			setSubmissionData(useFirestore(submissionRef));
+		}
+	});
+
+	createEffect(async () => {
+		if (submissionData() !== null && !submissionData()?.error && submissionData()?.data === null) {
+			await submitTypingJapaneseScore({
+				submissionText: props.text,
+				gameId: props.gameId,
+			});
+		}
 	});
 
 	return (
-		<Dialog
-			open
-		>
+		<Dialog open class={styles.onGameFinishedDialog}>
 			<DialogTitle>
 				競技は終了しました
 			</DialogTitle>
 			<DialogContent>
 				<DialogContentText>
-					<CircularProgress color="primary"/>
-					スコアを送信しています⋯⋯
+					<Doc
+						data={submissionData()}
+						fallback={
+							<>
+								<CircularProgress color="primary"/>
+								<p>スコアを送信しています⋯⋯</p>
+							</>
+						}
+					>
+						{(submission) => (
+							<>
+								<Typography variant="h5" component="p">
+									スコア: {submission.score}
+								</Typography>
+								<Box mt={1}>
+									<For each={submission.diffTokens}>
+										{(diff) => (
+											<span class={styles[diff.type]}>{diff.token}</span>
+										)}
+									</For>
+								</Box>
+							</>
+						)}
+					</Doc>
 				</DialogContentText>
 			</DialogContent>
+			<DialogActions>
+				<Doc data={submissionData()}>
+					{(submission) => (
+						<Button
+							component={A}
+							href={`/athlons/${last(submission.athlon.path.split('/'))}/typing-japanese`}
+						>
+							競技ページに戻る
+						</Button>
+					)}
+				</Doc>
+			</DialogActions>
 		</Dialog>
 	);
 };
@@ -54,7 +111,6 @@ const TypingJapanese = () => {
 	const db = getFirestore(app);
 	const gameRef = doc(db, 'games', gameId) as DocumentReference<Game>;
 	const gameData = useFirestore(gameRef);
-
 
 	const zoom = createMemo(() => {
 		const size = createWindowSize();
@@ -200,7 +256,7 @@ const TypingJapanese = () => {
 			</div>
 
 			<Show when={phase() === 'finished'}>
-				<OnGameFinishedDialog text={text()}/>
+				<OnGameFinishedDialog text={text()} gameId={gameId}/>
 			</Show>
 		</main>
 	);
