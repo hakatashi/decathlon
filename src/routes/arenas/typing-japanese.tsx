@@ -1,6 +1,6 @@
 import {createWindowSize} from '@solid-primitives/resize-observer';
 import TextareaAutosize from '@suid/base/TextareaAutosize';
-import {Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Modal, Typography} from '@suid/material';
+import {Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Modal, Typography, useMediaQuery} from '@suid/material';
 import {doc, DocumentReference, getFirestore} from 'firebase/firestore';
 import {getFunctions, httpsCallable} from 'firebase/functions';
 import last from 'lodash/last';
@@ -112,9 +112,11 @@ const TypingJapanese = () => {
 	const gameRef = doc(db, 'games', gameId) as DocumentReference<Game>;
 	const gameData = useFirestore(gameRef);
 
+	const isMobileLayout = useMediaQuery('(max-width: 480px)');
+
 	const zoom = createMemo(() => {
 		const size = createWindowSize();
-		return (size.width / 2 - 50) / 800;
+		return (size.width * (isMobileLayout() ? 1 : 0.5) - 50) / 800;
 	});
 
 	const [text, setText] = createSignal<string>('');
@@ -215,6 +217,16 @@ const TypingJapanese = () => {
 		window.removeEventListener('keydown', handleKeydown);
 	});
 
+	const pdfUrl = createMemo(() => {
+		const url = config()?.textUrl ?? '';
+		if (isMobileLayout()) {
+			return `https://drive.google.com/viewerng/viewer?${new URLSearchParams({
+				embedded: 'true',
+				url,
+			})}`;
+		}
+		return url;
+	});
 
 	return (
 		<main class={styles.app}>
@@ -227,7 +239,7 @@ const TypingJapanese = () => {
 			<iframe
 				class={styles.pdf}
 				style={{visibility: phase() === 'playing' || phase() === 'finished' ? 'visible' : 'hidden'}}
-				src={`${config()?.textUrl}#${new URLSearchParams({
+				src={`${pdfUrl()}#${new URLSearchParams({
 					zoom: Math.floor(zoom() * 100).toString(),
 					scrollbar: '0',
 					pagemode: 'none',
