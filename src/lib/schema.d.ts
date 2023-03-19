@@ -69,6 +69,16 @@ export interface Score extends DocumentData {
 	user: string,
 }
 
+export interface TypingJapaneseSubmission extends DocumentData {
+	athlon: DocumentReference<Athlon>,
+	submissionText: string,
+	score: number,
+	diffTokens: {
+		type: 'deletion' | 'addition' | 'common',
+		token: string,
+	}[],
+}
+
 export interface GameRule extends DocumentData {
 	name: string,
 	icon: string,
