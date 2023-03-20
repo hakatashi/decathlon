@@ -149,8 +149,8 @@ const ReversingDiff = () => {
 
 	return (
 		<main class={styles.app}>
-			<Container maxWidth="md">
-				<Alert severity="success" sx={{my: 3}}>
+			<Container maxWidth="lg">
+				<Alert severity="info" sx={{my: 3}}>
 					与えられた実行ファイルを解析し、これになるべく近いファイルにビルドされるようなソースコードを提出してください。
 				</Alert>
 				<Doc data={gameData}>
