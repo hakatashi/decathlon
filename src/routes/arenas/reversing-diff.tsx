@@ -1,4 +1,4 @@
-import {Box, Button, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Stack, TextField, Typography, useMediaQuery} from '@suid/material';
+import {Alert, Box, Button, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Stack, TextField, Typography, useMediaQuery} from '@suid/material';
 import {doc, DocumentReference, getFirestore} from 'firebase/firestore';
 import {getFunctions, httpsCallable} from 'firebase/functions';
 import {getStorage, ref} from 'firebase/storage';
@@ -150,13 +150,9 @@ const ReversingDiff = () => {
 	return (
 		<main class={styles.app}>
 			<Container maxWidth="md">
-				<Typography
-					component="h1"
-					variant="h4"
-					my={6}
-				>
-					diff
-				</Typography>
+				<Alert severity="success" sx={{my: 3}}>
+					与えられた実行ファイルを解析し、これになるべく近いファイルにビルドされるようなソースコードを提出してください。
+				</Alert>
 				<Doc data={gameData}>
 					{(game) => {
 						const config = game.configuration as Config;
