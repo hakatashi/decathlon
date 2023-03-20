@@ -14,6 +14,7 @@ type UseAuthReturn = ReturnType<typeof useAuth>;
 const AuthStateContext = createContext<UseAuthReturn>();
 
 export const [headerText, setHeaderText] = createSignal<string>('');
+export const [arenaTitle, setArenaTitle] = createSignal<string>('');
 
 const ArenasLayout = () => {
 	const app = useFirebaseApp();
@@ -37,7 +38,7 @@ const ArenasLayout = () => {
 				<AppBar position="static" class={styles.header}>
 					<Toolbar variant="dense">
 						<Typography variant="h6" color="inherit" component="h1">
-							タイピング (日本語)
+							{arenaTitle()}
 						</Typography>
 						<Typography variant="h6" component="div" color="inherit" sx={{flexGrow: 1, textAlign: 'center'}}>
 							{headerText()}

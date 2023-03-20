@@ -1,13 +1,13 @@
 import {createWindowSize} from '@solid-primitives/resize-observer';
 import TextareaAutosize from '@suid/base/TextareaAutosize';
-import {Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Modal, Typography, useMediaQuery} from '@suid/material';
+import {Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography, useMediaQuery} from '@suid/material';
 import {doc, DocumentReference, getFirestore} from 'firebase/firestore';
 import {getFunctions, httpsCallable} from 'firebase/functions';
 import last from 'lodash/last';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, For, JSX, onCleanup, onMount, Show} from 'solid-js';
 import {A, Link, useSearchParams} from 'solid-start';
-import {setHeaderText, useAuthState} from '../arenas';
+import {setArenaTitle, setHeaderText, useAuthState} from '../arenas';
 import styles from './typing-japanese.module.css';
 import Doc from '~/components/Doc';
 import PageNotFoundError from '~/lib/PageNotFoundError';
@@ -123,6 +123,8 @@ const TypingJapanese = () => {
 	const [phase, setPhase] = createSignal<'loading' | 'waiting' | 'playing' | 'finished'>('loading');
 	const [config, setConfig] = createSignal<Config>({});
 	const [textareaEl, setTextareaEl] = createSignal<HTMLTextAreaElement | null>(null);
+
+	setArenaTitle('タイピング (日本語)');
 
 	onMount(() => {
 		const savedText = localStorage.getItem(`typing-japanese_${gameId}_autosave`);
