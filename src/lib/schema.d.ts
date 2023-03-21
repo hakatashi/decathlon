@@ -71,12 +71,25 @@ export interface Score extends DocumentData {
 
 export interface TypingJapaneseSubmission extends DocumentData {
 	athlon: DocumentReference<Athlon>,
+	userId: string,
 	submissionText: string,
 	score: number,
 	diffTokens: {
 		type: 'deletion' | 'addition' | 'common',
 		token: string,
 	}[],
+}
+
+export interface ReversingDiffSubmission extends DocumentData {
+	athlon: DocumentReference<Athlon>,
+	userId: string,
+	status: 'pending' | 'executing' | 'failed' | 'success' | 'error' | 'invalid',
+	language: string,
+	code: string,
+	stdout: string | null,
+	stderr: string | null,
+	duration: number | null,
+	score: number | null,
 }
 
 export interface GameRule extends DocumentData {

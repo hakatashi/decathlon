@@ -141,6 +141,7 @@ export const submitTypingJapaneseScore = https.onCall(async (data, context) => {
 		score,
 		submissionText,
 		diffTokens: diffTokens.map(({type, token}) => ({type, token})),
+		userId: uid,
 	});
 
 	await scoreRef.set({
