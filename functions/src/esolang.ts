@@ -1,4 +1,5 @@
 import axios from 'axios';
+import {getFunctions} from 'firebase-admin/functions';
 import {firestore, logger, runWith} from 'firebase-functions';
 import {Game} from '../../src/lib/schema';
 import db from './firestore';
@@ -34,13 +35,19 @@ export const executeDiffSubmission =
 export const onSubmissionCreated = firestore
 	.document('games/{gameId}/submissions/{submissionId}')
 	.onCreate(async (snapshot, context) => {
-		const submission = snapshot.data();
 		const changedGameId = context.params.gameId;
 		const gameDoc = await db.collection('games').doc(changedGameId).get();
 		const game = gameDoc.data() as Game;
 
 		logger.info(`New submission: id = ${snapshot.id}, rule = ${game.rule.path}`);
 		if (game.rule.path === 'gameRules/reversing-diff') {
-			logger.info(`user = ${submission.user}`);
+			const queue = getFunctions().taskQueue('executeDiffSubmission');
+			queue.enqueue(
+				{id: `executeDiffSubmission-${snapshot.id}`},
+				{
+					scheduleDelaySeconds: 0,
+					dispatchDeadlineSeconds: 60 * 5,
+				},
+			);
 		}
 	});
