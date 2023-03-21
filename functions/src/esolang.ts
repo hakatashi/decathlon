@@ -41,6 +41,6 @@ export const onSubmissionCreated = firestore
 
 		logger.info(`New submission: id = ${snapshot.id}, rule = ${game.rule.path}`);
 		if (game.rule.path === 'gameRules/reversing-diff') {
-			// none
+			logger.info(`user = ${submission.user}`);
 		}
 	});
