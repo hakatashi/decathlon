@@ -33,6 +33,10 @@ export const onSubmissionCreated = firestore
 	.document('games/{gameId}/submissions/{submissionId}')
 	.onCreate(async (snapshot) => {
 		// const submission = snapshot.data();
+		logger.info(snapshot.ref.parent);
+		logger.info(snapshot.ref.parent.path);
+		logger.info(snapshot.ref.parent.parent);
+		logger.info(snapshot.ref.parent.parent?.path);
 		const game = await snapshot.ref.parent.parent?.get();
 		logger.info(game?.data());
 	});
