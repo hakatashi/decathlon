@@ -60,7 +60,7 @@ service cloud.firestore {
 
       match /submissions/{submissionId} {
         allow read: if (
-          (request.auth != null && request.resource.data.userId == userId) ||
+          (request.auth != null && resource.data.userId == userId) ||
           ('endAt' in gameData() && gameData().endAt >= request.time)
         );
       }
