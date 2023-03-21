@@ -11,6 +11,8 @@ import {calculateRanking} from './scores';
 initializeApp();
 const db = getFirestore();
 
+export * from './esolang';
+
 // eslint-disable-next-line import/prefer-default-export
 export const onUserCreated = auth.user().onCreate(async (user) => {
 	await db.runTransaction(async (transaction) => {
