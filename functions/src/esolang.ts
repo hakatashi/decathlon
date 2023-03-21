@@ -15,6 +15,7 @@ export const executeDiffSubmission =
 				maxConcurrentDispatches: 1,
 			},
 		}).onDispatch(async () => {
+			logger.info('Dispatch started');
 			const result = await axios({
 				method: 'POST',
 				url: 'https://esolang.hakatashi.com/api/execution',
@@ -42,12 +43,14 @@ export const onSubmissionCreated = firestore
 		logger.info(`New submission: id = ${snapshot.id}, rule = ${game.rule.path}`);
 		if (game.rule.path === 'gameRules/reversing-diff') {
 			const queue = getFunctions().taskQueue('executeDiffSubmission');
-			queue.enqueue(
-				{id: `executeDiffSubmission-${snapshot.id}`},
-				{
-					scheduleDelaySeconds: 0,
-					dispatchDeadlineSeconds: 60 * 5,
-				},
-			);
+			for (const i of Array(10).keys()) {
+				queue.enqueue(
+					{id: `executeDiffSubmission-${snapshot.id}-${i}`},
+					{
+						scheduleDelaySeconds: 0,
+						dispatchDeadlineSeconds: 60 * 5,
+					},
+				);
+			}
 		}
 	});
