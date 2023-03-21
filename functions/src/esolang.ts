@@ -1,5 +1,6 @@
 import axios from 'axios';
 import {firestore, logger, runWith} from 'firebase-functions';
+import db from './firestore';
 
 export const executeDiffSubmission =
 	runWith({secrets: ['ESOLANG_BATTLE_API_TOKEN']})
@@ -31,12 +32,11 @@ export const executeDiffSubmission =
 
 export const onSubmissionCreated = firestore
 	.document('games/{gameId}/submissions/{submissionId}')
-	.onCreate(async (snapshot) => {
-		// const submission = snapshot.data();
-		logger.info(snapshot.ref.parent);
-		logger.info(snapshot.ref.parent.path);
-		logger.info(snapshot.ref.parent.parent);
-		logger.info(snapshot.ref.parent.parent?.path);
-		const game = await snapshot.ref.parent.parent?.get();
-		logger.info(game?.data());
+	.onCreate(async (snapshot, context) => {
+		const submission = snapshot.data();
+		const changedGameId = context.params.gameId;
+		const game = await db.collection('games').doc(changedGameId).get();
+
+		logger.info(submission);
+		logger.info(game.data());
 	});

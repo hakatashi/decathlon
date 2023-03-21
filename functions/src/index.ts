@@ -1,15 +1,11 @@
-
 import assert from 'assert';
-import {initializeApp} from 'firebase-admin/app';
-import {DocumentReference, getFirestore} from 'firebase-admin/firestore';
+import {DocumentReference} from 'firebase-admin/firestore';
 import type {CollectionReference, CollectionGroup} from 'firebase-admin/firestore';
 import {auth, firestore, https} from 'firebase-functions';
 import mdiff from 'mdiff';
 import type {Athlon, Game, Score, TypingJapaneseSubmission} from '../../src/lib/schema';
+import db from './firestore';
 import {calculateRanking} from './scores';
-
-initializeApp();
-const db = getFirestore();
 
 export * from './esolang';
 
