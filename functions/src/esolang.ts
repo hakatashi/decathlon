@@ -1,10 +1,13 @@
-import assert from 'assert';
+import assert, {AssertionError} from 'assert';
 import axios from 'axios';
 import {DocumentReference} from 'firebase-admin/firestore';
 import {getFunctions} from 'firebase-admin/functions';
+import {getStorage} from 'firebase-admin/storage';
 import {firestore, logger, runWith} from 'firebase-functions';
 import {Game, ReversingDiffSubmission} from '../../src/lib/schema';
 import db from './firestore';
+
+const bucket = getStorage().bucket();
 
 export const executeDiffSubmission =
 	runWith({secrets: ['ESOLANG_BATTLE_API_TOKEN']})
@@ -34,15 +37,23 @@ export const executeDiffSubmission =
 				return true;
 			});
 
-			const submissionDoc = await submissionRef.get();
-			const submission = submissionDoc.data();
-
 			if (!isOk) {
 				logger.warn('Lock failed.');
 				return;
 			}
 
+			const submissionDoc = await submissionRef.get();
+			const submission = submissionDoc.data();
+
+			if (!submission || typeof submission.code !== 'string') {
+				throw new AssertionError();
+			}
+
 			logger.info(submission);
+			const answerBlobs = await bucket.file(`games/${data.gameId}/answer`).download();
+			const answer = answerBlobs.reduce((a, b) => Buffer.concat([a, b]), Buffer.alloc(0));
+
+			const input = `${answer.toString('base64')}\n${Buffer.from(submission.code, 'utf-8').toString('base64')}`;
 
 			const result = await axios({
 				method: 'POST',
@@ -52,15 +63,43 @@ export const executeDiffSubmission =
 				},
 				data: new URLSearchParams({
 					token: process.env.ESOLANG_BATTLE_API_TOKEN!,
-					code: 'YVc1MElHMWhhVzRvS1NCN0lISmxkSFZ5YmlBd095QjkKYVc1MElHMWhhVzRvS1NCN0lISmxkSFZ5YmlBeE95Qjk=',
+					code: Buffer.from(input, 'utf-8').toString('base64'),
 					input: '',
 					language: 'clang-cpp',
 					imageId: 'hakatashi/diff-challenge-cpp',
 				}),
 			});
-			logger.info(result.data);
 
-			submissionRef.update({status: 'success'});
+			const {duration, stderr, stdout} = result.data;
+
+			// eslint-disable-next-line no-undef-init
+			let error = undefined;
+			if (typeof duration !== 'number') {
+				error = 'duration is not a number';
+			}
+			if (typeof stderr !== 'string') {
+				error = 'stderr is not a string';
+			}
+			if (typeof stdout !== 'string') {
+				error = 'stdout is not a string';
+			}
+			if (!stdout.match(/^\d+$/)) {
+				error = 'stdout is not a valid format';
+			}
+
+			let score = error ? null : parseInt(stdout);
+			if (!Number.isFinite(score)) {
+				score = null;
+			}
+
+			submissionRef.update({
+				status: error ? 'error' : 'success',
+				errorMessage: error,
+				score,
+				duration,
+				stderr,
+				stdout,
+			});
 		});
 
 export const onSubmissionCreated = firestore

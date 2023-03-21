@@ -51,6 +51,7 @@ export interface Game extends DocumentData {
 	maxPoint: number,
 	maxRawScore: number,
 	weight?: number,
+	endAt?: Timestamp,
 	order: number,
 	description: string,
 	scoreConfiguration: ScoreConfiguration,
@@ -88,6 +89,7 @@ export interface ReversingDiffSubmission extends DocumentData {
 	code: string,
 	stdout: string | null,
 	stderr: string | null,
+	errorMessage?: string,
 	duration: number | null,
 	score: number | null,
 }
