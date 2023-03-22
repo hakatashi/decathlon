@@ -1,6 +1,6 @@
 import {Alert, Avatar, Box, Button, ButtonGroup, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from '@suid/material';
 import dayjs from 'dayjs';
-import {addDoc, collection, CollectionReference, doc, DocumentReference, getFirestore, query, serverTimestamp, where} from 'firebase/firestore';
+import {addDoc, collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, serverTimestamp, where} from 'firebase/firestore';
 import {getFunctions, httpsCallable} from 'firebase/functions';
 import {getStorage, ref} from 'firebase/storage';
 import last from 'lodash/last';
@@ -14,7 +14,7 @@ import styles from './reversing-diff.module.css';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import PageNotFoundError from '~/lib/PageNotFoundError';
-import {Game, ReversingDiffSubmission, TypingJapaneseSubmission, UseFireStoreReturn, User} from '~/lib/schema';
+import {Game, ReversingDiffRanking, ReversingDiffSubmission, TypingJapaneseSubmission, UseFireStoreReturn, User} from '~/lib/schema';
 
 interface onGameFinishedDialogProps {
 	text: string,
@@ -369,6 +369,61 @@ const SubmissionsTab = (props: Props) => {
 	);
 };
 
+const RankingTab = () => {
+	const [searchParams] = useSearchParams();
+	const gameId = searchParams.gameId;
+
+	const app = useFirebaseApp();
+	const db = getFirestore(app);
+
+	const rankingRef = collection(db, `games/${gameId}/ranking`) as CollectionReference<ReversingDiffRanking>;
+	const rankingDocs = useFirestore(query(rankingRef, orderBy('score', 'asc'), orderBy('createdAt', 'asc')));
+
+	return (
+		<TableContainer component={Paper}>
+			<Table>
+				<TableHead>
+					<TableRow>
+						<TableCell>#</TableCell>
+						<TableCell>User</TableCell>
+						<TableCell align="right">Score</TableCell>
+						<TableCell align="right">Date</TableCell>
+					</TableRow>
+				</TableHead>
+				<TableBody>
+					<Collection data={rankingDocs}>
+						{(ranking, i) => {
+							const userRef = doc(db, 'users', ranking.userId) as DocumentReference<User>;
+							const userData = useFirestore(userRef);
+							return (
+								<TableRow>
+									<TableCell>{i() + 1}</TableCell>
+									<TableCell>
+										<Doc data={userData}>
+											{(user) => (
+												<Stack direction="row" alignItems="center">
+													<Avatar
+														alt={user.displayName}
+														src={user.photoURL}
+														sx={{width: 30, height: 30, mr: 1}}
+													/>
+													<span>{user.displayName}</span>
+												</Stack>
+											)}
+										</Doc>
+									</TableCell>
+									<TableCell align="right"><strong>{ranking.score}</strong></TableCell>
+									<TableCell align="right">{dayjs(ranking.createdAt.toDate()).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
+								</TableRow>
+							);
+						 }}
+					</Collection>
+				</TableBody>
+			</Table>
+		</TableContainer>
+	);
+};
+
 const ReversingDiff = () => {
 	const [searchParams] = useSearchParams();
 	if (typeof searchParams.gameId !== 'string') {
@@ -432,6 +487,9 @@ const ReversingDiff = () => {
 					</Match>
 					<Match when={tab() === 'submissions'}>
 						<SubmissionsTab submissions={submissions()}/>
+					</Match>
+					<Match when={tab() === 'ranking'}>
+						<RankingTab/>
 					</Match>
 				</Switch>
 			</Container>
