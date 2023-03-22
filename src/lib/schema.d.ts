@@ -92,6 +92,8 @@ export interface ReversingDiffSubmission extends DocumentData {
 	errorMessage?: string,
 	duration: number | null,
 	score: number | null,
+	createdAt: Timestamp,
+	executedAt: Timestamp | null,
 }
 
 export interface GameRule extends DocumentData {

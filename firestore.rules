@@ -59,7 +59,7 @@ service cloud.firestore {
       }
 
       function isValidReversingDiffSubmission(submission, game) {
-        return submission.size() == 9
+        return submission.size() == 11
           && submission.athlon is path
           && game.athlon == submission.athlon
           && submission.userId is string
@@ -69,7 +69,9 @@ service cloud.firestore {
           && submission.stdout == null
           && submission.stderr == null
           && submission.duration == null
-          && submission.score == null;
+          && submission.score == null
+          && submission.createdAt == request.time
+          && submission.executedAt == null;
       }
 
       match /submissions/{submissionId} {

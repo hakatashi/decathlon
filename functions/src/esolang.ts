@@ -99,6 +99,7 @@ export const executeDiffSubmission =
 				duration,
 				stderr,
 				stdout,
+				executedAt: new Date(),
 			});
 		});
 
