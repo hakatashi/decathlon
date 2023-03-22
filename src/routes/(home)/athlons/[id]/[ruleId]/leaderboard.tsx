@@ -136,7 +136,7 @@ const Leaderboard = () => {
 															const isMe = authState?.data?.uid === score.id;
 
 															return (
-																<TableRow sx={isMe ? {backgroundColor: blue[50]} : {}} >
+																<TableRow sx={isMe ? {backgroundColor: blue[50]} : {}}>
 																	<TableCell>
 																		{score.rank + 1}
 																	</TableCell>

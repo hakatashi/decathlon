@@ -1,4 +1,7 @@
+/* eslint-disable array-plural/array-plural */
+
 import {Alert, Avatar, Box, Button, ButtonGroup, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from '@suid/material';
+import {blue} from '@suid/material/colors';
 import dayjs from 'dayjs';
 import {addDoc, collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, serverTimestamp, where} from 'firebase/firestore';
 import {getFunctions, httpsCallable} from 'firebase/functions';
@@ -376,6 +379,8 @@ const RankingTab = () => {
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
 
+	const authState = useAuthState();
+
 	const rankingRef = collection(db, `games/${gameId}/ranking`) as CollectionReference<ReversingDiffRanking>;
 	const rankingDocs = useFirestore(query(rankingRef, orderBy('score', 'asc'), orderBy('createdAt', 'asc')));
 
@@ -395,8 +400,10 @@ const RankingTab = () => {
 						{(ranking, i) => {
 							const userRef = doc(db, 'users', ranking.userId) as DocumentReference<User>;
 							const userData = useFirestore(userRef);
+							const isMe = authState?.data?.uid === ranking.userId;
+
 							return (
-								<TableRow>
+								<TableRow sx={isMe ? {backgroundColor: blue[50]} : {}}>
 									<TableCell>{i() + 1}</TableCell>
 									<TableCell>
 										<Doc data={userData}>
