@@ -105,8 +105,8 @@ interface Config {
 
 const DEFAULT_CODE = `
 #include <iostream>
-
 int main() {
+  std::cout << "Hello, World!" << std::endl;
   return 0;
 }
 `.trim();
