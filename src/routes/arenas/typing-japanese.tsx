@@ -5,7 +5,7 @@ import {doc, DocumentReference, getFirestore} from 'firebase/firestore';
 import {getFunctions, httpsCallable} from 'firebase/functions';
 import last from 'lodash/last';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
-import {createEffect, createMemo, createSignal, For, JSX, onCleanup, onMount, Show} from 'solid-js';
+import {createEffect, createMemo, createSignal, For, onCleanup, onMount, Show} from 'solid-js';
 import {A, Link, useSearchParams} from 'solid-start';
 import {setArenaTitle, setHeaderText, useAuthState} from '../arenas';
 import styles from './typing-japanese.module.css';

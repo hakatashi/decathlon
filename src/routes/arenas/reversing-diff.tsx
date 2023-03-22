@@ -1,11 +1,11 @@
-import {Alert, Box, Button, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Stack, TextField, Typography, useMediaQuery} from '@suid/material';
+import {Alert, Box, Button, ButtonGroup, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Stack, TextField, Typography} from '@suid/material';
 import {addDoc, collection, CollectionReference, doc, DocumentReference, getFirestore, query, serverTimestamp, where} from 'firebase/firestore';
 import {getFunctions, httpsCallable} from 'firebase/functions';
 import {getStorage, ref} from 'firebase/storage';
 import last from 'lodash/last';
 import remarkGfm from 'remark-gfm';
 import {useDownloadURL, useFirebaseApp, useFirestore} from 'solid-firebase';
-import {createEffect, createSignal, For, JSX, Match, onCleanup, Show, Switch} from 'solid-js';
+import {createEffect, createSignal, For, Match, onCleanup, Show, Switch} from 'solid-js';
 import SolidMarkdown from 'solid-markdown';
 import {A, useSearchParams} from 'solid-start';
 import {setArenaTitle, setHeaderText, useAuthState} from '../arenas';
@@ -111,7 +111,7 @@ int main() {
 }
 `.trim();
 
-const ReversingDiff = () => {
+const MainTab = () => {
 	const [searchParams] = useSearchParams();
 	if (typeof searchParams.gameId !== 'string') {
 		throw new PageNotFoundError();
@@ -131,10 +131,10 @@ const ReversingDiff = () => {
 	const [code, setCode] = createSignal<string>(DEFAULT_CODE);
 	const [phase, setPhase] = createSignal<'loading' | 'waiting' | 'playing' | 'finished'>('loading');
 	const [submitStatus, setSubmitStatus] = createSignal<'ready' | 'executing' | 'throttled'>('ready');
-	const [submission, setSubmission] = createSignal<UseFireStoreReturn<ReversingDiffSubmission | undefined> | null>(null);
+	const [submission, setSubmission] = createSignal<UseFireStoreReturn<ReversingDiffSubmission | null | undefined> | null>(null);
 	const [lastSubmissionTime, setLastSubmissionTime] = createSignal<number | null>(null);
 	const [throttleTime, setThrottleTime] = createSignal<number>(0);
-	const [submissions, setSubmissions] = createSignal<UseFireStoreReturn<ReversingDiffSubmission[] | undefined> | null>(null);
+	const [submissions, setSubmissions] = createSignal<UseFireStoreReturn<ReversingDiffSubmission[] | null | undefined> | null>(null);
 
 	setArenaTitle('diff');
 
@@ -235,102 +235,138 @@ const ReversingDiff = () => {
 	});
 
 	return (
+		<Doc data={gameData}>
+			{(game) => {
+				const config = game.configuration as Config;
+
+				return (
+					<>
+						<Typography
+							variant="body1"
+						>
+							<SolidMarkdown
+								class={styles.rule}
+								// eslint-disable-next-line react/no-children-prop
+								children={config.rule}
+								remarkPlugins={[remarkGfm]}
+								linkTarget="_blank"
+							/>
+						</Typography>
+						<Stack spacing={2} direction="row">
+							<For each={config.files}>
+								{(file) => {
+									const urlData = useDownloadURL(ref(storage, `assets/reversing-diff/${file.filename}`));
+
+									return (
+										<Show when={urlData.data} keyed>
+											{(url) => (
+												<Button
+													variant={file.isMain ? 'contained' : 'outlined'}
+													size="large"
+													component={A}
+													href={url}
+													color="secondary"
+												>
+													{file.label}をダウンロードする
+												</Button>
+											)}
+										</Show>
+									);
+								}}
+							</For>
+						</Stack>
+						<TextField
+							label="提出コード"
+							multiline
+							minRows={4}
+							value={code()}
+							onChange={(_event, value) => setCode(value)}
+							disabled={submitStatus() === 'executing'}
+							// @ts-expect-error: type error
+							sx={{
+								my: 5,
+								width: '100%',
+								'& textarea': {
+									'font-family': 'monospace',
+									'line-height': '1em',
+								},
+							}}
+						/>
+						<Switch>
+							<Match when={submitStatus() === 'ready'}>
+								<Button onClick={handleClickSubmit} variant="contained" size="large">
+									送信
+								</Button>
+							</Match>
+							<Match when={submitStatus() === 'executing'}>
+								<Button variant="contained" disabled size="large">
+									<CircularProgress color="secondary" sx={{color: 'inherit', width: '16px', height: '16px', mr: 1}}/>
+									実行中
+								</Button>
+							</Match>
+							<Match when={submitStatus() === 'throttled'}>
+								<Button variant="contained" disabled size="large">
+									<CircularProgress variant="determinate" value={(1 - throttleTime() / 30000) * 100} color="secondary" sx={{color: 'inherit', width: '16px', height: '16px', mr: 1}}/>
+									待機中⋯⋯
+								</Button>
+							</Match>
+						</Switch>
+						<Show when={submitStatus() !== 'executing' && submission() !== null}>
+							<Doc data={submission()}>
+								{(submissionData) => (
+									<Alert severity="info" sx={{my: 3}}>
+										提出成功 - Diffスコア: {submissionData.score}
+									</Alert>
+								)}
+							</Doc>
+						</Show>
+						<Show when={phase() === 'finished'}>
+							<OnGameFinishedDialog text={code()} gameId={gameId}/>
+						</Show>
+					</>
+				);
+			}}
+		</Doc>
+	);
+};
+
+const ReversingDiff = () => {
+	const [tab, setTab] = createSignal<'main' | 'submissions' | 'ranking'>('main');
+
+	return (
 		<main class={styles.app}>
 			<Container maxWidth="lg" sx={{py: 3}}>
 				<Alert severity="info">
 					与えられた実行ファイルを解析し、これになるべく近いファイルにビルドされるようなソースコードを提出してください。
 				</Alert>
-				<Doc data={gameData}>
-					{(game) => {
-						const config = game.configuration as Config;
-
-						return (
-							<>
-								<Typography
-									variant="body1"
-								>
-									<SolidMarkdown
-										class={styles.rule}
-										children={config.rule}
-										remarkPlugins={[remarkGfm]}
-										linkTarget="_blank"
-									/>
-								</Typography>
-								<Stack spacing={2} direction="row">
-									<For each={config.files}>
-										{(file) => {
-											const urlData = useDownloadURL(ref(storage, `assets/reversing-diff/${file.filename}`));
-
-											return (
-												<Show when={urlData.data} keyed>
-													{(url) => (
-														<Button
-															variant={file.isMain ? 'contained' : 'outlined'}
-															size="large"
-															component={A}
-															href={url}
-															color="secondary"
-														>
-															{file.label}をダウンロードする
-														</Button>
-													)}
-												</Show>
-											);
-										}}
-									</For>
-								</Stack>
-								<TextField
-									label="提出コード"
-									multiline
-									minRows={4}
-									value={code()}
-									onChange={(_event, value) => setCode(value)}
-									disabled={submitStatus() === 'executing'}
-									sx={{
-										my: 5,
-										width: '100%',
-										'& textarea': {
-											'font-family': 'monospace',
-											'line-height': '1em',
-										},
-									}}
-								/>
-								<Switch>
-									<Match when={submitStatus() === 'ready'}>
-										<Button onClick={handleClickSubmit} variant="contained" size="large">
-											送信
-										</Button>
-									</Match>
-									<Match when={submitStatus() === 'executing'}>
-										<Button variant="contained" disabled size="large">
-											<CircularProgress color="secondary" sx={{color: 'inherit', width: '16px', height: '16px', mr: 1}}/>
-											実行中
-										</Button>
-									</Match>
-									<Match when={submitStatus() === 'throttled'}>
-										<Button variant="contained" disabled size="large">
-											<CircularProgress variant="determinate" value={(1 - throttleTime() / 30000) * 100} color="secondary" sx={{color: 'inherit', width: '16px', height: '16px', mr: 1}}/>
-											待機中⋯⋯
-										</Button>
-									</Match>
-								</Switch>
-								<Show when={submitStatus() !== 'executing' && submission() !== null}>
-									<Doc data={submission()}>
-										{(submissionData) => (
-											<Alert severity="info" sx={{my: 3}}>
-												提出成功 - Diffスコア: {submissionData.score}
-											</Alert>
-										)}
-									</Doc>
-								</Show>
-							</>
-						);
-					}}
-				</Doc>
+				<Box textAlign="center" my={1}>
+					<ButtonGroup variant="outlined" size="large">
+						<Button
+							variant={tab() === 'main' ? 'contained' : 'outlined'}
+							onClick={() => setTab('main')}
+						>
+							問題
+						</Button>
+						<Button
+							variant={tab() === 'submissions' ? 'contained' : 'outlined'}
+							onClick={() => setTab('submissions')}
+						>
+							提出一覧
+						</Button>
+						<Button
+							variant={tab() === 'ranking' ? 'contained' : 'outlined'}
+							onClick={() => setTab('ranking')}
+						>
+							ランキング
+						</Button>
+					</ButtonGroup>
+				</Box>
+				<Switch>
+					<Match when={tab() === 'main'}>
+						<MainTab/>
+					</Match>
+				</Switch>
 			</Container>
-			<Show when={phase() === 'finished'}>
-				<OnGameFinishedDialog text={code()} gameId={gameId}/>
-			</Show>
 		</main>
 	);
 };
