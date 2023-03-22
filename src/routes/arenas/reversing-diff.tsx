@@ -1,4 +1,5 @@
-import {Alert, Box, Button, ButtonGroup, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Stack, TextField, Typography} from '@suid/material';
+import {Alert, Avatar, Box, Button, ButtonGroup, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from '@suid/material';
+import dayjs from 'dayjs';
 import {addDoc, collection, CollectionReference, doc, DocumentReference, getFirestore, query, serverTimestamp, where} from 'firebase/firestore';
 import {getFunctions, httpsCallable} from 'firebase/functions';
 import {getStorage, ref} from 'firebase/storage';
@@ -10,6 +11,7 @@ import SolidMarkdown from 'solid-markdown';
 import {A, useSearchParams} from 'solid-start';
 import {setArenaTitle, setHeaderText, useAuthState} from '../arenas';
 import styles from './reversing-diff.module.css';
+import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import PageNotFoundError from '~/lib/PageNotFoundError';
 import {Game, ReversingDiffSubmission, TypingJapaneseSubmission, UseFireStoreReturn} from '~/lib/schema';
@@ -111,11 +113,12 @@ int main() {
 }
 `.trim();
 
-const MainTab = () => {
+interface Props {
+	submissions: UseFireStoreReturn<ReversingDiffSubmission[] | null | undefined> | null,
+}
+
+const MainTab = (props: Props) => {
 	const [searchParams] = useSearchParams();
-	if (typeof searchParams.gameId !== 'string') {
-		throw new PageNotFoundError();
-	}
 
 	const gameId = searchParams.gameId;
 
@@ -134,7 +137,6 @@ const MainTab = () => {
 	const [submission, setSubmission] = createSignal<UseFireStoreReturn<ReversingDiffSubmission | null | undefined> | null>(null);
 	const [lastSubmissionTime, setLastSubmissionTime] = createSignal<number | null>(null);
 	const [throttleTime, setThrottleTime] = createSignal<number>(0);
-	const [submissions, setSubmissions] = createSignal<UseFireStoreReturn<ReversingDiffSubmission[] | null | undefined> | null>(null);
 
 	setArenaTitle('diff');
 
@@ -210,19 +212,7 @@ const MainTab = () => {
 	});
 
 	createEffect(() => {
-		if (authState?.data?.uid) {
-			const submissionsData = useFirestore(
-				query(
-					collection(gameRef, 'submissions') as CollectionReference<ReversingDiffSubmission>,
-					where('userId', '==', authState.data.uid),
-				),
-			);
-			setSubmissions(submissionsData);
-		}
-	});
-
-	createEffect(() => {
-		const submissionsData = submissions();
+		const submissionsData = props.submissions;
 		if (submissionsData && Array.isArray(submissionsData.data)) {
 			const successSubmissions = submissionsData.data.filter(({status}) => status === 'success');
 			if (successSubmissions.length === 0) {
@@ -330,8 +320,83 @@ const MainTab = () => {
 	);
 };
 
+const SubmissionsTab = (props: Props) => {
+	const app = useFirebaseApp();
+	const db = getFirestore(app);
+
+	return (
+		<TableContainer component={Paper}>
+			<Table>
+				<TableHead>
+					<TableRow>
+						<TableCell>User</TableCell>
+						<TableCell align="right">Score</TableCell>
+						<TableCell align="right">Status</TableCell>
+						<TableCell align="right">Date</TableCell>
+					</TableRow>
+				</TableHead>
+				<TableBody>
+					<Collection data={props.submissions}>
+						{(submission) => {
+							const userRef = doc(db, 'users', submission.userId) as DocumentReference<User>;
+							const userData = useFirestore(userRef);
+							return (
+								<TableRow>
+									<TableCell>
+										<Doc data={userData}>
+											{(user) => (
+												<Stack direction="row" alignItems="center">
+													<Avatar
+														alt={user.displayName}
+														src={user.photoURL}
+														sx={{width: 30, height: 30, mr: 1}}
+													/>
+													<span>{user.displayName}</span>
+												</Stack>
+											)}
+										</Doc>
+									</TableCell>
+									<TableCell align="right">{submission.score}</TableCell>
+									<TableCell align="right">{submission.status}</TableCell>
+									<TableCell align="right">{dayjs(submission.createdAt.toDate()).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
+								</TableRow>
+							);
+						 }}
+					</Collection>
+				</TableBody>
+			</Table>
+		</TableContainer>
+	);
+};
+
 const ReversingDiff = () => {
+	const [searchParams] = useSearchParams();
+	if (typeof searchParams.gameId !== 'string') {
+		throw new PageNotFoundError();
+	}
+
+	const gameId = searchParams.gameId;
+
+	const app = useFirebaseApp();
+	const db = getFirestore(app);
+
+	const authState = useAuthState();
 	const [tab, setTab] = createSignal<'main' | 'submissions' | 'ranking'>('main');
+	const [submissions, setSubmissions] = createSignal<UseFireStoreReturn<ReversingDiffSubmission[] | null | undefined> | null>(null);
+
+	const gameRef = doc(db, 'games', gameId) as DocumentReference<Game>;
+
+	createEffect(() => {
+		if (authState?.data?.uid) {
+			const submissionsData = useFirestore(
+				query(
+					collection(gameRef, 'submissions') as CollectionReference<ReversingDiffSubmission>,
+					where('userId', '==', authState.data.uid),
+				),
+			);
+			setSubmissions(submissionsData);
+		}
+	});
 
 	return (
 		<main class={styles.app}>
@@ -363,7 +428,10 @@ const ReversingDiff = () => {
 				</Box>
 				<Switch>
 					<Match when={tab() === 'main'}>
-						<MainTab/>
+						<MainTab submissions={submissions()}/>
+					</Match>
+					<Match when={tab() === 'submissions'}>
+						<SubmissionsTab submissions={submissions()}/>
 					</Match>
 				</Switch>
 			</Container>
