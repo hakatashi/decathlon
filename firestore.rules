@@ -58,10 +58,31 @@ service cloud.firestore {
                         );
       }
 
+      function isValidReversingDiffSubmission(submission, game) {
+        return submission.size() == 9
+          && submission.athlon is path
+          && game.athlon == submission.athlon
+          && submission.userId is string
+          && submission.status == 'pending'
+          && submission.language is string
+          && submission.code is string
+          && submission.stdout == null
+          && submission.stderr == null
+          && submission.duration == null
+          && submission.score == null;
+      }
+
       match /submissions/{submissionId} {
         allow read: if (
           (request.auth != null && resource.data.userId == request.auth.uid) ||
           ('endAt' in gameData() && gameData().endAt >= request.time)
+        );
+        allow create: if (
+          (request.auth != null && request.resource.data.userId == request.auth.uid) &&
+          (
+            gameData().rule == /databases/$(database)/documents/gameRules/reversing-diff &&
+            isValidReversingDiffSubmission(request.resource.data, get(/databases/(default)/documents/games/$(gameId)).data)
+          )
         );
       }
     }
