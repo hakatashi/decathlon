@@ -73,7 +73,7 @@ export const executeDiffSubmission =
 			const {duration, stderr, stdout} = result.data;
 
 			// eslint-disable-next-line no-undef-init
-			let error = undefined;
+			let error = null;
 			if (typeof duration !== 'number') {
 				error = 'duration is not a number';
 			}
@@ -92,9 +92,9 @@ export const executeDiffSubmission =
 				score = null;
 			}
 
-			submissionRef.update({
+			await submissionRef.update({
 				status: error ? 'error' : 'success',
-				errorMessage: error,
+				...(error ? {errorMessage: error} : {}),
 				score,
 				duration,
 				stderr,
