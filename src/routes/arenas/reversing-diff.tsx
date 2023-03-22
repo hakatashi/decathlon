@@ -1,5 +1,5 @@
 import {Alert, Box, Button, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Stack, TextField, Typography, useMediaQuery} from '@suid/material';
-import {addDoc, collection, CollectionReference, doc, DocumentReference, getFirestore, serverTimestamp} from 'firebase/firestore';
+import {addDoc, collection, CollectionReference, doc, DocumentReference, getFirestore, query, serverTimestamp, where} from 'firebase/firestore';
 import {getFunctions, httpsCallable} from 'firebase/functions';
 import {getStorage, ref} from 'firebase/storage';
 import last from 'lodash/last';
@@ -8,7 +8,7 @@ import {useDownloadURL, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createSignal, For, JSX, Match, onCleanup, Show, Switch} from 'solid-js';
 import SolidMarkdown from 'solid-markdown';
 import {A, useSearchParams} from 'solid-start';
-import {setArenaTitle, useAuthState} from '../arenas';
+import {setArenaTitle, setHeaderText, useAuthState} from '../arenas';
 import styles from './reversing-diff.module.css';
 import Doc from '~/components/Doc';
 import PageNotFoundError from '~/lib/PageNotFoundError';
@@ -123,17 +123,18 @@ const ReversingDiff = () => {
 	const db = getFirestore(app);
 	const storage = getStorage(app);
 
+	const authState = useAuthState();
+
 	const gameRef = doc(db, 'games', gameId) as DocumentReference<Game>;
 	const gameData = useFirestore(gameRef);
 
 	const [code, setCode] = createSignal<string>(DEFAULT_CODE);
 	const [phase, setPhase] = createSignal<'loading' | 'waiting' | 'playing' | 'finished'>('loading');
 	const [submitStatus, setSubmitStatus] = createSignal<'ready' | 'executing' | 'throttled'>('ready');
-	const [submission, setSubmission] = createSignal<UseFireStoreReturn<ReversingDiffSubmission | null | undefined> | null>(null);
+	const [submission, setSubmission] = createSignal<UseFireStoreReturn<ReversingDiffSubmission | undefined> | null>(null);
 	const [lastSubmissionTime, setLastSubmissionTime] = createSignal<number | null>(null);
 	const [throttleTime, setThrottleTime] = createSignal<number>(0);
-
-	const authState = useAuthState();
+	const [submissions, setSubmissions] = createSignal<UseFireStoreReturn<ReversingDiffSubmission[] | undefined> | null>(null);
 
 	setArenaTitle('diff');
 
@@ -204,9 +205,33 @@ const ReversingDiff = () => {
 			setSubmitStatus('ready');
 		}
 	}, 1000);
-
 	onCleanup(() => {
 		clearInterval(intervalId);
+	});
+
+	createEffect(() => {
+		if (authState?.data?.uid) {
+			const submissionsData = useFirestore(
+				query(
+					collection(gameRef, 'submissions') as CollectionReference<ReversingDiffSubmission>,
+					where('userId', '==', authState.data.uid),
+				),
+			);
+			setSubmissions(submissionsData);
+		}
+	});
+
+	createEffect(() => {
+		const submissionsData = submissions();
+		if (submissionsData && Array.isArray(submissionsData.data)) {
+			const successSubmissions = submissionsData.data.filter(({status}) => status === 'success');
+			if (successSubmissions.length === 0) {
+				setHeaderText('スコア: -');
+			} else {
+				const minScore = Math.min(...successSubmissions.map(({score}) => score!));
+				setHeaderText(`スコア: ${minScore}`);
+			}
+		}
 	});
 
 	return (
