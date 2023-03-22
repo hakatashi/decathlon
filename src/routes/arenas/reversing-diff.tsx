@@ -211,8 +211,8 @@ const ReversingDiff = () => {
 
 	return (
 		<main class={styles.app}>
-			<Container maxWidth="lg">
-				<Alert severity="info" sx={{my: 3}}>
+			<Container maxWidth="lg" sx={{py: 3}}>
+				<Alert severity="info">
 					与えられた実行ファイルを解析し、これになるべく近いファイルにビルドされるようなソースコードを提出してください。
 				</Alert>
 				<Doc data={gameData}>
@@ -244,6 +244,7 @@ const ReversingDiff = () => {
 															size="large"
 															component={A}
 															href={url}
+															color="secondary"
 														>
 															{file.label}をダウンロードする
 														</Button>
@@ -271,18 +272,18 @@ const ReversingDiff = () => {
 								/>
 								<Switch>
 									<Match when={submitStatus() === 'ready'}>
-										<Button onClick={handleClickSubmit} variant="contained">
+										<Button onClick={handleClickSubmit} variant="contained" size="large">
 											送信
 										</Button>
 									</Match>
 									<Match when={submitStatus() === 'executing'}>
-										<Button variant="contained" disabled>
+										<Button variant="contained" disabled size="large">
 											<CircularProgress color="secondary" sx={{color: 'inherit', width: '16px', height: '16px', mr: 1}}/>
 											実行中
 										</Button>
 									</Match>
 									<Match when={submitStatus() === 'throttled'}>
-										<Button variant="contained" disabled>
+										<Button variant="contained" disabled size="large">
 											<CircularProgress variant="determinate" value={(1 - throttleTime() / 30000) * 100} color="secondary" sx={{color: 'inherit', width: '16px', height: '16px', mr: 1}}/>
 											待機中⋯⋯
 										</Button>
