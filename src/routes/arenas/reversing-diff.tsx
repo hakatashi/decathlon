@@ -1,18 +1,18 @@
 import {Alert, Box, Button, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Stack, TextField, Typography, useMediaQuery} from '@suid/material';
-import {doc, DocumentReference, getFirestore} from 'firebase/firestore';
+import {addDoc, collection, CollectionReference, doc, DocumentReference, getFirestore, serverTimestamp} from 'firebase/firestore';
 import {getFunctions, httpsCallable} from 'firebase/functions';
 import {getStorage, ref} from 'firebase/storage';
 import last from 'lodash/last';
 import remarkGfm from 'remark-gfm';
 import {useDownloadURL, useFirebaseApp, useFirestore} from 'solid-firebase';
-import {createEffect, createSignal, For, Show} from 'solid-js';
+import {createEffect, createSignal, For, JSX, Match, onCleanup, Show, Switch} from 'solid-js';
 import SolidMarkdown from 'solid-markdown';
 import {A, useSearchParams} from 'solid-start';
 import {setArenaTitle, useAuthState} from '../arenas';
 import styles from './reversing-diff.module.css';
 import Doc from '~/components/Doc';
 import PageNotFoundError from '~/lib/PageNotFoundError';
-import {Game, TypingJapaneseSubmission, UseFireStoreReturn} from '~/lib/schema';
+import {Game, ReversingDiffSubmission, TypingJapaneseSubmission, UseFireStoreReturn} from '~/lib/schema';
 
 interface onGameFinishedDialogProps {
 	text: string,
@@ -126,8 +126,14 @@ const ReversingDiff = () => {
 	const gameRef = doc(db, 'games', gameId) as DocumentReference<Game>;
 	const gameData = useFirestore(gameRef);
 
-	const [text, setText] = createSignal<string>('');
+	const [code, setCode] = createSignal<string>(DEFAULT_CODE);
 	const [phase, setPhase] = createSignal<'loading' | 'waiting' | 'playing' | 'finished'>('loading');
+	const [submitStatus, setSubmitStatus] = createSignal<'ready' | 'executing' | 'throttled'>('ready');
+	const [submission, setSubmission] = createSignal<UseFireStoreReturn<ReversingDiffSubmission | null | undefined> | null>(null);
+	const [lastSubmissionTime, setLastSubmissionTime] = createSignal<number | null>(null);
+	const [throttleTime, setThrottleTime] = createSignal<number>(0);
+
+	const authState = useAuthState();
 
 	setArenaTitle('diff');
 
@@ -145,6 +151,62 @@ const ReversingDiff = () => {
 		}
 
 		setPhase('waiting');
+	});
+
+	const handleClickSubmit = async () => {
+		if (!gameData.data || !authState?.data) {
+			return;
+		}
+
+		setSubmission(null);
+		setSubmitStatus('executing');
+
+		const submissionRef = await addDoc(
+			collection(gameRef, 'submissions') as CollectionReference<ReversingDiffSubmission>,
+			{
+				athlon: gameData.data.athlon,
+				userId: authState.data.uid,
+				status: 'pending',
+				language: 'cpp',
+				code: code(),
+				stdout: null,
+				stderr: null,
+				duration: null,
+				score: null,
+				createdAt: serverTimestamp(),
+				executedAt: null,
+			},
+		);
+
+		setLastSubmissionTime(Date.now());
+		setSubmission(useFirestore(submissionRef));
+	};
+
+	createEffect(() => {
+		const submissionDoc = submission();
+		if (submitStatus() === 'executing') {
+			if (submissionDoc?.data?.status === 'success') {
+				setSubmitStatus('throttled');
+			}
+		}
+	});
+
+	const intervalId = setInterval(() => {
+		const lastSubmissionTimeData = lastSubmissionTime();
+		if (lastSubmissionTimeData === null) {
+			setThrottleTime(0);
+			return;
+		}
+
+		const newThrottleTime = Math.max(0, 30000 - (Date.now() - lastSubmissionTimeData));
+		setThrottleTime(newThrottleTime);
+		if (newThrottleTime === 0 && submitStatus() === 'throttled') {
+			setSubmitStatus('ready');
+		}
+	}, 1000);
+
+	onCleanup(() => {
+		clearInterval(intervalId);
 	});
 
 	return (
@@ -195,7 +257,9 @@ const ReversingDiff = () => {
 									label="提出コード"
 									multiline
 									minRows={4}
-									defaultValue={DEFAULT_CODE}
+									value={code()}
+									onChange={(_event, value) => setCode(value)}
+									disabled={submitStatus() === 'executing'}
 									sx={{
 										my: 5,
 										width: '100%',
@@ -205,13 +269,41 @@ const ReversingDiff = () => {
 										},
 									}}
 								/>
+								<Switch>
+									<Match when={submitStatus() === 'ready'}>
+										<Button onClick={handleClickSubmit} variant="contained">
+											送信
+										</Button>
+									</Match>
+									<Match when={submitStatus() === 'executing'}>
+										<Button variant="contained" disabled>
+											<CircularProgress color="secondary" sx={{color: 'inherit', width: '16px', height: '16px', mr: 1}}/>
+											実行中
+										</Button>
+									</Match>
+									<Match when={submitStatus() === 'throttled'}>
+										<Button variant="contained" disabled>
+											<CircularProgress variant="determinate" value={(1 - throttleTime() / 30000) * 100} color="secondary" sx={{color: 'inherit', width: '16px', height: '16px', mr: 1}}/>
+											待機中⋯⋯
+										</Button>
+									</Match>
+								</Switch>
+								<Show when={submitStatus() !== 'executing' && submission() !== null}>
+									<Doc data={submission()}>
+										{(submissionData) => (
+											<Alert severity="info" sx={{my: 3}}>
+												提出成功 - Diffスコア: {submissionData.score}
+											</Alert>
+										)}
+									</Doc>
+								</Show>
 							</>
 						);
 					}}
 				</Doc>
 			</Container>
 			<Show when={phase() === 'finished'}>
-				<OnGameFinishedDialog text={text()} gameId={gameId}/>
+				<OnGameFinishedDialog text={code()} gameId={gameId}/>
 			</Show>
 		</main>
 	);
