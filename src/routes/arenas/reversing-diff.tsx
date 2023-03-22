@@ -14,7 +14,7 @@ import styles from './reversing-diff.module.css';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import PageNotFoundError from '~/lib/PageNotFoundError';
-import {Game, ReversingDiffSubmission, TypingJapaneseSubmission, UseFireStoreReturn} from '~/lib/schema';
+import {Game, ReversingDiffSubmission, TypingJapaneseSubmission, UseFireStoreReturn, User} from '~/lib/schema';
 
 interface onGameFinishedDialogProps {
 	text: string,
@@ -326,7 +326,7 @@ const SubmissionsTab = (props: Props) => {
 
 	return (
 		<TableContainer component={Paper}>
-			<Table>
+			<Table size="small">
 				<TableHead>
 					<TableRow>
 						<TableCell>User</TableCell>
@@ -356,7 +356,7 @@ const SubmissionsTab = (props: Props) => {
 											)}
 										</Doc>
 									</TableCell>
-									<TableCell align="right">{submission.score}</TableCell>
+									<TableCell align="right"><strong>{submission.score}</strong></TableCell>
 									<TableCell align="right">{submission.status}</TableCell>
 									<TableCell align="right">{dayjs(submission.createdAt.toDate()).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
 								</TableRow>

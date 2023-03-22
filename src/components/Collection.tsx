@@ -4,20 +4,23 @@ import {For, JSX, Match, Switch} from 'solid-js';
 import {UseFireStoreReturn} from '~/lib/schema';
 
 interface Props<T extends DocumentData> {
-	data: UseFireStoreReturn<T[] | undefined>,
+	data: UseFireStoreReturn<T[] | null | undefined> | null | undefined,
 	// eslint-disable-next-line no-unused-vars
 	children: (item: T, index: () => number) => JSX.Element,
 }
 
 const Collection = <T extends DocumentData, >(props: Props<T>) => (
 	<Switch>
-		<Match when={props.data.loading}>
+		<Match when={props.data === null}>
 			<Skeleton variant="text"/>
 		</Match>
-		<Match when={props.data.error}>
+		<Match when={props.data?.loading}>
+			<Skeleton variant="text"/>
+		</Match>
+		<Match when={props.data?.error}>
 			<span class="load-error">{props.data.error?.toString()}</span>
 		</Match>
-		<Match when={props.data.data} keyed>
+		<Match when={props.data?.data} keyed>
 			{(docs) => (
 				<For each={docs}>
 					{(doc, index) => props.children(doc, index)}
