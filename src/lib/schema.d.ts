@@ -96,6 +96,13 @@ export interface ReversingDiffSubmission extends DocumentData {
 	executedAt: Timestamp | null,
 }
 
+export interface ReversingDiffRanking extends DocumentData {
+	athlon: DocumentReference<Athlon>,
+	userId: string,
+	score: number,
+	createdAt: Timestamp,
+}
+
 export interface GameRule extends DocumentData {
 	name: string,
 	icon: string,

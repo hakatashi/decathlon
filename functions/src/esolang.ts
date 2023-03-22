@@ -1,10 +1,11 @@
 import assert, {AssertionError} from 'assert';
 import axios from 'axios';
-import {DocumentReference} from 'firebase-admin/firestore';
+import {CollectionReference, DocumentReference} from 'firebase-admin/firestore';
 import {getFunctions} from 'firebase-admin/functions';
 import {getStorage} from 'firebase-admin/storage';
 import {firestore, logger, runWith} from 'firebase-functions';
-import {Game, ReversingDiffSubmission} from '../../src/lib/schema';
+import {groupBy, minBy} from 'lodash';
+import {Game, ReversingDiffRanking, ReversingDiffSubmission} from '../../src/lib/schema';
 import db from './firestore';
 
 const bucket = getStorage().bucket();
@@ -101,6 +102,22 @@ export const executeDiffSubmission =
 				stdout,
 				executedAt: new Date(),
 			});
+
+			{
+				const submissionDocs = await (db.collection(`games/${data.gameId}/submissions`) as CollectionReference<ReversingDiffSubmission>)
+					.where('status', '==', 'success').get();
+				const submissionsByUser = groupBy(submissionDocs.docs, (s) => s.data().userId);
+				for (const [userId, submissions] of Object.entries(submissionsByUser)) {
+					const minScoreSubmission = minBy(submissions, (s) => s.data().score)!.data();
+					const rankingRef = db.doc(`games/${data.gameId}/ranking/${minScoreSubmission.userId}`) as DocumentReference<ReversingDiffRanking>;
+					await rankingRef.set({
+						athlon: submission.athlon,
+						userId,
+						score: minScoreSubmission.score!,
+						createdAt: minScoreSubmission.createdAt,
+					});
+				}
+			}
 		});
 
 export const onSubmissionCreated = firestore
