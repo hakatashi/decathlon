@@ -87,6 +87,10 @@ service cloud.firestore {
           )
         );
       }
+
+      match /ranking/{userId} {
+        allow read;
+      }
     }
 
     match /gameRules/{document=**} {
