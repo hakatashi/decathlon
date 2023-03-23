@@ -1,103 +1,22 @@
 /* eslint-disable array-plural/array-plural */
 
-import {Alert, Avatar, Box, Button, ButtonGroup, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from '@suid/material';
+import {Alert, Avatar, Box, Button, ButtonGroup, CircularProgress, Container, Link as LinkUi, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from '@suid/material';
 import {blue} from '@suid/material/colors';
 import dayjs from 'dayjs';
 import {addDoc, collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, serverTimestamp, where} from 'firebase/firestore';
-import {getFunctions, httpsCallable} from 'firebase/functions';
 import {getStorage, ref} from 'firebase/storage';
-import last from 'lodash/last';
 import remarkGfm from 'remark-gfm';
 import {useDownloadURL, useFirebaseApp, useFirestore} from 'solid-firebase';
-import {createEffect, createSignal, For, Match, onCleanup, Show, Switch} from 'solid-js';
+import {createEffect, createMemo, createSignal, For, Match, onCleanup, Show, Switch} from 'solid-js';
 import SolidMarkdown from 'solid-markdown';
-import {A, useSearchParams} from 'solid-start';
+import {A, Link, useSearchParams} from 'solid-start';
 import {setArenaTitle, setHeaderText, useAuthState} from '../arenas';
 import styles from './reversing-diff.module.css';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
+import Username from '~/components/Username';
 import PageNotFoundError from '~/lib/PageNotFoundError';
-import {Game, ReversingDiffRanking, ReversingDiffSubmission, TypingJapaneseSubmission, UseFireStoreReturn, User} from '~/lib/schema';
-
-interface onGameFinishedDialogProps {
-	text: string,
-	gameId: string,
-}
-
-const OnGameFinishedDialog = (props: onGameFinishedDialogProps) => {
-	const app = useFirebaseApp();
-	const db = getFirestore(app);
-
-	const functions = getFunctions();
-	const submitTypingJapaneseScore = httpsCallable(functions, 'submitTypingJapaneseScore');
-
-	const [submissionData, setSubmissionData] = createSignal<UseFireStoreReturn<TypingJapaneseSubmission | null | undefined> | null>(null);
-
-	createEffect(() => {
-		const authState = useAuthState();
-		if (authState?.data?.uid) {
-			const submissionRef = doc(db, 'games', props.gameId, 'submissions', authState.data.uid) as DocumentReference<TypingJapaneseSubmission>;
-			setSubmissionData(useFirestore(submissionRef));
-		}
-	});
-
-	createEffect(async () => {
-		if (submissionData() !== null && !submissionData()?.error && submissionData()?.data === null) {
-			await submitTypingJapaneseScore({
-				submissionText: props.text,
-				gameId: props.gameId,
-			});
-		}
-	});
-
-	return (
-		<Dialog open class={styles.onGameFinishedDialog}>
-			<DialogTitle>
-				競技は終了しました
-			</DialogTitle>
-			<DialogContent>
-				<DialogContentText>
-					<Doc
-						data={submissionData()}
-						fallback={
-							<>
-								<CircularProgress color="primary"/>
-								<p>スコアを送信しています⋯⋯</p>
-							</>
-						}
-					>
-						{(submission) => (
-							<>
-								<Typography variant="h5" component="p">
-									スコア: {submission.score}
-								</Typography>
-								<Box mt={1}>
-									<For each={submission.diffTokens}>
-										{(diff) => (
-											<span class={styles[diff.type]}>{diff.token}</span>
-										)}
-									</For>
-								</Box>
-							</>
-						)}
-					</Doc>
-				</DialogContentText>
-			</DialogContent>
-			<DialogActions>
-				<Doc data={submissionData()}>
-					{(submission) => (
-						<Button
-							component={A}
-							href={`/athlons/${last(submission.athlon.path.split('/'))}/typing-japanese`}
-						>
-							競技ページに戻る
-						</Button>
-					)}
-				</Doc>
-			</DialogActions>
-		</Dialog>
-	);
-};
+import {Game, ReversingDiffRanking, ReversingDiffSubmission, UseFireStoreReturn, User} from '~/lib/schema';
 
 interface Config {
 	rule?: string,
@@ -121,7 +40,7 @@ interface Props {
 }
 
 const MainTab = (props: Props) => {
-	const [searchParams] = useSearchParams();
+	const [searchParams, setSearchParams] = useSearchParams();
 
 	const gameId = searchParams.gameId;
 
@@ -191,7 +110,7 @@ const MainTab = (props: Props) => {
 	createEffect(() => {
 		const submissionDoc = submission();
 		if (submitStatus() === 'executing') {
-			if (submissionDoc?.data?.status === 'success') {
+			if (submissionDoc?.data?.status === 'success' || submissionDoc?.data?.status === 'error') {
 				setSubmitStatus('throttled');
 			}
 		}
@@ -277,7 +196,8 @@ const MainTab = (props: Props) => {
 							disabled={submitStatus() === 'executing'}
 							// @ts-expect-error: type error
 							sx={{
-								my: 5,
+								mt: 5,
+								mb: 2,
 								width: '100%',
 								'& textarea': {
 									'font-family': 'monospace',
@@ -285,6 +205,32 @@ const MainTab = (props: Props) => {
 								},
 							}}
 						/>
+						<Show when={submitStatus() !== 'executing' && submission() !== null}>
+							<Doc data={submission()}>
+								{(submissionData) => (
+									<Switch>
+										<Match when={submissionData.status === 'success'}>
+											<Alert severity="info" sx={{my: 2}}>
+												提出成功 - Diffスコア: {submissionData.score}
+											</Alert>
+										</Match>
+										<Match when={submissionData.status === 'error'}>
+											<Alert severity="error" sx={{my: 2}}>
+												提出失敗
+												{' - '}
+												<LinkUi
+													href="#"
+													underline="hover"
+													onClick={() => setSearchParams({tab: 'submissions', submissionId: submissionData.id})}
+												>
+													詳細を見る
+												</LinkUi>
+											</Alert>
+										</Match>
+									</Switch>
+								)}
+							</Doc>
+						</Show>
 						<Switch>
 							<Match when={submitStatus() === 'ready'}>
 								<Button onClick={handleClickSubmit} variant="contained" size="large">
@@ -304,18 +250,6 @@ const MainTab = (props: Props) => {
 								</Button>
 							</Match>
 						</Switch>
-						<Show when={submitStatus() !== 'executing' && submission() !== null}>
-							<Doc data={submission()}>
-								{(submissionData) => (
-									<Alert severity="info" sx={{my: 3}}>
-										提出成功 - Diffスコア: {submissionData.score}
-									</Alert>
-								)}
-							</Doc>
-						</Show>
-						<Show when={phase() === 'finished'}>
-							<OnGameFinishedDialog text={code()} gameId={gameId}/>
-						</Show>
 					</>
 				);
 			}}
@@ -327,48 +261,96 @@ const SubmissionsTab = (props: Props) => {
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
 
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	const handleClickSubmission = (submissionId: string, event: MouseEvent) => {
+		event.preventDefault();
+		setSearchParams({submissionId});
+	};
+
 	return (
-		<TableContainer component={Paper}>
-			<Table size="small">
-				<TableHead>
-					<TableRow>
-						<TableCell>User</TableCell>
-						<TableCell align="right">Score</TableCell>
-						<TableCell align="right">Status</TableCell>
-						<TableCell align="right">Date</TableCell>
-					</TableRow>
-				</TableHead>
-				<TableBody>
-					<Collection data={props.submissions}>
-						{(submission) => {
-							const userRef = doc(db, 'users', submission.userId) as DocumentReference<User>;
-							const userData = useFirestore(userRef);
-							return (
-								<TableRow>
-									<TableCell>
-										<Doc data={userData}>
-											{(user) => (
-												<Stack direction="row" alignItems="center">
-													<Avatar
-														alt={user.displayName}
-														src={user.photoURL}
-														sx={{width: 30, height: 30, mr: 1}}
-													/>
-													<span>{user.displayName}</span>
-												</Stack>
-											)}
-										</Doc>
-									</TableCell>
-									<TableCell align="right"><strong>{submission.score}</strong></TableCell>
-									<TableCell align="right">{submission.status}</TableCell>
-									<TableCell align="right">{dayjs(submission.createdAt.toDate()).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
-								</TableRow>
-							);
-						 }}
-					</Collection>
-				</TableBody>
-			</Table>
-		</TableContainer>
+		<Switch>
+			<Match when={searchParams.submissionId} keyed>
+				{(submissionId) => {
+					const submission = createMemo(() => (
+						props.submissions?.data?.find(({id}) => submissionId === id)
+					));
+
+					return (
+						<div class={styles.submission}>
+							<LinkUi
+								href="#"
+								underline="hover"
+								onClick={() => setSearchParams({submissionId: undefined})}
+							>
+								提出一覧に戻る
+							</LinkUi>
+							<Typography variant="h4" component="h2" my={1}>Author</Typography>
+							<Show when={submission()} keyed>
+								{({userId}) => (
+									<Username userId={userId}/>
+								)}
+							</Show>
+							<Typography variant="h4" component="h2" my={1}>Date</Typography>
+							<Show when={submission()} keyed>
+								{({createdAt}) => (
+									<p>{dayjs(createdAt.toDate()).format('YYYY-MM-DD HH:mm:ss')}</p>
+								)}
+							</Show>
+							<Typography variant="h4" component="h2" my={1}>Execution Time</Typography>
+							<p>{submission()?.duration}ms</p>
+							<Typography variant="h4" component="h2" my={1}>Score</Typography>
+							<p>{submission()?.score ?? '-'}</p>
+							<Typography variant="h4" component="h2" my={1}>Code</Typography>
+							<pre>{submission()?.code}</pre>
+							<Show when={submission()?.errorMessage}>
+								<Typography variant="h4" component="h2" my={1}>Validation Message</Typography>
+								<pre>{submission()?.errorMessage}</pre>
+							</Show>
+							<Show when={submission()?.stderr}>
+								<Typography variant="h4" component="h2" my={1}>Error</Typography>
+								<pre>{submission()?.stderr}</pre>
+							</Show>
+						</div>
+					);
+				 }}
+			</Match>
+			<Match when>
+				<TableContainer component={Paper}>
+					<Table size="small">
+						<TableHead>
+							<TableRow>
+								<TableCell>User</TableCell>
+								<TableCell align="right">Score</TableCell>
+								<TableCell align="right">Status</TableCell>
+								<TableCell align="right">Date</TableCell>
+							</TableRow>
+						</TableHead>
+						<TableBody>
+							<Collection data={props.submissions}>
+								{(submission) => (
+									<TableRow>
+										<TableCell><Username userId={submission.userId}/></TableCell>
+										<TableCell align="right"><strong>{submission.score}</strong></TableCell>
+										<TableCell align="right">{submission.status}</TableCell>
+										<TableCell align="right">
+											<LinkUi
+												href="#"
+												underline="hover"
+												sx={{display: 'inline-box', whiteSpace: 'pre'}}
+												onClick={(event) => handleClickSubmission(submission.id, event)}
+											>
+												{dayjs(submission.createdAt.toDate()).format('YYYY-MM-DD HH:mm:ss')}
+											</LinkUi>
+										</TableCell>
+									</TableRow>
+								)}
+							</Collection>
+						</TableBody>
+					</Table>
+				</TableContainer>
+			</Match>
+		</Switch>
 	);
 };
 
@@ -398,27 +380,12 @@ const RankingTab = () => {
 				<TableBody>
 					<Collection data={rankingDocs}>
 						{(ranking, i) => {
-							const userRef = doc(db, 'users', ranking.userId) as DocumentReference<User>;
-							const userData = useFirestore(userRef);
 							const isMe = authState?.data?.uid === ranking.userId;
 
 							return (
 								<TableRow sx={isMe ? {backgroundColor: blue[50]} : {}}>
 									<TableCell>{i() + 1}</TableCell>
-									<TableCell>
-										<Doc data={userData}>
-											{(user) => (
-												<Stack direction="row" alignItems="center">
-													<Avatar
-														alt={user.displayName}
-														src={user.photoURL}
-														sx={{width: 30, height: 30, mr: 1}}
-													/>
-													<span>{user.displayName}</span>
-												</Stack>
-											)}
-										</Doc>
-									</TableCell>
+									<TableCell><Username userId={ranking.userId}/></TableCell>
 									<TableCell align="right"><strong>{ranking.score}</strong></TableCell>
 									<TableCell align="right">{dayjs(ranking.createdAt.toDate()).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
 								</TableRow>
@@ -443,7 +410,6 @@ const ReversingDiff = () => {
 	const db = getFirestore(app);
 
 	const authState = useAuthState();
-	const [tab, setTab] = createSignal<'main' | 'submissions' | 'ranking'>('main');
 	const [submissions, setSubmissions] = createSignal<UseFireStoreReturn<ReversingDiffSubmission[] | null | undefined> | null>(null);
 
 	const gameRef = doc(db, 'games', gameId) as DocumentReference<Game>;
@@ -456,6 +422,7 @@ const ReversingDiff = () => {
 					where('userId', '==', authState.data.uid),
 				),
 			);
+			console.log(submissionsData);
 			setSubmissions(submissionsData);
 		}
 	});
@@ -476,7 +443,7 @@ const ReversingDiff = () => {
 					<ButtonGroup variant="outlined" size="large">
 						<Button
 							variant={searchParams.tab === 'main' ? 'contained' : 'outlined'}
-							onClick={() => setSearchParams({tab: 'main'})}
+							onClick={() => setSearchParams({tab: 'main', submissionId: undefined})}
 						>
 							問題
 						</Button>
@@ -488,7 +455,7 @@ const ReversingDiff = () => {
 						</Button>
 						<Button
 							variant={searchParams.tab === 'ranking' ? 'contained' : 'outlined'}
-							onClick={() => setSearchParams({tab: 'ranking'})}
+							onClick={() => setSearchParams({tab: 'ranking', submissionId: undefined})}
 						>
 							ランキング
 						</Button>
