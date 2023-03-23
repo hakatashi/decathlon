@@ -83,7 +83,7 @@ service cloud.firestore {
           (request.auth != null && request.resource.data.userId == request.auth.uid) &&
           (
             gameData().rule == /databases/$(database)/documents/gameRules/reversing-diff &&
-            isValidReversingDiffSubmission(request.resource.data, get(/databases/(default)/documents/games/$(gameId)).data)
+            isValidReversingDiffSubmission(request.resource.data, gameData())
           )
         );
       }

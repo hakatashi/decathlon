@@ -432,7 +432,7 @@ const RankingTab = () => {
 };
 
 const ReversingDiff = () => {
-	const [searchParams] = useSearchParams();
+	const [searchParams, setSearchParams] = useSearchParams();
 	if (typeof searchParams.gameId !== 'string') {
 		throw new PageNotFoundError();
 	}
@@ -460,6 +460,12 @@ const ReversingDiff = () => {
 		}
 	});
 
+	createEffect(() => {
+		if (!['main', 'submissions', 'ranking'].includes(searchParams.tab)) {
+			setSearchParams({tab: 'main'});
+		}
+	});
+
 	return (
 		<main class={styles.app}>
 			<Container maxWidth="lg" sx={{py: 3}}>
@@ -469,33 +475,33 @@ const ReversingDiff = () => {
 				<Box textAlign="center" my={1}>
 					<ButtonGroup variant="outlined" size="large">
 						<Button
-							variant={tab() === 'main' ? 'contained' : 'outlined'}
-							onClick={() => setTab('main')}
+							variant={searchParams.tab === 'main' ? 'contained' : 'outlined'}
+							onClick={() => setSearchParams({tab: 'main'})}
 						>
 							問題
 						</Button>
 						<Button
-							variant={tab() === 'submissions' ? 'contained' : 'outlined'}
-							onClick={() => setTab('submissions')}
+							variant={searchParams.tab === 'submissions' ? 'contained' : 'outlined'}
+							onClick={() => setSearchParams({tab: 'submissions'})}
 						>
 							提出一覧
 						</Button>
 						<Button
-							variant={tab() === 'ranking' ? 'contained' : 'outlined'}
-							onClick={() => setTab('ranking')}
+							variant={searchParams.tab === 'ranking' ? 'contained' : 'outlined'}
+							onClick={() => setSearchParams({tab: 'ranking'})}
 						>
 							ランキング
 						</Button>
 					</ButtonGroup>
 				</Box>
 				<Switch>
-					<Match when={tab() === 'main'}>
+					<Match when={searchParams.tab === 'main'}>
 						<MainTab submissions={submissions()}/>
 					</Match>
-					<Match when={tab() === 'submissions'}>
+					<Match when={searchParams.tab === 'submissions'}>
 						<SubmissionsTab submissions={submissions()}/>
 					</Match>
-					<Match when={tab() === 'ranking'}>
+					<Match when={searchParams.tab === 'ranking'}>
 						<RankingTab/>
 					</Match>
 				</Switch>
