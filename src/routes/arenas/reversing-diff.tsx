@@ -164,7 +164,7 @@ const MainTab = (props: Props) => {
 								linkTarget="_blank"
 							/>
 						</Typography>
-						<Stack spacing={2} direction="row">
+						<Stack gap={2} direction="row" flexWrap="wrap">
 							<For each={config.files}>
 								{(file) => {
 									const urlData = useDownloadURL(ref(storage, `assets/reversing-diff/${file.filename}`));
@@ -387,7 +387,11 @@ const RankingTab = () => {
 									<TableCell>{i() + 1}</TableCell>
 									<TableCell><Username userId={ranking.userId}/></TableCell>
 									<TableCell align="right"><strong>{ranking.score}</strong></TableCell>
-									<TableCell align="right">{dayjs(ranking.createdAt.toDate()).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
+									<TableCell align="right">
+										<Box component="span" sx={{display: 'inline-box', whiteSpace: 'pre'}}>
+											{dayjs(ranking.createdAt.toDate()).format('YYYY-MM-DD HH:mm:ss')}
+										</Box>
+									</TableCell>
 								</TableRow>
 							);
 						 }}
