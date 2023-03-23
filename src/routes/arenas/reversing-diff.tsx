@@ -331,7 +331,7 @@ const SubmissionsTab = (props: Props) => {
 								{(submission) => (
 									<TableRow>
 										<TableCell><Username userId={submission.userId}/></TableCell>
-										<TableCell align="right"><strong>{submission.score}</strong></TableCell>
+										<TableCell align="right"><strong>{submission.score ?? '-'}</strong></TableCell>
 										<TableCell align="right">{submission.status}</TableCell>
 										<TableCell align="right">
 											<LinkUi
@@ -420,9 +420,9 @@ const ReversingDiff = () => {
 				query(
 					collection(gameRef, 'submissions') as CollectionReference<ReversingDiffSubmission>,
 					where('userId', '==', authState.data.uid),
+					orderBy('createdAt', 'desc'),
 				),
 			);
-			console.log(submissionsData);
 			setSubmissions(submissionsData);
 		}
 	});
