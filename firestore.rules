@@ -77,7 +77,7 @@ service cloud.firestore {
       match /submissions/{submissionId} {
         allow read: if (
           (request.auth != null && resource.data.userId == request.auth.uid) ||
-          ('endAt' in gameData() && gameData().endAt >= request.time)
+          ('endAt' in gameData() && gameData().endAt <= request.time)
         );
         allow create: if (
           (request.auth != null && request.resource.data.userId == request.auth.uid) &&
