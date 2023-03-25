@@ -128,6 +128,8 @@ const Leaderboard = () => {
 													return {...score, id: score.id, rank} as RankedScore;
 												});
 
+												const maxRawScore = Math.max(...scores.map(({rawScore}) => rawScore));
+
 												return (
 													<For each={rankedScores}>
 														{(score) => {
@@ -167,6 +169,7 @@ const Leaderboard = () => {
 																				score.rank,
 																				game.maxPoint,
 																				game.scoreConfiguration,
+																				maxRawScore,
 																			).toFixed(2)}
 																		</strong>
 																	</TableCell>

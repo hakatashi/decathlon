@@ -7,7 +7,23 @@ import {orderBy, sortBy, sum} from 'lodash';
 import type {Game, Score, ScoreConfiguration} from '../../src/lib/schema';
 
 // eslint-disable-next-line import/prefer-default-export
-export const calculateScore = (rawScore: number, rank: number, maxPoint: number, configuration: ScoreConfiguration) => {
+export const calculateScore = (
+	rawScore: number,
+	rank: number,
+	maxPoint: number,
+	configuration: ScoreConfiguration,
+	highestRawScore?: number,
+) => {
+	if (configuration.type === 'max-ratio') {
+		if (highestRawScore === undefined) {
+			throw new Error('Argument error: highestRawScore must be provided for max-ratio configuration');
+		}
+		if (rawScore > highestRawScore) {
+			throw new Error('highestRawScore cannot be larger than rawScore');
+		}
+		return rawScore / highestRawScore * maxPoint;
+	}
+
 	if (configuration.type === 'score') {
 		return Math.min(maxPoint, rawScore * configuration.scoreWeight);
 	}
@@ -52,6 +68,7 @@ export const calculateRanking = (gameDocs: QuerySnapshot<Game>, scoreDocs: Query
 		const gameId = game.id;
 		const scores = scoresMap.get(gameId) ?? [];
 		const sortedScores = orderBy(scores, ['rawScore', 'tiebreakScore'], ['desc', 'desc']);
+		const maxRawScore = Math.max(...scores.map(({rawScore}) => rawScore));
 
 		for (const score of scores) {
 			usersSet.add(score.userId);
@@ -82,6 +99,7 @@ export const calculateRanking = (gameDocs: QuerySnapshot<Game>, scoreDocs: Query
 				scoreEntry.rank,
 				game.data().maxPoint,
 				game.data().scoreConfiguration,
+				maxRawScore,
 			);
 
 			return scoreEntry;

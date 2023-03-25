@@ -42,7 +42,11 @@ export interface ScoreConfigurationScoreAndRank {
 	rankWeight: number,
 }
 
-export type ScoreConfiguration = ScoreConfigurationScore | ScoreConfigurationScoreAndRank;
+export interface ScoreConfigurationMaxRatio {
+	type: 'max-ratio',
+}
+
+export type ScoreConfiguration = ScoreConfigurationScore | ScoreConfigurationScoreAndRank | ScoreConfigurationMaxRatio;
 
 export interface Game extends DocumentData {
 	athlon: DocumentReference<Athlon>,
