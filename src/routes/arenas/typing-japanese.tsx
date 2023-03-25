@@ -7,7 +7,7 @@ import last from 'lodash/last';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, For, onCleanup, onMount, Show} from 'solid-js';
 import {A, Link, useSearchParams} from 'solid-start';
-import {setArenaTitle, setHeaderText, useAuthState} from '../arenas';
+import {setArenaTitle, setHeaderText, useUser} from '../arenas';
 import styles from './typing-japanese.module.css';
 import Doc from '~/components/Doc';
 import PageNotFoundError from '~/lib/PageNotFoundError';
@@ -28,9 +28,9 @@ const OnGameFinishedDialog = (props: onGameFinishedDialogProps) => {
 	const [submissionData, setSubmissionData] = createSignal<UseFireStoreReturn<TypingJapaneseSubmission | null | undefined> | null>(null);
 
 	createEffect(() => {
-		const authState = useAuthState();
-		if (authState?.data?.uid) {
-			const submissionRef = doc(db, 'games', props.gameId, 'submissions', authState.data.uid) as DocumentReference<TypingJapaneseSubmission>;
+		const user = useUser();
+		if (user?.uid) {
+			const submissionRef = doc(db, 'games', props.gameId, 'submissions', user.uid) as DocumentReference<TypingJapaneseSubmission>;
 			setSubmissionData(useFirestore(submissionRef));
 		}
 	});
@@ -137,9 +137,9 @@ const TypingJapanese = () => {
 	const [submissionData, setSubmissionData] = createSignal<UseFireStoreReturn<TypingJapaneseSubmission | null | undefined> | null>(null);
 
 	createEffect(() => {
-		const authState = useAuthState();
-		if (authState?.data?.uid) {
-			const submissionRef = doc(db, 'games', gameId, 'submissions', authState.data.uid) as DocumentReference<TypingJapaneseSubmission>;
+		const user = useUser();
+		if (user?.uid) {
+			const submissionRef = doc(db, 'games', gameId, 'submissions', user.uid) as DocumentReference<TypingJapaneseSubmission>;
 			setSubmissionData(useFirestore(submissionRef));
 		}
 	});

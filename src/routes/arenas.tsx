@@ -1,5 +1,6 @@
 import {AppBar, Avatar, IconButton, Toolbar, Typography} from '@suid/material';
 import {getAuth} from 'firebase/auth';
+import type {User as AuthUser} from 'firebase/auth';
 import {doc, DocumentReference, getFirestore} from 'firebase/firestore';
 import {useFirebaseApp, useAuth, useFirestore} from 'solid-firebase';
 import {createContext, createEffect, createSignal, Show, useContext} from 'solid-js';
@@ -9,9 +10,7 @@ import Doc from '~/components/Doc';
 import LoginRequiredDialog from '~/components/LoginRequiredDialog';
 import type {UseFireStoreReturn, User} from '~/lib/schema';
 
-type UseAuthReturn = ReturnType<typeof useAuth>;
-
-const AuthStateContext = createContext<UseAuthReturn>();
+const UserContext = createContext<AuthUser>();
 
 export const [headerText, setHeaderText] = createSignal<string>('');
 export const [arenaTitle, setArenaTitle] = createSignal<string>('');
@@ -33,41 +32,43 @@ const ArenasLayout = () => {
 	});
 
 	return (
-		<AuthStateContext.Provider value={authState}>
-			<div class={styles.wrap}>
-				<AppBar position="static" class={styles.header}>
-					<Toolbar variant="dense">
-						<Typography variant="h6" color="inherit" component="h1">
-							{arenaTitle()}
-						</Typography>
-						<Typography variant="h6" component="div" color="inherit" sx={{flexGrow: 1, textAlign: 'center'}}>
-							{headerText()}
-						</Typography>
-						<IconButton sx={{p: 0}} size="small">
-							<Doc data={userData()}>
-								{({displayName, photoURL}) => (
-									<Avatar
-										alt={displayName ?? 'No name'}
-										src={photoURL ?? ''}
-										sx={{width: 30, height: 30}}
-									/>
-								)}
-							</Doc>
-						</IconButton>
-					</Toolbar>
-				</AppBar>
-				<Show
-					when={authState.data}
-					fallback={<LoginRequiredDialog/>}
-				>
-					<div class={styles.mainArea}>
-						<Outlet/>
-					</div>
-				</Show>
-			</div>
-		</AuthStateContext.Provider>
+		<div class={styles.wrap}>
+			<AppBar position="static" class={styles.header}>
+				<Toolbar variant="dense">
+					<Typography variant="h6" color="inherit" component="h1">
+						{arenaTitle()}
+					</Typography>
+					<Typography variant="h6" component="div" color="inherit" sx={{flexGrow: 1, textAlign: 'center'}}>
+						{headerText()}
+					</Typography>
+					<IconButton sx={{p: 0}} size="small">
+						<Doc data={userData()}>
+							{({displayName, photoURL}) => (
+								<Avatar
+									alt={displayName ?? 'No name'}
+									src={photoURL ?? ''}
+									sx={{width: 30, height: 30}}
+								/>
+							)}
+						</Doc>
+					</IconButton>
+				</Toolbar>
+			</AppBar>
+			<Show when={!authState.loading && !authState.data}>
+				<LoginRequiredDialog/>
+			</Show>
+			<Show when={authState.data} keyed>
+				{(user) => (
+					<UserContext.Provider value={user}>
+						<div class={styles.mainArea}>
+							<Outlet/>
+						</div>
+					</UserContext.Provider>
+				)}
+			</Show>
+		</div>
 	);
 };
 
-export const useAuthState = () => useContext(AuthStateContext);
+export const useUser = () => useContext(UserContext);
 export default ArenasLayout;

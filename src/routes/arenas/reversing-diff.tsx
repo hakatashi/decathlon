@@ -1,6 +1,6 @@
 /* eslint-disable array-plural/array-plural */
 
-import {Alert, Avatar, Box, Button, ButtonGroup, CircularProgress, Container, Link as LinkUi, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from '@suid/material';
+import {Alert, Box, Button, ButtonGroup, CircularProgress, Container, Link as LinkUi, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from '@suid/material';
 import {blue} from '@suid/material/colors';
 import dayjs from 'dayjs';
 import {addDoc, collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, serverTimestamp, where} from 'firebase/firestore';
@@ -9,14 +9,14 @@ import remarkGfm from 'remark-gfm';
 import {useDownloadURL, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, For, Match, onCleanup, Show, Switch} from 'solid-js';
 import SolidMarkdown from 'solid-markdown';
-import {A, Link, useSearchParams} from 'solid-start';
-import {setArenaTitle, setHeaderText, useAuthState} from '../arenas';
+import {A, useSearchParams} from 'solid-start';
+import {setArenaTitle, setHeaderText, useUser} from '../arenas';
 import styles from './reversing-diff.module.css';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import Username from '~/components/Username';
 import PageNotFoundError from '~/lib/PageNotFoundError';
-import {Game, ReversingDiffRanking, ReversingDiffSubmission, UseFireStoreReturn, User} from '~/lib/schema';
+import {Game, ReversingDiffRanking, ReversingDiffSubmission, UseFireStoreReturn} from '~/lib/schema';
 
 interface Config {
 	rule?: string,
@@ -48,7 +48,7 @@ const MainTab = (props: Props) => {
 	const db = getFirestore(app);
 	const storage = getStorage(app);
 
-	const authState = useAuthState();
+	const user = useUser();
 
 	const gameRef = doc(db, 'games', gameId) as DocumentReference<Game>;
 	const gameData = useFirestore(gameRef);
@@ -79,7 +79,7 @@ const MainTab = (props: Props) => {
 	});
 
 	const handleClickSubmit = async () => {
-		if (!gameData.data || !authState?.data) {
+		if (!gameData.data || !user?.uid) {
 			return;
 		}
 
@@ -90,7 +90,7 @@ const MainTab = (props: Props) => {
 			collection(gameRef, 'submissions') as CollectionReference<ReversingDiffSubmission>,
 			{
 				athlon: gameData.data.athlon,
-				userId: authState.data.uid,
+				userId: user.uid,
 				status: 'pending',
 				language: 'cpp',
 				code: code(),
@@ -361,7 +361,7 @@ const RankingTab = () => {
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
 
-	const authState = useAuthState();
+	const user = useUser();
 
 	const rankingRef = collection(db, `games/${gameId}/ranking`) as CollectionReference<ReversingDiffRanking>;
 	const rankingDocs = useFirestore(query(rankingRef, orderBy('score', 'asc'), orderBy('createdAt', 'asc')));
@@ -380,7 +380,7 @@ const RankingTab = () => {
 				<TableBody>
 					<Collection data={rankingDocs}>
 						{(ranking, i) => {
-							const isMe = authState?.data?.uid === ranking.userId;
+							const isMe = user?.uid === ranking.userId;
 
 							return (
 								<TableRow sx={isMe ? {backgroundColor: blue[50]} : {}}>
@@ -413,17 +413,17 @@ const ReversingDiff = () => {
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
 
-	const authState = useAuthState();
+	const user = useUser();
 	const [submissions, setSubmissions] = createSignal<UseFireStoreReturn<ReversingDiffSubmission[] | null | undefined> | null>(null);
 
 	const gameRef = doc(db, 'games', gameId) as DocumentReference<Game>;
 
 	createEffect(() => {
-		if (authState?.data?.uid) {
+		if (user?.uid) {
 			const submissionsData = useFirestore(
 				query(
 					collection(gameRef, 'submissions') as CollectionReference<ReversingDiffSubmission>,
-					where('userId', '==', authState.data.uid),
+					where('userId', '==', user.uid),
 					orderBy('createdAt', 'desc'),
 				),
 			);
