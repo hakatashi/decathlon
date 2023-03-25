@@ -1,10 +1,13 @@
 /* eslint-disable array-plural/array-plural */
 
-import {Alert, Box, Button, ButtonGroup, Card, CardContent, CircularProgress, Container, Grid, Link as LinkUi, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from '@suid/material';
+import {exec} from 'child_process';
+import {Alert, Box, Button, ButtonGroup, Card, CardContent, CircularProgress, Container, FormControl, Grid, InputLabel, Link as LinkUi, MenuItem, Paper, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from '@suid/material';
+import {SelectChangeEvent} from '@suid/material/Select';
 import {blue, red} from '@suid/material/colors';
 import {stripIndent} from 'common-tags';
 import dayjs from 'dayjs';
 import {addDoc, collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, serverTimestamp, where} from 'firebase/firestore';
+import zip from 'lodash/zip';
 import remarkGfm from 'remark-gfm';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, For, Match, onCleanup, Show, Switch} from 'solid-js';
@@ -16,6 +19,7 @@ import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import Username from '~/components/Username';
 import PageNotFoundError from '~/lib/PageNotFoundError';
+import {codegolfLanguageAllowList} from '~/lib/const';
 import {CodegolfSubmission, Game, CodegolfRanking, UseFireStoreReturn, CodegolfConfiguration} from '~/lib/schema';
 
 const DEFAULT_CODES = {
@@ -55,6 +59,8 @@ const MainTab = (props: MainTabProps) => {
 	const [lastSubmissionTime, setLastSubmissionTime] = createSignal<number | null>(null);
 	const [throttleTime, setThrottleTime] = createSignal<number>(0);
 	const [selectedLanguage, setSelectedLanguage] = createSignal<string | null>(null);
+	const [selectedAnyLanguage, setSelectedAnyLanguage] = createSignal<string | null>(null);
+	const [languageInfos, setLanguageInfos] = createSignal<{shortestSize: number | null}[]>([]);
 
 	const handleClickSubmit = async () => {
 		if (!gameData.data || !user?.uid || code().length === 0) {
@@ -111,17 +117,29 @@ const MainTab = (props: MainTabProps) => {
 
 	createEffect(() => {
 		const submissionsData = props.submissions;
-		if (submissionsData && Array.isArray(submissionsData.data)) {
+		if (submissionsData && Array.isArray(submissionsData.data) && gameData.data) {
 			const successSubmissions = submissionsData.data.filter(({status, userId}) => (
 				status === 'success' && userId === user?.uid
 			));
-			if (successSubmissions.length === 0) {
-				setHeaderText('スコア: -');
-			} else {
-				const minScore = Math.min(...successSubmissions.map(({score}) => score!));
-				setHeaderText(`スコア: ${minScore}`);
-			}
+			const config = gameData.data.configuration as CodegolfConfiguration;
+			const newLanguageInfos = config.languages.map((language) => {
+				const filteredSubmissions = successSubmissions.filter((s) => s.language === language.id);
+				const shortestSize = filteredSubmissions.length === 0 ? null : Math.min(...filteredSubmissions.map(({size}) => size));
+				return {shortestSize};
+			});
+			setLanguageInfos(newLanguageInfos);
 		}
+	});
+
+	const handleChangeAnyLanguage = (event: SelectChangeEvent) => {
+		setSelectedAnyLanguage(event.target.value);
+	};
+
+	const executionLanguage = createMemo(() => {
+		if (selectedLanguage() !== 'anything') {
+			return selectedLanguage();
+		}
+		return selectedAnyLanguage();
 	});
 
 	return (
@@ -152,20 +170,20 @@ const MainTab = (props: MainTabProps) => {
 							</For>
 						</Grid>
 						<Stack direction="row" gap={3} flexWrap="wrap">
-							<For each={config.languages}>
-								{(language) => (
+							<For each={zip(config.languages, languageInfos())}>
+								{([language, languageInfo]) => (
 									<Card
 										sx={{
 											flexGrow: 1,
 											cursor: 'pointer',
-											...(selectedLanguage() === language.id ? {backgroundColor: blue[50]} : {}),
+											...(selectedLanguage() === language?.id ? {backgroundColor: blue[50]} : {}),
 										}}
-										onClick={() => setSelectedLanguage(language.id)}
+										onClick={() => language && setSelectedLanguage(language.id)}
 									>
 										<CardContent>
-											<Typography variant="h5" component="div">{language.label}</Typography>
+											<Typography variant="h5" component="div">{language?.label}</Typography>
 											<Typography color="text.secondary">
-												Score: 100 bytes
+												Score: {languageInfo?.shortestSize ?? '-'} bytes
 											</Typography>
 										</CardContent>
 									</Card>
@@ -174,16 +192,38 @@ const MainTab = (props: MainTabProps) => {
 						</Stack>
 						<Show when={selectedLanguage()} keyed>
 							{(language) => (
-								<>
-									<Typography variant="body1" sx={{mt: 3}}>
-										Environment:{' '}
-										<LinkUi
-											target="_blank"
-											href={`https://hub.docker.com/r/esolang/${language}`}
+								<Box my={3}>
+									<Show when={selectedLanguage() === 'anything'}>
+										<FormControl
+											sx={{
+												width: '100%',
+											}}
 										>
-											esolang/{language}
-										</LinkUi>
-									</Typography>
+											<InputLabel>Language</InputLabel>
+											<Select
+												value={selectedAnyLanguage()}
+												onChange={handleChangeAnyLanguage}
+												label="Language"
+											>
+												<For each={codegolfLanguageAllowList}>
+													{([languageId, languageName]) => (
+														<MenuItem value={languageId}>{languageName}</MenuItem>
+													)}
+												</For>
+											</Select>
+										</FormControl>
+									</Show>
+									<Show when={executionLanguage()}>
+										<Typography variant="body1" sx={{mt: 1}}>
+											Environment:{' '}
+											<LinkUi
+												target="_blank"
+												href={`https://hub.docker.com/r/esolang/${executionLanguage()}`}
+											>
+												esolang/{executionLanguage()}
+											</LinkUi>
+										</Typography>
+									</Show>
 									<TextField
 										label="提出コード"
 										multiline
@@ -252,7 +292,7 @@ const MainTab = (props: MainTabProps) => {
 											</Button>
 										</Match>
 									</Switch>
-								</>
+								</Box>
 							)}
 						</Show>
 					</>
