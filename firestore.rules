@@ -74,6 +74,23 @@ service cloud.firestore {
           && submission.executedAt == null;
       }
 
+      function isValidCodegolfSubmission(submission, game) {
+        return submission.keys.hasOnly([
+            'athlon', 'userId', 'status', 'language', 'code', 'size',
+            'testcases', 'createdAt', 'executedAt'])
+          && submission.athlon is path
+          && game.athlon == submission.athlon
+          && submission.userId is string
+          && submission.status == 'pending'
+          && submission.language is string
+          && submission.code is string
+          && submission.size == submission.code.size()
+          && submission.testcases is list
+          && submission.testcases.size() == 0
+          && submission.createdAt == request.time
+          && submission.executedAt == null;
+      }
+
       match /submissions/{submissionId} {
         allow read: if (
           (request.auth != null && resource.data.userId == request.auth.uid) ||
@@ -82,8 +99,14 @@ service cloud.firestore {
         allow create: if (
           (request.auth != null && request.resource.data.userId == request.auth.uid) &&
           (
+          (
             gameData().rule == /databases/$(database)/documents/gameRules/reversing-diff &&
             isValidReversingDiffSubmission(request.resource.data, gameData())
+          ) ||
+          (
+            gameData().rule == /databases/$(database)/documents/gameRules/codegolf &&
+            isValidCodegolfSubmission(request.resource.data, gameData())
+          )
           )
         );
       }
