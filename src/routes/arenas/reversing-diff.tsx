@@ -19,6 +19,7 @@ import PageNotFoundError from '~/lib/PageNotFoundError';
 import {Game, ReversingDiffRanking, ReversingDiffSubmission, UseFireStoreReturn} from '~/lib/schema';
 
 interface Config {
+	enabled?: boolean,
 	rule?: string,
 	files?: {
 		filename: string,
@@ -35,11 +36,12 @@ int main() {
 }
 `.trim();
 
-interface Props {
+interface MainTabProps {
 	submissions: UseFireStoreReturn<ReversingDiffSubmission[] | null | undefined> | null,
+	phase: 'loading' | 'waiting' | 'playing' | 'finished',
 }
 
-const MainTab = (props: Props) => {
+const MainTab = (props: MainTabProps) => {
 	const [searchParams, setSearchParams] = useSearchParams();
 
 	const gameId = searchParams.gameId;
@@ -54,29 +56,10 @@ const MainTab = (props: Props) => {
 	const gameData = useFirestore(gameRef);
 
 	const [code, setCode] = createSignal<string>(DEFAULT_CODE);
-	const [phase, setPhase] = createSignal<'loading' | 'waiting' | 'playing' | 'finished'>('loading');
 	const [submitStatus, setSubmitStatus] = createSignal<'ready' | 'executing' | 'throttled'>('ready');
 	const [submission, setSubmission] = createSignal<UseFireStoreReturn<ReversingDiffSubmission | null | undefined> | null>(null);
 	const [lastSubmissionTime, setLastSubmissionTime] = createSignal<number | null>(null);
 	const [throttleTime, setThrottleTime] = createSignal<number>(0);
-
-	setArenaTitle('diff');
-
-	createEffect(() => {
-		if (gameData.loading) {
-			return;
-		}
-
-		if (!gameData.data || gameData.error) {
-			throw new PageNotFoundError();
-		}
-
-		if (gameData.data.rule.path !== 'gameRules/reversing-diff') {
-			throw new PageNotFoundError();
-		}
-
-		setPhase('waiting');
-	});
 
 	const handleClickSubmit = async () => {
 		if (!gameData.data || !user?.uid) {
@@ -136,7 +119,9 @@ const MainTab = (props: Props) => {
 	createEffect(() => {
 		const submissionsData = props.submissions;
 		if (submissionsData && Array.isArray(submissionsData.data)) {
-			const successSubmissions = submissionsData.data.filter(({status}) => status === 'success');
+			const successSubmissions = submissionsData.data.filter(({status, userId}) => (
+				status === 'success' && userId === user?.uid
+			));
 			if (successSubmissions.length === 0) {
 				setHeaderText('スコア: -');
 			} else {
@@ -153,9 +138,7 @@ const MainTab = (props: Props) => {
 
 				return (
 					<>
-						<Typography
-							variant="body1"
-						>
+						<Typography variant="body1">
 							<SolidMarkdown
 								class={styles.rule}
 								// eslint-disable-next-line react/no-children-prop
@@ -193,7 +176,7 @@ const MainTab = (props: Props) => {
 							minRows={4}
 							value={code()}
 							onChange={(_event, value) => setCode(value)}
-							disabled={submitStatus() === 'executing'}
+							disabled={props.phase === 'finished' || submitStatus() === 'executing'}
 							// @ts-expect-error: type error
 							sx={{
 								mt: 5,
@@ -232,6 +215,11 @@ const MainTab = (props: Props) => {
 							</Doc>
 						</Show>
 						<Switch>
+							<Match when={props.phase === 'finished'}>
+								<Button variant="contained" disabled size="large">
+									競技は終了しました
+								</Button>
+							</Match>
 							<Match when={submitStatus() === 'ready'}>
 								<Button onClick={handleClickSubmit} variant="contained" size="large">
 									送信
@@ -257,10 +245,11 @@ const MainTab = (props: Props) => {
 	);
 };
 
-const SubmissionsTab = (props: Props) => {
-	const app = useFirebaseApp();
-	const db = getFirestore(app);
+interface SubmissionsTabProps {
+	submissions: UseFireStoreReturn<ReversingDiffSubmission[] | null | undefined> | null,
+}
 
+const SubmissionsTab = (props: SubmissionsTabProps) => {
 	const [searchParams, setSearchParams] = useSearchParams();
 
 	const handleClickSubmission = (submissionId: string, event: MouseEvent) => {
@@ -415,19 +404,33 @@ const ReversingDiff = () => {
 
 	const user = useUser();
 	const [submissions, setSubmissions] = createSignal<UseFireStoreReturn<ReversingDiffSubmission[] | null | undefined> | null>(null);
+	const [phase, setPhase] = createSignal<'loading' | 'waiting' | 'playing' | 'finished'>('loading');
 
 	const gameRef = doc(db, 'games', gameId) as DocumentReference<Game>;
+	const gameData = useFirestore(gameRef);
+
+	setArenaTitle('diff');
 
 	createEffect(() => {
 		if (user?.uid) {
-			const submissionsData = useFirestore(
-				query(
+			if (phase() === 'playing') {
+				const submissionsData = useFirestore(
+					query(
 					collection(gameRef, 'submissions') as CollectionReference<ReversingDiffSubmission>,
 					where('userId', '==', user.uid),
 					orderBy('createdAt', 'desc'),
-				),
-			);
-			setSubmissions(submissionsData);
+					),
+				);
+				setSubmissions(submissionsData);
+			} else if (phase() === 'finished') {
+				const submissionsData = useFirestore(
+					query(
+					collection(gameRef, 'submissions') as CollectionReference<ReversingDiffSubmission>,
+					orderBy('createdAt', 'desc'),
+					),
+				);
+				setSubmissions(submissionsData);
+			}
 		}
 	});
 
@@ -437,47 +440,100 @@ const ReversingDiff = () => {
 		}
 	});
 
+	createEffect(() => {
+		if (gameData.loading) {
+			return;
+		}
+
+		if (!gameData.data || gameData.error) {
+			throw new PageNotFoundError();
+		}
+
+		if (gameData.data.rule.path !== 'gameRules/reversing-diff') {
+			throw new PageNotFoundError();
+		}
+
+		setPhase('waiting');
+
+		if (gameData.data.configuration.enabled) {
+			setPhase('playing');
+
+			if (gameData.data.endAt && gameData.data.endAt.toDate() <= new Date()) {
+				setPhase('finished');
+			}
+		}
+	});
+
+	const intervalId = setInterval(() => {
+		if (
+			phase() === 'playing' &&
+			gameData.data?.endAt &&
+			gameData.data.endAt.toDate() <= new Date()
+		) {
+			setPhase('finished');
+		}
+	}, 1000);
+	onCleanup(() => {
+		clearInterval(intervalId);
+	});
+
 	return (
-		<main class={styles.app}>
-			<Container maxWidth="lg" sx={{py: 3}}>
-				<Alert severity="info">
-					与えられた実行ファイルを解析し、これになるべく近いファイルにビルドされるようなソースコードを提出してください。
-				</Alert>
-				<Box textAlign="center" my={1}>
-					<ButtonGroup variant="outlined" size="large">
-						<Button
-							variant={searchParams.tab === 'main' ? 'contained' : 'outlined'}
-							onClick={() => setSearchParams({tab: 'main', submissionId: undefined})}
-						>
-							問題
-						</Button>
-						<Button
-							variant={searchParams.tab === 'submissions' ? 'contained' : 'outlined'}
-							onClick={() => setSearchParams({tab: 'submissions'})}
-						>
-							提出一覧
-						</Button>
-						<Button
-							variant={searchParams.tab === 'ranking' ? 'contained' : 'outlined'}
-							onClick={() => setSearchParams({tab: 'ranking', submissionId: undefined})}
-						>
-							ランキング
-						</Button>
-					</ButtonGroup>
-				</Box>
-				<Switch>
-					<Match when={searchParams.tab === 'main'}>
-						<MainTab submissions={submissions()}/>
-					</Match>
-					<Match when={searchParams.tab === 'submissions'}>
-						<SubmissionsTab submissions={submissions()}/>
-					</Match>
-					<Match when={searchParams.tab === 'ranking'}>
-						<RankingTab/>
-					</Match>
-				</Switch>
-			</Container>
-		</main>
+		<Switch>
+			<Match when={phase() === 'waiting'}>
+				<Typography
+					variant="h3"
+					component="p"
+					textAlign="center"
+					py={6}
+				>
+					競技開始までしばらくお待ち下さい。
+				</Typography>
+			</Match>
+			<Match
+				when={phase() === 'playing' || phase() === 'finished'}
+			>
+				<main class={styles.app}>
+					<Container maxWidth="lg" sx={{py: 3}}>
+						<Alert severity="info">
+							与えられた実行ファイルを解析し、これになるべく近いファイルにビルドされるようなソースコードを提出してください。
+						</Alert>
+						<Box textAlign="center" my={1}>
+							<ButtonGroup variant="outlined" size="large">
+								<Button
+									variant={searchParams.tab === 'main' ? 'contained' : 'outlined'}
+									onClick={() => setSearchParams({tab: 'main', submissionId: undefined})}
+								>
+									問題
+								</Button>
+								<Button
+									variant={searchParams.tab === 'submissions' ? 'contained' : 'outlined'}
+									onClick={() => setSearchParams({tab: 'submissions'})}
+								>
+									提出一覧
+								</Button>
+								<Button
+									variant={searchParams.tab === 'ranking' ? 'contained' : 'outlined'}
+									onClick={() => setSearchParams({tab: 'ranking', submissionId: undefined})}
+								>
+									ランキング
+								</Button>
+							</ButtonGroup>
+						</Box>
+						<Switch>
+							<Match when={searchParams.tab === 'main'}>
+								<MainTab submissions={submissions()} phase={phase()}/>
+							</Match>
+							<Match when={searchParams.tab === 'submissions'}>
+								<SubmissionsTab submissions={submissions()}/>
+							</Match>
+							<Match when={searchParams.tab === 'ranking'}>
+								<RankingTab/>
+							</Match>
+						</Switch>
+					</Container>
+				</main>
+			</Match>
+		</Switch>
 	);
 };
 
