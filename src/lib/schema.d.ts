@@ -106,12 +106,14 @@ export interface CodegolfSubmission extends DocumentData {
 	status: 'pending' | 'executing' | 'failed' | 'success' | 'error' | 'invalid',
 	language: string,
 	code: string,
+	size: number,
 	testcases: {
 		stdin: string,
 		stdout: string | null,
 		stderr: string | null,
 		trace: string | null,
 		duration: number | null,
+		status: 'failed' | 'success' | 'error',
 	}[],
 	errorMessage?: string,
 	createdAt: Timestamp,
@@ -136,6 +138,18 @@ export interface ReversingDiffRanking extends DocumentData {
 	userId: string,
 	score: number,
 	createdAt: Timestamp,
+}
+
+export interface CodegolfRanking extends DocumentData {
+	athlon: DocumentReference<Athlon>,
+	userId: string,
+	score: number,
+	languages: {
+		id: string,
+		size: number,
+		score: number,
+	}[],
+	updatedAt: Timestamp,
 }
 
 export interface GameRule extends DocumentData {

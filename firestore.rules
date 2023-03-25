@@ -66,6 +66,7 @@ service cloud.firestore {
           && submission.status == 'pending'
           && submission.language is string
           && submission.code is string
+          && submission.code.size() > 0
           && submission.stdout == null
           && submission.stderr == null
           && submission.duration == null
@@ -84,6 +85,7 @@ service cloud.firestore {
           && submission.status == 'pending'
           && submission.language is string
           && submission.code is string
+          && submission.code.size() > 0
           && submission.size == submission.code.size()
           && submission.testcases is list
           && submission.testcases.size() == 0

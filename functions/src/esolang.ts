@@ -120,6 +120,12 @@ export const executeDiffSubmission =
 			}
 		});
 
+const isTestcaseCorrect = (result: string, expected: string) => {
+	const normalizedResult = result.replaceAll(/\s/g, '');
+	const normalizedExpected = expected.replaceAll(/\s/g, '');
+	return normalizedResult === normalizedExpected;
+};
+
 export const executeCodegolfSubmission =
 	runWith({secrets: ['ESOLANG_BATTLE_API_TOKEN']})
 		.tasks.taskQueue({
@@ -166,6 +172,8 @@ export const executeCodegolfSubmission =
 
 			logger.info(`Starting execution of submission ${submissionDoc.id}`);
 
+			type TestcaseStatus = 'error' | 'failed' | 'success';
+
 			let error = null;
 			const testcaseResults: {
 				stdin: string,
@@ -173,6 +181,7 @@ export const executeCodegolfSubmission =
 				stderr: string | null,
 				trace: string | null,
 				duration: number | null,
+				status: TestcaseStatus,
 			}[] = [];
 
 			for (const [i, testcase] of config.testcases.entries()) {
@@ -208,8 +217,13 @@ export const executeCodegolfSubmission =
 					error = 'trace is not a string';
 				}
 
+				let status: TestcaseStatus | null = null;
 				if (error) {
-					break;
+					status = 'error';
+				} else if (isTestcaseCorrect(stdout, testcase.output)) {
+					status = 'success';
+				} else {
+					status = 'failed';
 				}
 
 				testcaseResults.push({
@@ -218,11 +232,25 @@ export const executeCodegolfSubmission =
 					stderr: typeof stderr === 'string' ? stderr : null,
 					trace: typeof trace === 'string' ? trace : null,
 					duration: typeof duration === 'number' ? duration : null,
+					status,
 				});
+
+				if (error) {
+					break;
+				}
+			}
+
+			let totalStatus: TestcaseStatus | null = null;
+			if (testcaseResults.some(({status}) => status === 'error')) {
+				totalStatus = 'error';
+			} else if (testcaseResults.some(({status}) => status === 'failed')) {
+				totalStatus = 'failed';
+			} else {
+				totalStatus = 'success';
 			}
 
 			await submissionRef.update({
-				status: error ? 'error' : 'success',
+				status: totalStatus,
 				...(error ? {errorMessage: error} : {}),
 				testcases: testcaseResults,
 				executedAt: new Date(),
