@@ -100,6 +100,37 @@ export interface ReversingDiffSubmission extends DocumentData {
 	executedAt: Timestamp | null,
 }
 
+export interface CodegolfSubmission extends DocumentData {
+	athlon: DocumentReference<Athlon>,
+	userId: string,
+	status: 'pending' | 'executing' | 'failed' | 'success' | 'error' | 'invalid',
+	language: string,
+	code: string,
+	testcases: {
+		stdin: string,
+		stdout: string | null,
+		stderr: string | null,
+		trace: string | null,
+		duration: number | null,
+	}[],
+	errorMessage?: string,
+	createdAt: Timestamp,
+	executedAt: Timestamp | null,
+}
+
+export interface CodegolfConfiguration {
+	enabled: boolean,
+	testcases: {
+		input: string,
+		output: string,
+	}[],
+	description: string,
+	languages: {
+		id: string,
+		label: string,
+	}[],
+}
+
 export interface ReversingDiffRanking extends DocumentData {
 	athlon: DocumentReference<Athlon>,
 	userId: string,
