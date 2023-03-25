@@ -3,7 +3,7 @@
 import {exec} from 'child_process';
 import {Alert, Box, Button, ButtonGroup, Card, CardContent, CircularProgress, Container, FormControl, Grid, InputLabel, Link as LinkUi, MenuItem, Paper, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from '@suid/material';
 import {SelectChangeEvent} from '@suid/material/Select';
-import {blue, red} from '@suid/material/colors';
+import {blue, green, red} from '@suid/material/colors';
 import {stripIndent} from 'common-tags';
 import dayjs from 'dayjs';
 import {addDoc, collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, serverTimestamp, where} from 'firebase/firestore';
@@ -62,8 +62,16 @@ const MainTab = (props: MainTabProps) => {
 	const [selectedAnyLanguage, setSelectedAnyLanguage] = createSignal<string | null>(null);
 	const [languageInfos, setLanguageInfos] = createSignal<{shortestSize: number | null}[]>([]);
 
+	const executionLanguage = createMemo(() => {
+		if (selectedLanguage() !== 'anything') {
+			return selectedLanguage();
+		}
+		return selectedAnyLanguage();
+	});
+
 	const handleClickSubmit = async () => {
-		if (!gameData.data || !user?.uid || code().length === 0) {
+		const language = executionLanguage();
+		if (!gameData.data || !user?.uid || code().length === 0 || language === null) {
 			return;
 		}
 
@@ -76,7 +84,7 @@ const MainTab = (props: MainTabProps) => {
 				athlon: gameData.data.athlon,
 				userId: user.uid,
 				status: 'pending',
-				language: 'c-gcc',
+				language,
 				code: code(),
 				size: code().length,
 				createdAt: serverTimestamp(),
@@ -92,7 +100,7 @@ const MainTab = (props: MainTabProps) => {
 	createEffect(() => {
 		const submissionDoc = submission();
 		if (submitStatus() === 'executing') {
-			if (submissionDoc?.data?.status === 'success' || submissionDoc?.data?.status === 'error') {
+			if ((['success', 'failed', 'error'] as (string | undefined)[]).includes(submissionDoc?.data?.status)) {
 				setSubmitStatus('throttled');
 			}
 		}
@@ -123,7 +131,10 @@ const MainTab = (props: MainTabProps) => {
 			));
 			const config = gameData.data.configuration as CodegolfConfiguration;
 			const newLanguageInfos = config.languages.map((language) => {
-				const filteredSubmissions = successSubmissions.filter((s) => s.language === language.id);
+				const filteredSubmissions =
+					language.id === 'anything'
+						? successSubmissions
+						: successSubmissions.filter((s) => s.language === language.id);
 				const shortestSize = filteredSubmissions.length === 0 ? null : Math.min(...filteredSubmissions.map(({size}) => size));
 				return {shortestSize};
 			});
@@ -134,13 +145,6 @@ const MainTab = (props: MainTabProps) => {
 	const handleChangeAnyLanguage = (event: SelectChangeEvent) => {
 		setSelectedAnyLanguage(event.target.value);
 	};
-
-	const executionLanguage = createMemo(() => {
-		if (selectedLanguage() !== 'anything') {
-			return selectedLanguage();
-		}
-		return selectedAnyLanguage();
-	});
 
 	return (
 		<Doc data={gameData}>
@@ -204,6 +208,7 @@ const MainTab = (props: MainTabProps) => {
 												value={selectedAnyLanguage()}
 												onChange={handleChangeAnyLanguage}
 												label="Language"
+												required
 											>
 												<For each={codegolfLanguageAllowList}>
 													{([languageId, languageName]) => (
@@ -245,26 +250,24 @@ const MainTab = (props: MainTabProps) => {
 									<Show when={submitStatus() !== 'executing' && submission() !== null}>
 										<Doc data={submission()}>
 											{(submissionData) => (
-												<Switch>
-													<Match when={submissionData.status === 'success'}>
-														<Alert severity="info" sx={{my: 2}}>
-															提出成功 - Diffスコア: {submissionData.score}
-														</Alert>
-													</Match>
-													<Match when={submissionData.status === 'error'}>
-														<Alert severity="error" sx={{my: 2}}>
+												<Alert severity={submissionData.status === 'success' ? 'info' : 'error'} sx={{my: 2}}>
+													<Switch>
+														<Match when={submissionData.status === 'success'}>
+															提出成功
+														</Match>
+														<Match when>
 															提出失敗
-															{' - '}
-															<LinkUi
-																href="#"
-																underline="hover"
-																onClick={() => setSearchParams({tab: 'submissions', submissionId: submissionData.id})}
-															>
-																詳細を見る
-															</LinkUi>
-														</Alert>
-													</Match>
-												</Switch>
+														</Match>
+													</Switch>
+													{' - '}
+													<LinkUi
+														href="#"
+														underline="hover"
+														onClick={() => setSearchParams({tab: 'submissions', submissionId: submissionData.id})}
+													>
+														詳細を見る
+													</LinkUi>
+												</Alert>
 											)}
 										</Doc>
 									</Show>
@@ -275,7 +278,12 @@ const MainTab = (props: MainTabProps) => {
 											</Button>
 										</Match>
 										<Match when={submitStatus() === 'ready'}>
-											<Button onClick={handleClickSubmit} variant="contained" size="large">
+											<Button
+												onClick={handleClickSubmit}
+												variant="contained"
+												size="large"
+												disabled={executionLanguage() === null}
+											>
 												送信
 											</Button>
 										</Match>
@@ -343,20 +351,31 @@ const SubmissionsTab = (props: SubmissionsTabProps) => {
 									<p>{dayjs(createdAt.toDate()).format('YYYY-MM-DD HH:mm:ss')}</p>
 								)}
 							</Show>
-							<Typography variant="h4" component="h2" my={1}>Execution Time</Typography>
-							<p>{submission()?.duration}ms</p>
-							<Typography variant="h4" component="h2" my={1}>Score</Typography>
-							<p>{submission()?.score ?? '-'}</p>
+							<Typography variant="h4" component="h2" my={1}>Status</Typography>
+							<p>{submission()?.status}</p>
+							<Typography variant="h4" component="h2" my={1}>Size</Typography>
+							<p>{submission()?.size}bytes</p>
 							<Typography variant="h4" component="h2" my={1}>Code</Typography>
 							<pre>{submission()?.code}</pre>
 							<Show when={submission()?.errorMessage}>
 								<Typography variant="h4" component="h2" my={1}>Validation Message</Typography>
 								<pre>{submission()?.errorMessage}</pre>
 							</Show>
-							<Show when={submission()?.stderr}>
-								<Typography variant="h4" component="h2" my={1}>Error</Typography>
-								<pre>{submission()?.stderr}</pre>
-							</Show>
+							<For each={submission()?.testcases}>
+								{(testcase, i) => (
+									<>
+										<Typography variant="h4" component="h2" my={1}>Test Case {i() + 1}</Typography>
+										<Typography variant="h5" component="h3" my={1}>Execution Time</Typography>
+										<p>{testcase.duration}ms</p>
+										<Typography variant="h5" component="h3" my={1}>stdin</Typography>
+										<pre>{testcase.stdin}</pre>
+										<Typography variant="h5" component="h3" my={1}>stdout</Typography>
+										<pre>{testcase.stdout}</pre>
+										<Typography variant="h5" component="h3" my={1}>stderr</Typography>
+										<pre>{testcase.stderr}</pre>
+									</>
+								)}
+							</For>
 						</div>
 					);
 				 }}
@@ -367,7 +386,8 @@ const SubmissionsTab = (props: SubmissionsTabProps) => {
 						<TableHead>
 							<TableRow>
 								<TableCell>User</TableCell>
-								<TableCell align="right">Score</TableCell>
+								<TableCell align="right">Language</TableCell>
+								<TableCell align="right">Size</TableCell>
 								<TableCell align="right">Status</TableCell>
 								<TableCell align="right">Date</TableCell>
 							</TableRow>
@@ -375,9 +395,10 @@ const SubmissionsTab = (props: SubmissionsTabProps) => {
 						<TableBody>
 							<Collection data={props.submissions}>
 								{(submission) => (
-									<TableRow>
+									<TableRow sx={{backgroundColor: submission.status === 'success' ? green[50] : red[50]}}>
 										<TableCell><Username userId={submission.userId}/></TableCell>
-										<TableCell align="right"><strong>{submission.score ?? '-'}</strong></TableCell>
+										<TableCell align="right"><strong>{submission.language}</strong></TableCell>
+										<TableCell align="right"><strong>{submission.size}</strong> bytes</TableCell>
 										<TableCell align="right">{submission.status}</TableCell>
 										<TableCell align="right">
 											<LinkUi
@@ -413,38 +434,41 @@ const RankingTab = () => {
 	const rankingDocs = useFirestore(query(rankingRef, orderBy('score', 'asc'), orderBy('createdAt', 'asc')));
 
 	return (
-		<TableContainer component={Paper}>
-			<Table>
-				<TableHead>
-					<TableRow>
-						<TableCell>#</TableCell>
-						<TableCell>User</TableCell>
-						<TableCell align="right">Score</TableCell>
-						<TableCell align="right">Date</TableCell>
-					</TableRow>
-				</TableHead>
-				<TableBody>
-					<Collection data={rankingDocs}>
-						{(ranking, i) => {
-							const isMe = user?.uid === ranking.userId;
+		<>
+			<p>未実装です♡</p>
+			<TableContainer component={Paper}>
+				<Table>
+					<TableHead>
+						<TableRow>
+							<TableCell>#</TableCell>
+							<TableCell>User</TableCell>
+							<TableCell align="right">Score</TableCell>
+							<TableCell align="right">Date</TableCell>
+						</TableRow>
+					</TableHead>
+					<TableBody>
+						<Collection data={rankingDocs}>
+							{(ranking, i) => {
+								const isMe = user?.uid === ranking.userId;
 
-							return (
-								<TableRow sx={isMe ? {backgroundColor: blue[50]} : {}}>
-									<TableCell>{i() + 1}</TableCell>
-									<TableCell><Username userId={ranking.userId}/></TableCell>
-									<TableCell align="right"><strong>{ranking.score}</strong></TableCell>
-									<TableCell align="right">
-										<Box component="span" sx={{display: 'inline-box', whiteSpace: 'pre'}}>
-											{dayjs(ranking.createdAt.toDate()).format('YYYY-MM-DD HH:mm:ss')}
-										</Box>
-									</TableCell>
-								</TableRow>
-							);
+								return (
+									<TableRow sx={isMe ? {backgroundColor: blue[50]} : {}}>
+										<TableCell>{i() + 1}</TableCell>
+										<TableCell><Username userId={ranking.userId}/></TableCell>
+										<TableCell align="right"><strong>{ranking.score}</strong></TableCell>
+										<TableCell align="right">
+											<Box component="span" sx={{display: 'inline-box', whiteSpace: 'pre'}}>
+												{dayjs(ranking.createdAt.toDate()).format('YYYY-MM-DD HH:mm:ss')}
+											</Box>
+										</TableCell>
+									</TableRow>
+								);
 						 }}
-					</Collection>
-				</TableBody>
-			</Table>
-		</TableContainer>
+						</Collection>
+					</TableBody>
+				</Table>
+			</TableContainer>
+		</>
 	);
 };
 
