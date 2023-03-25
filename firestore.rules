@@ -75,7 +75,7 @@ service cloud.firestore {
       }
 
       function isValidCodegolfSubmission(submission, game) {
-        return submission.keys.hasOnly([
+        return submission.keys().hasOnly([
             'athlon', 'userId', 'status', 'language', 'code', 'size',
             'testcases', 'createdAt', 'executedAt'])
           && submission.athlon is path
