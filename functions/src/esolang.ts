@@ -204,7 +204,7 @@ export const executeCodegolfSubmission =
 				if (typeof stdout !== 'string') {
 					error = 'stdout is not a string';
 				}
-				if (typeof trace !== 'string') {
+				if (trace !== null && typeof trace !== 'string') {
 					error = 'trace is not a string';
 				}
 
