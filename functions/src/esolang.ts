@@ -4,7 +4,7 @@ import {CollectionReference, DocumentReference, Timestamp} from 'firebase-admin/
 import {getFunctions} from 'firebase-admin/functions';
 import {getStorage} from 'firebase-admin/storage';
 import {firestore, logger, runWith} from 'firebase-functions';
-import {first, groupBy, max, minBy, reverse, sortBy, sum, zip} from 'lodash';
+import {groupBy, last, max, minBy, reverse, sortBy, sum, zip} from 'lodash';
 import {CodegolfConfiguration, CodegolfRanking, CodegolfSubmission, Game, ReversingDiffRanking, ReversingDiffSubmission} from '../../src/lib/schema';
 import db from './firestore';
 
@@ -291,7 +291,7 @@ const updateCodegolfRanking = async (gameId: string, game: Game) => {
 		});
 		const sortedUsers = reverse(sortBy(users, (user) => user.size));
 
-		const firstUser = first(sortedUsers);
+		const firstUser = last(sortedUsers);
 		assert(firstUser);
 		const fullscore = 1 / firstUser.size;
 
