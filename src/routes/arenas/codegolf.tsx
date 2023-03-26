@@ -430,45 +430,53 @@ const RankingTab = () => {
 
 	const user = useUser();
 
+	const gameRef = doc(db, 'games', gameId) as DocumentReference<Game>;
+	const gameData = useFirestore(gameRef);
+
 	const rankingRef = collection(db, `games/${gameId}/ranking`) as CollectionReference<CodegolfRanking>;
-	const rankingDocs = useFirestore(query(rankingRef, orderBy('score', 'asc'), orderBy('createdAt', 'asc')));
+	const rankingDocs = useFirestore(query(rankingRef, orderBy('score', 'asc'), orderBy('updatedAt', 'asc')));
 
 	return (
-		<>
-			<p>未実装です♡</p>
-			<TableContainer component={Paper}>
-				<Table>
-					<TableHead>
-						<TableRow>
-							<TableCell>#</TableCell>
-							<TableCell>User</TableCell>
-							<TableCell align="right">Score</TableCell>
-							<TableCell align="right">Date</TableCell>
-						</TableRow>
-					</TableHead>
-					<TableBody>
-						<Collection data={rankingDocs}>
-							{(ranking, i) => {
-								const isMe = user?.uid === ranking.userId;
+		<TableContainer component={Paper}>
+			<Table>
+				<TableHead>
+					<TableRow>
+						<TableCell>#</TableCell>
+						<TableCell>User</TableCell>
+						<Doc data={gameData}>
+							{(game) => (
+								<For each={(game.configuration as CodegolfConfiguration).languages}>
+									{(language) => (
+										<TableCell>{language.label}</TableCell>
+									)}
+								</For>
+							)}
+						</Doc>
+						<TableCell align="right">Score</TableCell>
+					</TableRow>
+				</TableHead>
+				<TableBody>
+					<Collection data={rankingDocs}>
+						{(ranking, i) => {
+							const isMe = user?.uid === ranking.userId;
 
-								return (
-									<TableRow sx={isMe ? {backgroundColor: blue[50]} : {}}>
-										<TableCell>{i() + 1}</TableCell>
-										<TableCell><Username userId={ranking.userId}/></TableCell>
-										<TableCell align="right"><strong>{ranking.score}</strong></TableCell>
-										<TableCell align="right">
-											<Box component="span" sx={{display: 'inline-box', whiteSpace: 'pre'}}>
-												{dayjs(ranking.createdAt.toDate()).format('YYYY-MM-DD HH:mm:ss')}
-											</Box>
-										</TableCell>
-									</TableRow>
-								);
+							return (
+								<TableRow sx={isMe ? {backgroundColor: blue[50]} : {}}>
+									<TableCell>{i() + 1}</TableCell>
+									<TableCell><Username userId={ranking.userId}/></TableCell>
+									<For each={ranking.languages}>
+										{(language) => (
+											<TableCell>{language.hasScore ? language.score.toFixed(2) : '-'}</TableCell>
+										)}
+									</For>
+									<TableCell align="right"><strong>{ranking.score.toFixed(2)}</strong></TableCell>
+								</TableRow>
+							);
 						 }}
-						</Collection>
-					</TableBody>
-				</Table>
-			</TableContainer>
-		</>
+					</Collection>
+				</TableBody>
+			</Table>
+		</TableContainer>
 	);
 };
 
