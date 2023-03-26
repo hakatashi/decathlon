@@ -466,7 +466,12 @@ const RankingTab = () => {
 									<TableCell><Username userId={ranking.userId}/></TableCell>
 									<For each={ranking.languages}>
 										{(language) => (
-											<TableCell>{language.hasScore ? language.score.toFixed(2) : '-'}</TableCell>
+											<TableCell>
+												<Show when={language.hasScore}>
+													<strong>{language.size}B</strong> ({language.score.toFixed(2)})
+												</Show>
+												<Show when={!language.hasScore}>-</Show>
+											</TableCell>
 										)}
 									</For>
 									<TableCell align="right"><strong>{ranking.score.toFixed(2)}</strong></TableCell>
