@@ -69,9 +69,10 @@ export const executeDiffSubmission =
 					language: 'clang-cpp',
 					imageId: 'hakatashi/diff-challenge-cpp',
 				}),
+				validateStatus: null,
 			});
 
-			const {duration, stderr, stdout} = result.data;
+			const {duration, stderr, stdout, error: errorMessage} = result.data;
 
 			// eslint-disable-next-line no-undef-init
 			let error = null;
@@ -86,6 +87,12 @@ export const executeDiffSubmission =
 			}
 			if (!stdout.match(/^\d+$/)) {
 				error = 'stdout is not a valid format';
+			}
+			if (typeof errorMessage === 'string') {
+				error = errorMessage;
+			}
+			if (!error && result.status !== 200) {
+				error = result.data.toString();
 			}
 
 			let score = error ? null : parseInt(stdout);
@@ -200,9 +207,10 @@ export const executeCodegolfSubmission =
 						language: submission.language,
 						imageId: `esolang/${submission.language}`,
 					}),
+					validateStatus: null,
 				});
 
-				const {duration, stderr, stdout, trace} = result.data;
+				const {duration, stderr, stdout, trace, error: errorMessage} = result.data;
 
 				if (typeof duration !== 'number') {
 					error = 'duration is not a number';
@@ -215,6 +223,12 @@ export const executeCodegolfSubmission =
 				}
 				if (trace !== null && typeof trace !== 'string') {
 					error = 'trace is not a string';
+				}
+				if (typeof errorMessage === 'string') {
+					error = errorMessage;
+				}
+				if (!error && result.status !== 200) {
+					error = result.data.toString();
 				}
 
 				let status: TestcaseStatus | null = null;
