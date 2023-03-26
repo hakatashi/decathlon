@@ -92,7 +92,7 @@ export const executeDiffSubmission =
 				error = errorMessage;
 			}
 			if (!error && result.status !== 200) {
-				error = result.data.toString();
+				error = JSON.stringify(result.data) || 'unknown error';
 			}
 
 			let score = error ? null : parseInt(stdout);
@@ -114,16 +114,18 @@ export const executeDiffSubmission =
 				const submissionDocs = await (db.collection(`games/${data.gameId}/submissions`) as CollectionReference<ReversingDiffSubmission>)
 					.where('status', '==', 'success').get();
 				const submissionsByUser = groupBy(submissionDocs.docs, (s) => s.data().userId);
+				const batch = db.batch();
 				for (const [userId, submissions] of Object.entries(submissionsByUser)) {
 					const minScoreSubmission = minBy(submissions, (s) => s.data().score)!.data();
 					const rankingRef = db.doc(`games/${data.gameId}/ranking/${minScoreSubmission.userId}`) as DocumentReference<ReversingDiffRanking>;
-					await rankingRef.set({
+					batch.set(rankingRef, {
 						athlon: submission.athlon,
 						userId,
 						score: minScoreSubmission.score!,
 						createdAt: minScoreSubmission.createdAt,
 					});
 				}
+				await batch.commit();
 			}
 		});
 
@@ -228,7 +230,7 @@ export const executeCodegolfSubmission =
 					error = errorMessage;
 				}
 				if (!error && result.status !== 200) {
-					error = result.data.toString();
+					error = JSON.stringify(result.data) || 'unknown error';
 				}
 
 				let status: TestcaseStatus | null = null;
@@ -331,6 +333,8 @@ const updateCodegolfRanking = async (gameId: string, game: Game) => {
 		languageRankings.push(rankedUsers);
 	}
 
+	const batch = db.batch();
+
 	for (const userId of usersSet) {
 		const languages = zip(config.languages, languageRankings).map(([language, rankedUsers]) => {
 			assert(language && rankedUsers);
@@ -361,7 +365,7 @@ const updateCodegolfRanking = async (gameId: string, game: Game) => {
 		);
 
 		const rankingRef = db.doc(`games/${gameId}/ranking/${userId}`) as DocumentReference<CodegolfRanking>;
-		await rankingRef.set({
+		batch.set(rankingRef, {
 			athlon: game.athlon,
 			userId,
 			score: scoreSum,
@@ -376,6 +380,8 @@ const updateCodegolfRanking = async (gameId: string, game: Game) => {
 			})),
 		});
 	}
+
+	await batch.commit();
 };
 
 export const onSubmissionCreated = firestore
