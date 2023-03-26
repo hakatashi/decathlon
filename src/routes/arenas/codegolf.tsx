@@ -434,7 +434,7 @@ const RankingTab = () => {
 	const gameData = useFirestore(gameRef);
 
 	const rankingRef = collection(db, `games/${gameId}/ranking`) as CollectionReference<CodegolfRanking>;
-	const rankingDocs = useFirestore(query(rankingRef, orderBy('score', 'asc'), orderBy('updatedAt', 'asc')));
+	const rankingDocs = useFirestore(query(rankingRef, orderBy('score', 'desc'), orderBy('updatedAt', 'asc')));
 
 	return (
 		<TableContainer component={Paper}>
@@ -468,9 +468,8 @@ const RankingTab = () => {
 										{(language) => (
 											<TableCell>
 												<Show when={language.hasScore}>
-													<strong>{language.size}B</strong> ({language.score.toFixed(2)})
+													<strong>{language.size}</strong>B ({language.score.toFixed(2)})
 												</Show>
-												<Show when={!language.hasScore}>-</Show>
 											</TableCell>
 										)}
 									</For>
