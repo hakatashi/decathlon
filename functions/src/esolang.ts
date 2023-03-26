@@ -4,7 +4,7 @@ import {CollectionReference, DocumentReference, Timestamp} from 'firebase-admin/
 import {getFunctions} from 'firebase-admin/functions';
 import {getStorage} from 'firebase-admin/storage';
 import {firestore, logger, runWith} from 'firebase-functions';
-import {first, groupBy, max, minBy, reverse, sortBy, sum, update, zip} from 'lodash';
+import {first, groupBy, max, minBy, reverse, sortBy, sum, zip} from 'lodash';
 import {CodegolfConfiguration, CodegolfRanking, CodegolfSubmission, Game, ReversingDiffRanking, ReversingDiffSubmission} from '../../src/lib/schema';
 import db from './firestore';
 
@@ -310,7 +310,7 @@ const updateCodegolfRanking = async (gameId: string, game: Game) => {
 			return {
 				...user,
 				rank,
-				score: (1 / user.size) / fullscore * game.maxPoint / config.languages.length;
+				score: (1 / user.size) / fullscore * game.maxPoint / config.languages.length,
 			};
 		});
 
@@ -326,7 +326,7 @@ const updateCodegolfRanking = async (gameId: string, game: Game) => {
 					...rankedUser,
 					languageId: language.id,
 					hasScore: true,
-				}
+				};
 			}
 			return {
 				id: userId,
@@ -336,11 +336,15 @@ const updateCodegolfRanking = async (gameId: string, game: Game) => {
 				languageId: language.id,
 				hasScore: false,
 				createdAt: null,
-			}
+			};
 		});
 
 		const scoreSum = sum(languages.map(({score}) => score));
-		const updatedAt = max(languages.map(({createdAt}) => createdAt).filter((createdAt) => createdAt !== null))
+		const updatedAt = max(
+			languages
+				.filter(({createdAt}) => createdAt !== null)
+				.map(({createdAt}) => createdAt!.toDate()),
+		);
 
 		const rankingRef = db.doc(`games/${gameId}/ranking/${userId}`) as DocumentReference<CodegolfRanking>;
 		await rankingRef.set({
@@ -348,7 +352,7 @@ const updateCodegolfRanking = async (gameId: string, game: Game) => {
 			userId,
 			score: scoreSum,
 			// @ts-expect-error: Date is compatible
-			updatedAt: updatedAt!.toDate(),
+			updatedAt,
 			languages: languages.map((l) => ({
 				id: l.id,
 				size: l.size,
@@ -357,7 +361,7 @@ const updateCodegolfRanking = async (gameId: string, game: Game) => {
 				hasScore: l.hasScore,
 			})),
 		});
-	};
+	}
 };
 
 export const onSubmissionCreated = firestore
