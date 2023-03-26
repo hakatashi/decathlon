@@ -148,6 +148,8 @@ export interface CodegolfRanking extends DocumentData {
 		id: string,
 		size: number,
 		score: number,
+		rank: number,
+		hasScore: boolean,
 	}[],
 	updatedAt: Timestamp,
 }

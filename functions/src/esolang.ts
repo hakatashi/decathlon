@@ -1,11 +1,11 @@
 import assert, {AssertionError} from 'assert';
 import axios from 'axios';
-import {CollectionReference, DocumentReference} from 'firebase-admin/firestore';
+import {CollectionReference, DocumentReference, Timestamp} from 'firebase-admin/firestore';
 import {getFunctions} from 'firebase-admin/functions';
 import {getStorage} from 'firebase-admin/storage';
 import {firestore, logger, runWith} from 'firebase-functions';
-import {groupBy, minBy} from 'lodash';
-import {CodegolfConfiguration, CodegolfSubmission, Game, ReversingDiffRanking, ReversingDiffSubmission} from '../../src/lib/schema';
+import {first, groupBy, max, minBy, reverse, sortBy, sum, update, zip} from 'lodash';
+import {CodegolfConfiguration, CodegolfRanking, CodegolfSubmission, Game, ReversingDiffRanking, ReversingDiffSubmission} from '../../src/lib/schema';
 import db from './firestore';
 
 const bucket = getStorage().bucket();
@@ -255,7 +255,110 @@ export const executeCodegolfSubmission =
 				testcases: testcaseResults,
 				executedAt: new Date(),
 			});
+
+			// eslint-disable-next-line @typescript-eslint/no-use-before-define
+			await updateCodegolfRanking(data.gameId, game);
 		});
+
+const updateCodegolfRanking = async (gameId: string, game: Game) => {
+	const submissionsRef = db.collection('games').doc(gameId).collection('submissions') as CollectionReference<CodegolfSubmission>;
+	const submissionDocs = await submissionsRef.where('status', '==', 'success').get();
+	const submissions = submissionDocs.docs.map((submission) => submission.data());
+
+	interface RankedUser {
+		id: string,
+		size: number,
+		score: number,
+		rank: number,
+		createdAt: Timestamp,
+	}
+
+	const config = game.configuration as CodegolfConfiguration;
+	const languageRankings: RankedUser[][] = [];
+	const usersSet = new Set<string>();
+
+	for (const language of config.languages) {
+		const filteredSubmissions =
+			language.id === 'anything'
+				? submissions
+				: submissions.filter((s) => s.language === language.id);
+		const submissionsByUser = groupBy(filteredSubmissions, (submission) => submission.userId);
+
+		const users = Object.entries(submissionsByUser).map(([userId, userSubmissions]) => {
+			usersSet.add(userId);
+			const shortestSubmission = minBy(userSubmissions, (submission) => submission.size);
+			return {id: userId, size: shortestSubmission!.size, createdAt: shortestSubmission!.createdAt};
+		});
+		const sortedUsers = reverse(sortBy(users, (user) => user.size));
+
+		const firstUser = first(sortedUsers);
+		assert(firstUser);
+		const fullscore = 1 / firstUser.size;
+
+		let previousSize: number | null = null;
+		let previousRank = 0;
+		const rankedUsers = sortedUsers.map((user, index) => {
+			let rank = index;
+			if (user.size === previousSize) {
+				rank = previousRank;
+			} else {
+				previousRank = index;
+			}
+
+			previousSize = user.size;
+
+			return {
+				...user,
+				rank,
+				score: (1 / user.size) / fullscore * game.maxPoint / config.languages.length;
+			};
+		});
+
+		languageRankings.push(rankedUsers);
+	}
+
+	for (const userId of usersSet) {
+		const languages = zip(config.languages, languageRankings).map(([language, rankedUsers]) => {
+			assert(language && rankedUsers);
+			const rankedUser = rankedUsers.find((user) => user.id === userId);
+			if (rankedUser) {
+				return {
+					...rankedUser,
+					languageId: language.id,
+					hasScore: true,
+				}
+			}
+			return {
+				id: userId,
+				size: 0,
+				score: 0,
+				rank: 0,
+				languageId: language.id,
+				hasScore: false,
+				createdAt: null,
+			}
+		});
+
+		const scoreSum = sum(languages.map(({score}) => score));
+		const updatedAt = max(languages.map(({createdAt}) => createdAt).filter((createdAt) => createdAt !== null))
+
+		const rankingRef = db.doc(`games/${gameId}/ranking/${userId}`) as DocumentReference<CodegolfRanking>;
+		await rankingRef.set({
+			athlon: game.athlon,
+			userId,
+			score: scoreSum,
+			// @ts-expect-error: Date is compatible
+			updatedAt: updatedAt!.toDate(),
+			languages: languages.map((l) => ({
+				id: l.id,
+				size: l.size,
+				score: l.score,
+				rank: l.rank,
+				hasScore: l.hasScore,
+			})),
+		});
+	};
+};
 
 export const onSubmissionCreated = firestore
 	.document('games/{gameId}/submissions/{submissionId}')
