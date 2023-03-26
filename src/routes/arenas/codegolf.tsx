@@ -490,7 +490,7 @@ const Codegolf = () => {
 	const gameRef = doc(db, 'games', gameId) as DocumentReference<Game>;
 	const gameData = useFirestore(gameRef);
 
-	setArenaTitle('diff');
+	setArenaTitle('コードゴルフ');
 
 	createEffect(() => {
 		if (user?.uid) {
