@@ -145,7 +145,6 @@ export interface CodegolfRanking extends DocumentData {
 	userId: string,
 	score: number,
 	languages: {
-		id: string,
 		size: number,
 		score: number,
 		rank: number,

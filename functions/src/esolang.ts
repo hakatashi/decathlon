@@ -5,7 +5,7 @@ import {getFunctions} from 'firebase-admin/functions';
 import {getStorage} from 'firebase-admin/storage';
 import {firestore, logger, runWith} from 'firebase-functions';
 import {groupBy, last, max, minBy, reverse, sortBy, sum, zip} from 'lodash';
-import {CodegolfConfiguration, CodegolfRanking, CodegolfSubmission, Game, ReversingDiffRanking, ReversingDiffSubmission} from '../../src/lib/schema';
+import {CodegolfConfiguration, CodegolfRanking, CodegolfSubmission, Game, ReversingDiffRanking, ReversingDiffSubmission, Score} from '../../src/lib/schema';
 import db from './firestore';
 
 const bucket = getStorage().bucket();
@@ -360,8 +360,9 @@ const updateCodegolfRanking = async (gameId: string, game: Game) => {
 		const scoreSum = sum(languages.map(({score}) => score));
 		const updatedAt = max(
 			languages
-				.filter(({createdAt}) => createdAt !== null)
-				.map(({createdAt}) => createdAt!.toDate()),
+				.map(({createdAt}) => createdAt)
+				.filter((createdAt): createdAt is Timestamp => createdAt !== null)
+				.map((createdAt) => createdAt.toDate()),
 		);
 
 		const rankingRef = db.doc(`games/${gameId}/ranking/${userId}`) as DocumentReference<CodegolfRanking>;
@@ -372,12 +373,19 @@ const updateCodegolfRanking = async (gameId: string, game: Game) => {
 			// @ts-expect-error: Date is compatible
 			updatedAt,
 			languages: languages.map((l) => ({
-				id: l.id,
 				size: l.size,
 				score: l.score,
 				rank: l.rank,
 				hasScore: l.hasScore,
 			})),
+		});
+
+		const scoreRef = db.doc(`games/${gameId}/scores/${userId}`) as DocumentReference<Score>;
+		batch.set(scoreRef, {
+			athlon: game.athlon,
+			rawScore: scoreSum,
+			tiebreakScore: updatedAt?.getTime() ?? 0,
+			user: userId,
 		});
 	}
 
