@@ -137,7 +137,7 @@ export const executeDiffSubmission =
 
 					const rawScore = Math.max((fileSize - minScoreSubmission.score!) / fileSize, 0);
 
-					const scoreRef = db.doc(`games/${data.gameId}/score/${minScoreSubmission.userId}`) as DocumentReference<Score>;
+					const scoreRef = db.doc(`games/${data.gameId}/scores/${minScoreSubmission.userId}`) as DocumentReference<Score>;
 					batch.set(scoreRef, {
 						athlon: submission.athlon,
 						user: userId,
