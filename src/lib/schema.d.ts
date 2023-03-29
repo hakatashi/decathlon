@@ -121,6 +121,16 @@ export interface CodegolfSubmission extends DocumentData {
 	executedAt: Timestamp | null,
 }
 
+export interface DiffConfiguration {
+	enabled: boolean,
+	rule: string,
+	files: {
+		filename: string,
+		label: string,
+		isMain: boolean,
+	}[],
+}
+
 export interface CodegolfConfiguration {
 	enabled: boolean,
 	testcases: {

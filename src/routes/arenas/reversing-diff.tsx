@@ -16,17 +16,7 @@ import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import Username from '~/components/Username';
 import PageNotFoundError from '~/lib/PageNotFoundError';
-import {Game, ReversingDiffRanking, ReversingDiffSubmission, UseFireStoreReturn} from '~/lib/schema';
-
-interface Config {
-	enabled?: boolean,
-	rule?: string,
-	files?: {
-		filename: string,
-		label: string,
-		isMain: boolean,
-	}[],
-}
+import {DiffConfiguration, Game, ReversingDiffRanking, ReversingDiffSubmission, UseFireStoreReturn} from '~/lib/schema';
 
 const DEFAULT_CODE = `
 #include <iostream>
@@ -134,7 +124,7 @@ const MainTab = (props: MainTabProps) => {
 	return (
 		<Doc data={gameData}>
 			{(game) => {
-				const config = game.configuration as Config;
+				const config = game.configuration as DiffConfiguration;
 
 				return (
 					<>

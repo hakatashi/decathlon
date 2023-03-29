@@ -141,7 +141,7 @@ const Leaderboard = () => {
 															{(game) => {
 																const getScore = () => {
 																	if (!game.hasScore) {
-																		return '-';
+																		return '';
 																	}
 
 																	if (showRawScore()) {

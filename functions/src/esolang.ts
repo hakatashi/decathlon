@@ -2,13 +2,10 @@ import assert, {AssertionError} from 'assert';
 import axios from 'axios';
 import {CollectionReference, DocumentReference, Timestamp} from 'firebase-admin/firestore';
 import {getFunctions} from 'firebase-admin/functions';
-import {getStorage} from 'firebase-admin/storage';
 import {firestore, logger, runWith} from 'firebase-functions';
 import {groupBy, last, max, minBy, reverse, sortBy, sum, zip} from 'lodash';
-import {CodegolfConfiguration, CodegolfRanking, CodegolfSubmission, Game, ReversingDiffRanking, ReversingDiffSubmission, Score} from '../../src/lib/schema';
-import db from './firestore';
-
-const bucket = getStorage().bucket();
+import {CodegolfConfiguration, CodegolfRanking, CodegolfSubmission, DiffConfiguration, Game, ReversingDiffRanking, ReversingDiffSubmission, Score} from '../../src/lib/schema';
+import {db, storage} from './firebase';
 
 export const executeDiffSubmission =
 	runWith({secrets: ['ESOLANG_BATTLE_API_TOKEN']})
@@ -25,6 +22,9 @@ export const executeDiffSubmission =
 			assert(typeof data.submissionId === 'string');
 
 			const submissionRef = db.doc(`games/${data.gameId}/submissions/${data.submissionId}`) as DocumentReference<ReversingDiffSubmission>;
+			const gameDoc = await db.collection('games').doc(data.gameId).get();
+			const game = gameDoc.data() as Game;
+			const config = game.configuration as DiffConfiguration;
 
 			logger.info('Getting lock...');
 			const isOk = await db.runTransaction(async (transaction) => {
@@ -51,7 +51,7 @@ export const executeDiffSubmission =
 			}
 
 			logger.info(submission);
-			const answerBlobs = await bucket.file(`games/${data.gameId}/answer`).download();
+			const answerBlobs = await storage.bucket().file(`games/${data.gameId}/answer`).download();
 			const answer = answerBlobs.reduce((a, b) => Buffer.concat([a, b]), Buffer.alloc(0));
 
 			const input = `${answer.toString('base64')}\n${Buffer.from(submission.code, 'utf-8').toString('base64')}`;
@@ -114,6 +114,15 @@ export const executeDiffSubmission =
 				const submissionDocs = await (db.collection(`games/${data.gameId}/submissions`) as CollectionReference<ReversingDiffSubmission>)
 					.where('status', '==', 'success').get();
 				const submissionsByUser = groupBy(submissionDocs.docs, (s) => s.data().userId);
+
+				const mainFile = config.files.find((file) => file.isMain);
+				if (!mainFile) {
+					throw new AssertionError({message: 'Main file is not found'});
+				}
+
+				const [fileMetadata] = await storage.bucket().file(`assets/reversing-diff/${mainFile.filename}`).getMetadata();
+				const fileSize: number = fileMetadata.size;
+
 				const batch = db.batch();
 				for (const [userId, submissions] of Object.entries(submissionsByUser)) {
 					const minScoreSubmission = minBy(submissions, (s) => s.data().score)!.data();
@@ -124,7 +133,18 @@ export const executeDiffSubmission =
 						score: minScoreSubmission.score!,
 						createdAt: minScoreSubmission.createdAt,
 					});
+
+					const rawScore = Math.max((fileSize - minScoreSubmission.score!) / fileSize, 0);
+
+					const scoreRef = db.doc(`games/${data.gameId}/score/${minScoreSubmission.userId}`) as DocumentReference<Score>;
+					batch.set(scoreRef, {
+						athlon: submission.athlon,
+						user: userId,
+						rawScore,
+						tiebreakScore: minScoreSubmission.createdAt.toMillis(),
+					});
 				}
+
 				await batch.commit();
 			}
 		});

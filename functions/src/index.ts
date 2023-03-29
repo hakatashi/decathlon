@@ -4,7 +4,7 @@ import type {CollectionReference, CollectionGroup} from 'firebase-admin/firestor
 import {auth, firestore, https} from 'firebase-functions';
 import mdiff from 'mdiff';
 import type {Athlon, Game, Score, TypingJapaneseSubmission} from '../../src/lib/schema';
-import db from './firestore';
+import {db} from './firebase';
 import {calculateRanking} from './scores';
 
 export * from './esolang';
