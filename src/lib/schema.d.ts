@@ -60,6 +60,7 @@ export interface Game extends DocumentData {
 	description: string,
 	scoreConfiguration: ScoreConfiguration,
 	configuration: {[key: string]: any},
+	tiebreakOrder: 'asc' | 'desc',
 	links: {
 		label: string,
 		url: string,

@@ -67,7 +67,7 @@ export const calculateRanking = (gameDocs: QuerySnapshot<Game>, scoreDocs: Query
 	for (const game of gameDocs.docs) {
 		const gameId = game.id;
 		const scores = scoresMap.get(gameId) ?? [];
-		const sortedScores = orderBy(scores, ['rawScore', 'tiebreakScore'], ['desc', 'desc']);
+		const sortedScores = orderBy(scores, ['rawScore', 'tiebreakScore'], ['desc', game.data().tiebreakOrder]);
 		const maxRawScore = Math.max(...scores.map(({rawScore}) => rawScore));
 
 		for (const score of scores) {

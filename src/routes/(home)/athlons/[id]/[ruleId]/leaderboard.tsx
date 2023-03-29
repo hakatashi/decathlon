@@ -93,6 +93,7 @@ const Leaderboard = () => {
 							query(
 								collection(db, 'games', game.id, 'scores') as CollectionReference<Score>,
 								orderBy('rawScore', 'desc'),
+								orderBy('tiebreakScore', game.tiebreakOrder),
 							),
 						);
 
@@ -114,6 +115,7 @@ const Leaderboard = () => {
 												let previousRawScore: number | null = null;
 												let previousTiebreakScore: number | null = null;
 												let previousRank = 0;
+												let hasDecimalRawScore = false;
 												const rankedScores = scores.map((score, index) => {
 													let rank = index;
 													if (score.rawScore === previousRawScore && score.tiebreakScore === previousTiebreakScore) {
@@ -124,6 +126,10 @@ const Leaderboard = () => {
 
 													previousRawScore = score.rawScore;
 													previousTiebreakScore = score.tiebreakScore;
+
+													if (!Number.isInteger(score.rawScore)) {
+														hasDecimalRawScore = true;
+													}
 
 													return {...score, id: score.id, rank} as RankedScore;
 												});
@@ -157,7 +163,7 @@ const Leaderboard = () => {
 																		</Doc>
 																	</TableCell>
 																	<TableCell align="right">
-																		{score.rawScore}
+																		{hasDecimalRawScore ? score.rawScore.toFixed(2) : score.rawScore}
 																	</TableCell>
 																	<TableCell align="right">
 																		{score.tiebreakScore}

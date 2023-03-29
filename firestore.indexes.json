@@ -57,6 +57,34 @@
       ]
     },
     {
+      "collectionGroup": "scores",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "rawScore",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "tiebreakScore",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "scores",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "rawScore",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "tiebreakScore",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "submissions",
       "queryScope": "COLLECTION",
       "fields": [
