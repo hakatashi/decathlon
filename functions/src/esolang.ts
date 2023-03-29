@@ -50,7 +50,6 @@ export const executeDiffSubmission =
 				throw new AssertionError();
 			}
 
-			logger.info(submission);
 			const answerBlobs = await storage.bucket().file(`games/${data.gameId}/answer`).download();
 			const answer = answerBlobs.reduce((a, b) => Buffer.concat([a, b]), Buffer.alloc(0));
 
@@ -122,6 +121,8 @@ export const executeDiffSubmission =
 
 				const [fileMetadata] = await storage.bucket().file(`assets/reversing-diff/${mainFile.filename}`).getMetadata();
 				const fileSize: number = fileMetadata.size;
+
+				logger.info(`correct file size: ${fileSize}`);
 
 				const batch = db.batch();
 				for (const [userId, submissions] of Object.entries(submissionsByUser)) {
