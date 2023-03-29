@@ -1,7 +1,7 @@
 /* eslint-disable array-plural/array-plural */
 import {Star} from '@suid/icons-material';
 import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Avatar, Stack, FormControlLabel, Switch} from '@suid/material';
-import {blue} from '@suid/material/colors';
+import {blue, blueGrey, orange, red, yellow} from '@suid/material/colors';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, where} from 'firebase/firestore';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
@@ -153,18 +153,29 @@ const Leaderboard = () => {
 
 																return (
 																	<TableCell align="right">
-																		<Show when={game.rank === 0}>
-																			<Star
-																				color="secondary"
-																				sx={{
-																					verticalAlign: 'text-bottom',
-																					width: 0.07,
-																					height: 0.07,
-																					mr: 0.3,
-																				}}
-																			/>
-																		</Show>
-																		{getScore()}
+																		<Stack direction="row" justifyContent="flex-end">
+																			<Show when={game.rank === 0}>
+																				<Star
+																					sx={{
+																						color: red[600],
+																						width: '16px',
+																						height: '16px',
+																						mr: 0.3,
+																					}}
+																				/>
+																			</Show>
+																			<Show when={game.rank !== null && game.rank > 0 && game.rank < 5}>
+																				<Star
+																					sx={{
+																						color: orange[200],
+																						width: '16px',
+																						height: '16px',
+																						mr: 0.3,
+																					}}
+																				/>
+																			</Show>
+																			<span>{getScore()}</span>
+																		</Stack>
 																	</TableCell>
 																);
 															}}
