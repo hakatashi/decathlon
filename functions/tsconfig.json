@@ -1,13 +1,11 @@
 {
+  "extends": "../tsconfig.json",
   "compilerOptions": {
     "module": "commonjs",
-    "noImplicitReturns": true,
-    "noUnusedLocals": false,
     "outDir": "lib",
     "sourceMap": true,
     "strict": true,
-    "target": "es2021",
-    "esModuleInterop": true
+    "target": "es2021"
   },
   "compileOnSave": true,
   "include": [

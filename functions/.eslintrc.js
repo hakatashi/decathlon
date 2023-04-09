@@ -8,4 +8,5 @@ module.exports = {
 	rules: {
 		'import/no-unresolved': 'off',
 	},
+	ignorePatterns: ['lib/**/*.js', 'temp.ts'],
 };
