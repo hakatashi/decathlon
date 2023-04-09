@@ -1,18 +1,33 @@
-import {EmojiEvents} from '@suid/icons-material';
-import {Typography, Container, List, ListItem, ListItemAvatar, Avatar, ListItemText, Button} from '@suid/material';
+import {EmojiEvents, Star} from '@suid/icons-material';
+import {Typography, Container, List, ListItem, ListItemAvatar, Avatar, ListItemText, Button, Stack, Box} from '@suid/material';
 import {collection, CollectionReference, doc, getFirestore, orderBy, query, where} from 'firebase/firestore';
 import remarkGfm from 'remark-gfm';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
-import {For, Show} from 'solid-js';
+import {For, JSX, Show} from 'solid-js';
 import SolidMarkdown from 'solid-markdown';
 import {A, useParams} from 'solid-start';
 import {useAthlon} from '../[id]';
 import styles from './index.module.css';
+import crown from '~/../public/images/crown-solid.svg';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import PageTitle from '~/components/PageTitle';
+import Username from '~/components/Username';
 import {athlonNames} from '~/lib/const';
 import type {Game} from '~/lib/schema';
+
+const Head = (props: {children: JSX.Element}) => (
+	<Typography
+		component="h2"
+		textAlign="center"
+		letterSpacing={30}
+		fontSize={20}
+		fontWeight="bold"
+		mt={5}
+	>
+		{props.children}
+	</Typography>
+);
 
 const Home = () => {
 	const param = useParams();
@@ -65,16 +80,9 @@ const Home = () => {
 						/>
 					)}
 				</Doc>
-				<Typography
-					component="h2"
-					textAlign="center"
-					letterSpacing={30}
-					fontSize={20}
-					fontWeight="bold"
-					mt={5}
-				>
+				<Head>
 					競技一覧
-				</Typography>
+				</Head>
 				<List sx={{bgcolor: 'background.paper', 'max-width': '480px', m: '0 auto'}}>
 					<Collection data={gamesData}>
 						{(game, index) => {
@@ -97,10 +105,74 @@ const Home = () => {
 						}}
 					</Collection>
 				</List>
-				<Button size="large" sx={{my: 3}} variant="contained" component={A} href="./leaderboard">
-					<EmojiEvents sx={{mr: 1}}/>
-					Show Leaderboard
-				</Button>
+				<Head>
+					成績上位者
+				</Head>
+				<Doc data={athlonData}>
+					{(athlon) => (
+						<>
+							<Show when={athlon.ranking[0]} keyed>
+								{(rankingEntry) => (
+									<Username
+										userId={rankingEntry.userId}
+										size="large"
+										direction="column"
+										accessory={
+											<img src={crown} class={styles.crown}/>
+										}
+										sx={{mt: 5}}
+									/>
+								)}
+							</Show>
+							<Stack
+								direction="row"
+								width="100%"
+								justifyContent="space-around"
+							>
+								<For each={athlon.ranking.slice(1, 5)} >
+									{(rankingEntry, i) => (
+										<Username
+											userId={rankingEntry.userId}
+											size="medium"
+											direction="column"
+											sx={{mt: 5}}
+											accessory={
+												<div class={styles.rank}>{i() + 2}</div>
+											}
+										/>
+									)}
+								</For>
+							</Stack>
+							<Stack
+								direction="row"
+								width="100%"
+								justifyContent="space-between"
+							>
+								<For each={athlon.ranking.slice(5, 15)} >
+									{(rankingEntry, i) => (
+										<Box flex="1 1 0" style={{'word-break': 'break-all'}}>
+											<Username
+												userId={rankingEntry.userId}
+												size={60}
+												direction="column"
+												sx={{mt: 5}}
+												accessory={
+													<div class={styles.rank}>{i() + 6}</div>
+												}
+											/>
+										</Box>
+									)}
+								</For>
+							</Stack>
+						</>
+					)}
+				</Doc>
+				<Box textAlign="center" my={3}>
+					<Button size="large" variant="contained" component={A} href="./leaderboard">
+						<EmojiEvents sx={{mr: 1}}/>
+						ランキングをすべて表示する
+					</Button>
+				</Box>
 			</Container>
 		</main>
 	);

@@ -30,6 +30,7 @@
     "@suid/base": "^0.7.0",
     "@suid/icons-material": "^0.5.9",
     "@suid/material": "^0.11.0",
+    "@suid/system": "^0.10.0",
     "common-tags": "^1.8.2",
     "dayjs": "^1.11.7",
     "firebase": "^9.17.1",
