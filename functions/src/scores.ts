@@ -35,10 +35,6 @@ export const calculateRanking = (gameDocs: QuerySnapshot<Game>, scoreDocs: Query
 		const scores = scoresMap.get(gameId) ?? [];
 		const sortedScores = orderBy(scores, ['rawScore', 'tiebreakScore'], ['desc', game.data().tiebreakOrder]);
 		const rankedScores = calculateGameRanking(game.data(), sortedScores);
-		logger.info(gameId);
-		logger.info(game.data());
-		logger.info(sortedScores);
-		logger.info(rankedScores);
 		gameScores.push([gameId, rankedScores]);
 	}
 
@@ -58,7 +54,7 @@ export const calculateRanking = (gameDocs: QuerySnapshot<Game>, scoreDocs: Query
 
 	const userScoreEntries = Array.from(usersSet).map((userId) => {
 		const games = gameScores.map(([gameId, scores]) => {
-			const score = scores.find((s) => s.userId === userId);
+			const score = scores.find((s) => s.user === userId);
 			if (!score) {
 				return {
 					gameId,
