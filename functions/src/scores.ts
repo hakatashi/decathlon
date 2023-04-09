@@ -4,7 +4,7 @@
 
 import type {QuerySnapshot} from 'firebase-admin/firestore';
 import {orderBy, sortBy, sum} from 'lodash';
-import type {Game, Score} from '../../src/lib/schema';
+import type {Game, Score} from '~/lib/schema';
 import {RankedScore, calculateGameRanking} from './lib/scores';
 
 // eslint-disable-next-line import/prefer-default-export

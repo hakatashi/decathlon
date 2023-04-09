@@ -3,7 +3,7 @@ import {DocumentReference} from 'firebase-admin/firestore';
 import type {CollectionReference, CollectionGroup} from 'firebase-admin/firestore';
 import {auth, firestore, https} from 'firebase-functions';
 import mdiff from 'mdiff';
-import type {Athlon, Game, Score, TypingJapaneseSubmission} from '../../src/lib/schema';
+import type {Athlon, Game, Score, TypingJapaneseSubmission} from '~/lib/schema';
 import {db} from './firebase';
 import {calculateRanking} from './scores';
 

@@ -4,7 +4,7 @@ import {CollectionReference, DocumentReference, Timestamp} from 'firebase-admin/
 import {getFunctions} from 'firebase-admin/functions';
 import {firestore, logger, runWith} from 'firebase-functions';
 import {groupBy, last, max, minBy, reverse, sortBy, sum, zip} from 'lodash';
-import {CodegolfConfiguration, CodegolfRanking, CodegolfSubmission, DiffConfiguration, Game, ReversingDiffRanking, ReversingDiffSubmission, Score} from '../../src/lib/schema';
+import type {CodegolfConfiguration, CodegolfRanking, CodegolfSubmission, DiffConfiguration, Game, ReversingDiffRanking, ReversingDiffSubmission, Score} from '~/lib/schema';
 import {db, storage} from './firebase';
 
 export const executeDiffSubmission =
