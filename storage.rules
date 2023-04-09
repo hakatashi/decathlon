@@ -10,7 +10,7 @@ service firebase.storage {
     }
 
     match /assets/{asset=**} {
-      allow read;
+      allow get;
       
       // TODO: deny access before the game starts
     }
