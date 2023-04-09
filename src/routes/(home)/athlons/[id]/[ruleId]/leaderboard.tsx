@@ -2,7 +2,7 @@
 import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Stack, Chip} from '@suid/material';
 import {blue} from '@suid/material/colors';
 import {getAuth} from 'firebase/auth';
-import {collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, where} from 'firebase/firestore';
+import {collection, CollectionReference, doc, DocumentReference, getFirestore, query, where} from 'firebase/firestore';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {For, Show} from 'solid-js';
 import {A, useParams} from 'solid-start';

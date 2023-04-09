@@ -1,6 +1,5 @@
 /* eslint-disable array-plural/array-plural */
 
-import {exec} from 'child_process';
 import {Alert, Box, Button, ButtonGroup, Card, CardContent, CircularProgress, Container, FormControl, Grid, InputLabel, Link as LinkUi, MenuItem, Paper, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from '@suid/material';
 import {SelectChangeEvent} from '@suid/material/Select';
 import {blue, green, red} from '@suid/material/colors';
@@ -12,8 +11,8 @@ import remarkGfm from 'remark-gfm';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, For, Match, onCleanup, Show, Switch} from 'solid-js';
 import SolidMarkdown from 'solid-markdown';
-import {Link, useSearchParams} from 'solid-start';
-import {setArenaTitle, setHeaderText, useUser} from '../arenas';
+import {useSearchParams} from 'solid-start';
+import {setArenaTitle, useUser} from '../arenas';
 import styles from './reversing-diff.module.css';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';

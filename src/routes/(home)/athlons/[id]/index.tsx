@@ -1,4 +1,4 @@
-import {EmojiEvents, Star} from '@suid/icons-material';
+import {EmojiEvents} from '@suid/icons-material';
 import {Typography, Container, List, ListItem, ListItemAvatar, Avatar, ListItemText, Button, Stack, Box} from '@suid/material';
 import {collection, CollectionReference, doc, getFirestore, orderBy, query, where} from 'firebase/firestore';
 import remarkGfm from 'remark-gfm';
@@ -83,7 +83,10 @@ const Home = () => {
 				<Head>
 					競技一覧
 				</Head>
-				<List sx={{bgcolor: 'background.paper', 'max-width': '480px', m: '0 auto'}}>
+				<List
+					sx={{bgcolor: 'background.paper', m: '0 auto'}}
+					style={{'max-width': '480px'}}
+				>
 					<Collection data={gamesData}>
 						{(game, index) => {
 							const ruleData = useFirestore(game.rule);
