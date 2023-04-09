@@ -34,3 +34,22 @@ a {
     max-width: none;
   }
 }
+
+.markdown {
+  word-break: break-all;
+  padding-bottom: 1rem;
+}
+
+.markdown a {
+	color: #2196f3;
+}
+
+pre {
+  background: #EEE;
+  margin: 0;
+  padding: 0.5rem;
+  line-height: 1em;
+  border-radius: 0.3rem;
+  width: 100%;
+  box-sizing: border-box;
+}

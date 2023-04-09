@@ -154,7 +154,7 @@ const MainTab = (props: MainTabProps) => {
 				return (
 					<>
 						<SolidMarkdown
-							class={styles.rule}
+							class="markdown"
 							// eslint-disable-next-line react/no-children-prop
 							children={config.description}
 							remarkPlugins={[remarkGfm]}

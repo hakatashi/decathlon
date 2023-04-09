@@ -260,7 +260,7 @@ const AthlonGame = () => {
 								Show Leaderboard
 							</Button>
 							<SolidMarkdown
-								class={styles.gameDescription}
+								class="markdown"
 								children={game.description}
 								remarkPlugins={[remarkGfm]}
 								linkTarget="_blank"

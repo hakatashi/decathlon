@@ -26,9 +26,6 @@ const Athlons = () => {
 										<Typography variant="h5" component="h3">
 											{formatTimestamp(athlon.startAt)} - {formatTimestamp(athlon.endAt)}
 										</Typography>
-										<Typography variant="body2">
-											{athlon.description}
-										</Typography>
 									</CardContent>
 									<CardActions>
 										<Button>Learn More</Button>

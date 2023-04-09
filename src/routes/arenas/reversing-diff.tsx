@@ -130,7 +130,7 @@ const MainTab = (props: MainTabProps) => {
 					<>
 						<Typography variant="body1">
 							<SolidMarkdown
-								class={styles.rule}
+								class="markdown"
 								// eslint-disable-next-line react/no-children-prop
 								children={config.rule}
 								remarkPlugins={[remarkGfm]}

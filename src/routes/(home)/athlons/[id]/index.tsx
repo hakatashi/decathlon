@@ -1,8 +1,10 @@
 import {EmojiEvents} from '@suid/icons-material';
 import {Typography, Container, List, ListItem, ListItemAvatar, Avatar, ListItemText, Button} from '@suid/material';
 import {collection, CollectionReference, doc, getFirestore, orderBy, query, where} from 'firebase/firestore';
+import remarkGfm from 'remark-gfm';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {For, Show} from 'solid-js';
+import SolidMarkdown from 'solid-markdown';
 import {A, useParams} from 'solid-start';
 import {useAthlon} from '../[id]';
 import styles from './index.module.css';
@@ -52,11 +54,17 @@ const Home = () => {
 					)}
 				</Show>
 			</div>
-			<Container maxWidth="sm">
-				<Button size="large" sx={{my: 3}} variant="contained" component={A} href="./leaderboard">
-					<EmojiEvents sx={{mr: 1}}/>
-					Show Leaderboard
-				</Button>
+			<Container maxWidth="md">
+				<Doc data={athlonData}>
+					{(athlon) => (
+						<SolidMarkdown
+							class="markdown"
+							children={athlon.description}
+							remarkPlugins={[remarkGfm]}
+							linkTarget="_blank"
+						/>
+					)}
+				</Doc>
 				<Typography
 					component="h2"
 					textAlign="center"
@@ -67,7 +75,7 @@ const Home = () => {
 				>
 					競技一覧
 				</Typography>
-				<List sx={{bgcolor: 'background.paper'}}>
+				<List sx={{bgcolor: 'background.paper', 'max-width': '480px', m: '0 auto'}}>
 					<Collection data={gamesData}>
 						{(game, index) => {
 							const ruleData = useFirestore(game.rule);
@@ -89,6 +97,10 @@ const Home = () => {
 						}}
 					</Collection>
 				</List>
+				<Button size="large" sx={{my: 3}} variant="contained" component={A} href="./leaderboard">
+					<EmojiEvents sx={{mr: 1}}/>
+					Show Leaderboard
+				</Button>
 			</Container>
 		</main>
 	);
