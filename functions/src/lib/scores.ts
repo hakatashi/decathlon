@@ -1,1 +1,1 @@
-../../lib/scores.ts
+../../../lib/scores.ts
