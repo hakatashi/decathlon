@@ -5,7 +5,7 @@ import {collection, CollectionReference, doc, DocumentReference, getFirestore, q
 import {getStorage, ref} from 'firebase/storage';
 import remarkGfm from 'remark-gfm';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
-import {createEffect, createSignal, For, Show} from 'solid-js';
+import {createEffect, createMemo, createSignal, For, Show} from 'solid-js';
 import SolidMarkdown from 'solid-markdown';
 import {A, useParams} from 'solid-start';
 import {useAthlon} from '../../[id]';
@@ -79,7 +79,8 @@ const AthlonGame = () => {
 	const ruleRef = doc(db, 'gameRules', param.ruleId) as DocumentReference<GameRule>;
 
 	const [myScore, setMyScore] = createSignal<string>('N/A');
-	const [anchorEl, setAnchorEl] = createSignal<Element | null>(null);
+	const [popoverAnchorEl, setPopoverAnchorEl] = createSignal<Element | null>(null);
+	const [dialogOpen, setDialogOpen] = createSignal<boolean>(false);
 
 	const ruleData = useFirestore(ruleRef);
 	const gameData = useFirestore(
@@ -91,14 +92,26 @@ const AthlonGame = () => {
 	);
 	const authState = useAuth(auth);
 
-	const [open, setOpen] = createSignal<boolean>(false);
+	const scoreRecordErrorMessage = createMemo(() => {
+		if (!gameData.data?.[0]?.isScoreUserEditable) {
+			return 'この競技はスコアを手入力できません';
+		}
+
+		if (!authState.data?.uid) {
+			return 'ログインしてください';
+		}
+
+		return null;
+	});
 
 	const handlePopoverOpen = (event: { currentTarget: Element }) => {
-		setAnchorEl(event.currentTarget);
+		if (scoreRecordErrorMessage() !== null) {
+			setPopoverAnchorEl(event.currentTarget);
+		}
 	};
 
 	const handlePopoverClose = () => {
-		setAnchorEl(null);
+		setPopoverAnchorEl(null);
 	};
 
 	return (
@@ -200,16 +213,16 @@ const AthlonGame = () => {
 													size="large"
 													variant="contained"
 													color="secondary"
-													disabled
-													onClick={() => setOpen(true)}
+													disabled={scoreRecordErrorMessage() !== null}
+													onClick={() => setDialogOpen(true)}
 												>
 													スコアを記録する
 												</Button>
 											</div>
 											<Popover
 												sx={{pointerEvents: 'none'}}
-												open={Boolean(anchorEl())}
-												anchorEl={anchorEl()}
+												open={Boolean(popoverAnchorEl())}
+												anchorEl={popoverAnchorEl()}
 												anchorOrigin={{
 													vertical: 'top',
 													horizontal: 'center',
@@ -222,7 +235,7 @@ const AthlonGame = () => {
 												disableRestoreFocus
 												elevation={3}
 											>
-												<Typography sx={{p: 1}}>ログインしてください</Typography>
+												<Typography sx={{p: 1}}>{scoreRecordErrorMessage()}</Typography>
 											</Popover>
 										</Stack>
 										<Typography
@@ -273,11 +286,11 @@ const AthlonGame = () => {
 									tiebreakScore: 0,
 								});
 							}
-							setOpen(false);
+							setDialogOpen(false);
 						};
 
 						const handleCloseDialog = () => {
-							setOpen(false);
+							setDialogOpen(false);
 						};
 
 						createEffect(() => {
@@ -291,7 +304,7 @@ const AthlonGame = () => {
 								data={scoreData}
 								fallback={
 									<ScoreRecordDialog
-										open={open()}
+										open={dialogOpen()}
 										scoreInputNote={game.scoreInputNote}
 										maxRawScore={game.maxRawScore}
 										onSubmit={handleScoreSubmit}
@@ -301,7 +314,7 @@ const AthlonGame = () => {
 							>
 								{(score) => (
 									<ScoreRecordDialog
-										open={open()}
+										open={dialogOpen()}
 										scoreInputNote={game.scoreInputNote}
 										maxRawScore={game.maxRawScore}
 										onSubmit={handleScoreSubmit}
