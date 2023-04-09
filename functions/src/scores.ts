@@ -30,8 +30,7 @@ export const calculateRanking = (gameDocs: QuerySnapshot<Game>, scoreDocs: Query
 	for (const game of gameDocs.docs) {
 		const gameId = game.id;
 		const scores = scoresMap.get(gameId) ?? [];
-		const sortedScores = orderBy(scores, ['rawScore', 'tiebreakScore'], ['desc', game.data().tiebreakOrder]);
-		const rankedScores = calculateGameRanking(game.data(), sortedScores);
+		const rankedScores = calculateGameRanking(game.data(), scores);
 		gameScores.push([gameId, rankedScores]);
 	}
 

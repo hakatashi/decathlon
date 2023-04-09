@@ -1,4 +1,4 @@
-import {sum} from 'lodash';
+import {sum, orderBy} from 'lodash';
 import type {Game, Score, ScoreConfiguration} from '~/lib/schema';
 
 export const calculateScore = (
@@ -37,15 +37,20 @@ export interface RankedScore extends Score {
 	isAdmin: boolean,
 }
 
-// scores should be sorted before calling this function
 export const calculateGameRanking = (game: Game, scores: Score[]) => {
-	const maxRawScore = Math.max(...scores.map(({rawScore}) => rawScore));
+	const sortedScores = orderBy(
+		scores,
+		['rawScore', 'tiebreakScore'],
+		[game.scoreConfiguration.type === 'timestamp' ? 'asc' : 'desc', game.tiebreakOrder],
+	);
+
+	const maxRawScore = Math.max(...sortedScores.map(({rawScore}) => rawScore));
 
 	let previousRawScore: number | null = null;
 	let previousTiebreakScore: number | null = null;
 	let previousRank = 0;
 	// eslint-disable-next-line array-plural/array-plural
-	const rankedScoresWithoutAdmin = scores
+	const rankedScoresWithoutAdmin = sortedScores
 		.filter((score) => !game.admins.includes(score.user))
 		.map((score, index) => {
 			let rank = index;

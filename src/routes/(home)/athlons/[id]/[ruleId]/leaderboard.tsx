@@ -87,11 +87,7 @@ const Leaderboard = () => {
 				<Collection data={gameData}>
 					{(game) => {
 						const scoresData = useFirestore(
-							query(
-								collection(db, 'games', game.id, 'scores') as CollectionReference<Score>,
-								orderBy('rawScore', 'desc'),
-								orderBy('tiebreakScore', game.tiebreakOrder),
-							),
+							collection(db, 'games', game.id, 'scores') as CollectionReference<Score>,
 						);
 
 						return (

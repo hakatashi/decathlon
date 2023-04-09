@@ -47,7 +47,12 @@ export interface ScoreConfigurationMaxRatio {
 	type: 'max-ratio',
 }
 
-export type ScoreConfiguration = ScoreConfigurationScore | ScoreConfigurationScoreAndRank | ScoreConfigurationMaxRatio;
+export interface ScoreConfigurationTimestamp {
+	type: 'timestamp',
+	attenuationFactor: number,
+}
+
+export type ScoreConfiguration = ScoreConfigurationScore | ScoreConfigurationScoreAndRank | ScoreConfigurationMaxRatio | ScoreConfigurationTimestamp;
 
 export interface Game extends DocumentData {
 	athlon: DocumentReference<Athlon>,
