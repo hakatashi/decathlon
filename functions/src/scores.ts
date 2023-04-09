@@ -3,7 +3,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 
 import type {QuerySnapshot} from 'firebase-admin/firestore';
-import {logger} from 'firebase-functions/v1';
 import {orderBy, sortBy, sum} from 'lodash';
 import type {Game, Score} from '~/lib/schema';
 import {RankedScore, calculateGameRanking} from './lib/scores';
