@@ -22,6 +22,10 @@ export const calculateScore = (
 		return Math.min(maxPoint, rawScore * configuration.scoreWeight);
 	}
 
+	if (configuration.type === 'timestamp') {
+		return maxPoint * configuration.attenuationFactor ** rank;
+	}
+
 	const maxRankPoint = maxPoint * configuration.rankRatio;
 	const maxScorePoint = maxPoint - maxRankPoint;
 
