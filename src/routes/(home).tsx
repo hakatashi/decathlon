@@ -1,6 +1,6 @@
-import {Divider, Link, Stack, Typography} from '@suid/material';
+import {Divider, LinearProgress, Link, Stack, Typography} from '@suid/material';
 import {Show} from 'solid-js';
-import {Outlet, useLocation} from 'solid-start';
+import {Outlet, useIsRouting, useLocation} from 'solid-start';
 import Header from '~/components/Header';
 
 const RootLayout = () => {
@@ -8,6 +8,7 @@ const RootLayout = () => {
 		const location = useLocation();
 		return location.pathname === '/';
 	};
+	const isRouting = useIsRouting();
 
 	return (
 		<div
@@ -20,6 +21,17 @@ const RootLayout = () => {
 					} : {}
 			}
 		>
+			<Show when={isRouting()}>
+				<LinearProgress
+					style={{
+						position: 'fixed',
+						top: 0,
+						left: 0,
+						right: 0,
+						'z-index': 999,
+					}}
+				/>
+			</Show>
 			<Header/>
 			<Outlet/>
 			<Show when={!isRoot()}>
