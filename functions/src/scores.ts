@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 
 import type {QuerySnapshot} from 'firebase-admin/firestore';
+import {logger} from 'firebase-functions/v1';
 import {orderBy, sortBy, sum} from 'lodash';
 import type {Game, Score} from '~/lib/schema';
 import {RankedScore, calculateGameRanking} from './lib/scores';
@@ -34,6 +35,10 @@ export const calculateRanking = (gameDocs: QuerySnapshot<Game>, scoreDocs: Query
 		const scores = scoresMap.get(gameId) ?? [];
 		const sortedScores = orderBy(scores, ['rawScore', 'tiebreakScore'], ['desc', game.data().tiebreakOrder]);
 		const rankedScores = calculateGameRanking(game.data(), sortedScores);
+		logger.info(gameId);
+		logger.info(game.data());
+		logger.info(sortedScores);
+		logger.info(rankedScores);
 		gameScores.push([gameId, rankedScores]);
 	}
 
