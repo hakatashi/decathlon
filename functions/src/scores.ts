@@ -9,23 +9,21 @@ import {RankedScore, calculateGameRanking} from './lib/scores';
 
 // eslint-disable-next-line import/prefer-default-export
 export const calculateRanking = (gameDocs: QuerySnapshot<Game>, scoreDocs: QuerySnapshot<Score>) => {
-	type ScoreUserId = Score & { userId: string };
-
-	const scoresMap = new Map<string, ScoreUserId[]>();
+	const usersSet = new Set<string>();
+	const scoresMap = new Map<string, Score[]>();
 	for (const score of scoreDocs.docs) {
 		const gameId = score.ref.parent.parent?.id!;
 		if (!scoresMap.has(gameId)) {
 			scoresMap.set(gameId, []);
 		}
-		scoresMap.get(gameId)!.push({...score.data(), userId: score.id});
+		scoresMap.get(gameId)!.push(score.data());
+		usersSet.add(score.data().user);
 	}
 
 	const gamesMap = new Map<string, Game>();
 	for (const game of gameDocs.docs) {
 		gamesMap.set(game.id, game.data());
 	}
-
-	const usersSet = new Set<string>();
 
 	const gameScores: [string, RankedScore[]][] = [];
 
