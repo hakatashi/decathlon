@@ -1,5 +1,5 @@
 import {EmojiEvents} from '@suid/icons-material';
-import {Typography, Container, Breadcrumbs, Link, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Stack, TextField, Grid, Popover} from '@suid/material';
+import {Typography, Container, Breadcrumbs, Link, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Stack, TextField, Grid, Popover, Box} from '@suid/material';
 import dayjs from 'dayjs';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, query, setDoc, where} from 'firebase/firestore';
@@ -119,7 +119,7 @@ const AthlonGame = () => {
 
 	const scoreRecordErrorMessage = createMemo(() => {
 		if (!gameData.data?.[0]?.isScoreUserEditable) {
-			return 'この競技はスコアを手入力できません';
+			return 'この競技はスコアを手動入力できません';
 		}
 
 		if (!authState.data?.uid) {
@@ -265,10 +265,15 @@ const AthlonGame = () => {
 										</Stack>
 										<Typography
 											variant="body2"
-											my={3}
+											my={2}
 										>
 											Your score: {myScore()}
 										</Typography>
+										<Box sx={{mb: 3}} >
+											<Link component={A} href="./leaderboard">
+												ランキングを表示する
+											</Link>
+										</Box>
 									</Grid>
 								</Grid>
 							);
@@ -279,18 +284,12 @@ const AthlonGame = () => {
 			<Container maxWidth="lg">
 				<Collection data={gameData}>
 					{(game) => (
-						<>
-							<Button size="large" sx={{my: 3}} variant="contained" component={A} href="./leaderboard">
-								<EmojiEvents sx={{mr: 1}}/>
-								Show Leaderboard
-							</Button>
-							<SolidMarkdown
-								class="markdown"
-								children={game.description}
-								remarkPlugins={[remarkGfm]}
-								linkTarget="_blank"
-							/>
-						</>
+						<SolidMarkdown
+							class="markdown"
+							children={game.description}
+							remarkPlugins={[remarkGfm]}
+							linkTarget="_blank"
+						/>
 					)}
 				</Collection>
 				<Collection data={gameData}>

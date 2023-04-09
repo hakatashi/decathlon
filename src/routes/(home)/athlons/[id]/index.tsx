@@ -1,5 +1,5 @@
 import {EmojiEvents} from '@suid/icons-material';
-import {Typography, Container, List, ListItem, ListItemAvatar, Avatar, ListItemText, Button, Stack, Box} from '@suid/material';
+import {Typography, Container, List, ListItem, ListItemAvatar, Avatar, ListItemText, Button, Box} from '@suid/material';
 import {collection, CollectionReference, doc, getFirestore, orderBy, query, where} from 'firebase/firestore';
 import remarkGfm from 'remark-gfm';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
@@ -8,11 +8,10 @@ import SolidMarkdown from 'solid-markdown';
 import {A, useParams} from 'solid-start';
 import {useAthlon} from '../[id]';
 import styles from './index.module.css';
-import crown from '~/../public/images/crown-solid.svg';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import PageTitle from '~/components/PageTitle';
-import Username from '~/components/Username';
+import RankingSummary from '~/components/RankingSummary';
 import {athlonNames} from '~/lib/const';
 import type {Game} from '~/lib/schema';
 
@@ -113,63 +112,7 @@ const Home = () => {
 				</Head>
 				<Doc data={athlonData}>
 					{(athlon) => (
-						<>
-							<Show when={athlon.ranking[0]} keyed>
-								{(rankingEntry) => (
-									<Username
-										userId={rankingEntry.userId}
-										size="large"
-										direction="column"
-										accessory={
-											<img src={crown} class={styles.crown}/>
-										}
-										sx={{mt: 5}}
-									/>
-								)}
-							</Show>
-							<Stack
-								direction="row"
-								width="100%"
-								justifyContent="space-around"
-								flexWrap="wrap"
-							>
-								<For each={athlon.ranking.slice(1, 5)} >
-									{(rankingEntry, i) => (
-										<Username
-											userId={rankingEntry.userId}
-											size="medium"
-											direction="column"
-											sx={{mt: 5}}
-											accessory={
-												<div class={styles.rank}>{i() + 2}</div>
-											}
-										/>
-									)}
-								</For>
-							</Stack>
-							<Stack
-								direction="row"
-								width="100%"
-								justifyContent="space-between"
-								flexWrap="wrap"
-							>
-								<For each={athlon.ranking.slice(5, 15)} >
-									{(rankingEntry, i) => (
-										<Box flex="1 0 64px" textAlign="center" style={{'word-break': 'break-all'}}>
-											<Username
-												userId={rankingEntry.userId}
-												size={60}
-												direction="column"
-												sx={{mt: 5}}
-												accessory={
-													<div class={styles.rank}>{i() + 6}</div>
-												}
-											/>
-										</Box>
-									)}
-								</For>
-							</Stack>
-						</>
+						<RankingSummary users={athlon.ranking.map((rank) => rank.userId)}/>
 					)}
 				</Doc>
 				<Box textAlign="center" my={3}>
