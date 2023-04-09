@@ -45,7 +45,7 @@ export const calculateGameRanking = (game: Game, scores: Score[]) => {
 	const sortedScores = orderBy(
 		scores,
 		['rawScore', 'tiebreakScore'],
-		[game.scoreConfiguration.type === 'timestamp' ? 'asc' : 'desc', game.tiebreakOrder],
+		['desc', game.tiebreakOrder],
 	);
 
 	const maxRawScore = Math.max(...sortedScores.map(({rawScore}) => rawScore));

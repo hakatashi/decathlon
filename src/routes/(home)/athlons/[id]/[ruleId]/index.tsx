@@ -1,11 +1,12 @@
 import {EmojiEvents} from '@suid/icons-material';
 import {Typography, Container, Breadcrumbs, Link, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Stack, TextField, Grid, Popover} from '@suid/material';
+import dayjs from 'dayjs';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, query, setDoc, where} from 'firebase/firestore';
 import {getStorage, ref} from 'firebase/storage';
 import remarkGfm from 'remark-gfm';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
-import {createEffect, createMemo, createSignal, For, Show} from 'solid-js';
+import {createEffect, createMemo, createSignal, For, Match, Show, Switch} from 'solid-js';
 import SolidMarkdown from 'solid-markdown';
 import {A, useParams} from 'solid-start';
 import {useAthlon} from '../../[id]';
@@ -17,16 +18,23 @@ import {useStorageBytes} from '~/lib/firebase';
 import type {Game, GameRule, Score} from '~/lib/schema';
 
 interface Props {
-	onSubmit: (score: number) => void,
+	onSubmit: (score: number, tiebreakScore: number) => void,
 	onClose: () => void,
 	open: boolean,
 	maxRawScore: number,
 	scoreInputNote: string,
+	scoreConfigurationType: string,
 	defaultValue?: number,
+	defaultTiebreakValue?: number,
 }
 
 const ScoreRecordDialog = (props: Props) => {
-	const [score, setScore] = createSignal<string>(props.defaultValue?.toString() ?? '');
+	const [score, setScore] = createSignal<number>(props.defaultValue ?? 0);
+	const [tiebreakScore, setTiebreakScore] = createSignal<number>(props.defaultTiebreakValue ?? 0);
+
+	const handleClickSubmit = () => {
+		props.onSubmit(score(), tiebreakScore());
+	};
 
 	return (
 		<Dialog
@@ -41,26 +49,43 @@ const ScoreRecordDialog = (props: Props) => {
 			<DialogContent>
 				<DialogContentText id="alert-dialog-description">
 					<p>{props.scoreInputNote}</p>
-					<TextField
-						label="Score"
-						variant="standard"
-						type="number"
-						inputProps={{inputMode: 'numeric', pattern: '[0-9]*', max: props.maxRawScore, min: 0}}
-						defaultValue={props.defaultValue}
-						required
-						value={score()}
-						onChange={(event, value) => {
-							setScore(value);
-						}}
-					/>
+					<Switch>
+						<Match when={props.scoreConfigurationType === 'timestamp'}>
+							<input
+								class={styles.timestampInput}
+								type="time"
+								step="1"
+								value={dayjs(tiebreakScore() || 0).format('HH:mm:ss')}
+								onChange={(event) => {
+									const time = event.currentTarget.value;
+									const [hours, minutes, seconds] = time.split(':').map((component) => parseInt(component));
+									const timeData = dayjs().set('hours', hours).set('minutes', minutes).set('seconds', seconds);
+
+									setScore(props.maxRawScore);
+									setTiebreakScore(timeData.valueOf());
+								}}
+							/>
+						</Match>
+						<Match when>
+							<TextField
+								label="Score"
+								variant="standard"
+								type="number"
+								inputProps={{inputMode: 'numeric', pattern: '[0-9]*', max: props.maxRawScore, min: 0}}
+								defaultValue={props.defaultValue}
+								required
+								value={score()}
+								onChange={(event, value) => {
+									setScore(parseInt(value));
+									setTiebreakScore(0);
+								}}
+							/>
+						</Match>
+					</Switch>
 				</DialogContentText>
 			</DialogContent>
 			<DialogActions>
-				<Button
-					onClick={() => {
-						props.onSubmit(parseFloat(score()));
-					}}
-				>
+				<Button onClick={handleClickSubmit}>
 					送信
 				</Button>
 			</DialogActions>
@@ -277,13 +302,13 @@ const AthlonGame = () => {
 						const scoreRef = doc(db, 'games', game.id, 'scores', uid) as DocumentReference<Score>;
 						const scoreData = useFirestore(scoreRef);
 
-						const handleScoreSubmit = async (score: number) => {
+						const handleScoreSubmit = async (score: number, tiebreakScore: number) => {
 							if (athlonData?.data?.id) {
 								await setDoc(scoreRef, {
 									athlon: doc(db, 'athlons', athlonData?.data?.id),
 									rawScore: score,
 									user: uid,
-									tiebreakScore: 0,
+									tiebreakScore,
 								});
 							}
 							setDialogOpen(false);
@@ -306,6 +331,7 @@ const AthlonGame = () => {
 									<ScoreRecordDialog
 										open={dialogOpen()}
 										scoreInputNote={game.scoreInputNote}
+										scoreConfigurationType={game.scoreConfiguration.type}
 										maxRawScore={game.maxRawScore}
 										onSubmit={handleScoreSubmit}
 										onClose={handleCloseDialog}
@@ -316,10 +342,12 @@ const AthlonGame = () => {
 									<ScoreRecordDialog
 										open={dialogOpen()}
 										scoreInputNote={game.scoreInputNote}
+										scoreConfigurationType={game.scoreConfiguration.type}
 										maxRawScore={game.maxRawScore}
 										onSubmit={handleScoreSubmit}
 										onClose={handleCloseDialog}
 										defaultValue={score.rawScore}
+										defaultTiebreakValue={score.tiebreakScore}
 									/>
 								)}
 							</Doc>
