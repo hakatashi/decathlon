@@ -1,5 +1,5 @@
 import {EmojiEvents} from '@suid/icons-material';
-import {Typography, Container, Breadcrumbs, Link, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Stack, TextField, Grid} from '@suid/material';
+import {Typography, Container, Breadcrumbs, Link, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Stack, TextField, Grid, Popover} from '@suid/material';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, query, setDoc, where} from 'firebase/firestore';
 import {getStorage, ref} from 'firebase/storage';
@@ -79,6 +79,7 @@ const AthlonGame = () => {
 	const ruleRef = doc(db, 'gameRules', param.ruleId) as DocumentReference<GameRule>;
 
 	const [myScore, setMyScore] = createSignal<string>('N/A');
+	const [anchorEl, setAnchorEl] = createSignal<Element | null>(null);
 
 	const ruleData = useFirestore(ruleRef);
 	const gameData = useFirestore(
@@ -91,6 +92,14 @@ const AthlonGame = () => {
 	const authState = useAuth(auth);
 
 	const [open, setOpen] = createSignal<boolean>(false);
+
+	const handlePopoverOpen = (event: { currentTarget: Element }) => {
+		setAnchorEl(event.currentTarget);
+	};
+
+	const handlePopoverClose = () => {
+		setAnchorEl(null);
+	};
 
 	return (
 		<main>
@@ -183,14 +192,38 @@ const AthlonGame = () => {
 													</For>
 												)}
 											</Collection>
-											<Button
-												size="large"
-												variant="contained"
-												color="secondary"
-												onClick={handleClickOpen}
+											<div
+												onMouseEnter={handlePopoverOpen}
+												onMouseLeave={handlePopoverClose}
 											>
-												スコアを記録する
-											</Button>
+												<Button
+													size="large"
+													variant="contained"
+													color="secondary"
+													disabled
+													onClick={() => setOpen(true)}
+												>
+													スコアを記録する
+												</Button>
+											</div>
+											<Popover
+												sx={{pointerEvents: 'none'}}
+												open={Boolean(anchorEl())}
+												anchorEl={anchorEl()}
+												anchorOrigin={{
+													vertical: 'top',
+													horizontal: 'center',
+												}}
+												transformOrigin={{
+													vertical: 'bottom',
+													horizontal: 'center',
+												}}
+												onClose={handlePopoverClose}
+												disableRestoreFocus
+												elevation={3}
+											>
+												<Typography sx={{p: 1}}>ログインしてください</Typography>
+											</Popover>
 										</Stack>
 										<Typography
 											variant="body2"
