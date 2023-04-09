@@ -52,7 +52,7 @@ const Home = () => {
 			<div class={styles.athlonHeader}>
 				<Doc data={athlonData}>
 					{(athlon) => (
-						<Typography variant="h1">
+						<Typography variant="h1" style={{'font-size': '10vmin'}}>
 							{athlon.name}
 						</Typography>
 					)}
@@ -152,7 +152,7 @@ const Home = () => {
 							>
 								<For each={athlon.ranking.slice(5, 15)} >
 									{(rankingEntry, i) => (
-										<Box flex="1 0 64px" style={{'word-break': 'break-all'}}>
+										<Box flex="1 0 64px" textAlign="center" style={{'word-break': 'break-all'}}>
 											<Username
 												userId={rankingEntry.userId}
 												size={60}
