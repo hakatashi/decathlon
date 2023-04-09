@@ -31,13 +31,14 @@ export const calculateScore = (
 	return scorePoint + rankPoint;
 };
 
-interface RankedScore extends Score {
+export interface RankedScore extends Score {
 	rank: number,
-	score: number,
+	point: number,
 	isAdmin: boolean,
 }
 
-export const calculateRanking = (game: Game, scores: Score[]) => {
+// scores should be sorted before calling this function
+export const calculateGameRanking = (game: Game, scores: Score[]) => {
 	const maxRawScore = Math.max(...scores.map(({rawScore}) => rawScore));
 
 	let previousRawScore: number | null = null;
@@ -69,16 +70,15 @@ export const calculateRanking = (game: Game, scores: Score[]) => {
 				...score,
 				id: score.id,
 				rank,
-				score: scoreValue,
+				point: scoreValue,
 				isAdmin: false,
 			} as RankedScore;
 		});
 
-
 	const adminBonus = sum(
 		rankedScoresWithoutAdmin
 			.slice(0, game.adminBonus.count)
-			.map((score) => score.score),
+			.map((score) => score.point),
 	) / game.adminBonus.count;
 
 	const rankedScores = [
@@ -90,7 +90,7 @@ export const calculateRanking = (game: Game, scores: Score[]) => {
 			user: admin,
 			rank: 0,
 			isAdmin: true,
-			score: adminBonus,
+			point: adminBonus,
 		} as RankedScore)),
 	];
 

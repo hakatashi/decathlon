@@ -4,45 +4,10 @@
 
 import type {QuerySnapshot} from 'firebase-admin/firestore';
 import {orderBy, sortBy, sum} from 'lodash';
-import type {Game, Score, ScoreConfiguration} from '../../src/lib/schema';
+import {RankedScore, calculateGameRanking, calculateScore} from '../../lib/scores';
+import type {Game, Score} from '../../src/lib/schema';
 
 // eslint-disable-next-line import/prefer-default-export
-export const calculateScore = (
-	rawScore: number,
-	rank: number,
-	maxPoint: number,
-	configuration: ScoreConfiguration,
-	highestRawScore?: number,
-) => {
-	if (configuration.type === 'max-ratio') {
-		if (highestRawScore === undefined) {
-			throw new Error('Argument error: highestRawScore must be provided for max-ratio configuration');
-		}
-		if (rawScore > highestRawScore) {
-			throw new Error('highestRawScore cannot be larger than rawScore');
-		}
-		return rawScore / highestRawScore * maxPoint;
-	}
-
-	if (configuration.type === 'score') {
-		return Math.min(maxPoint, rawScore * configuration.scoreWeight);
-	}
-
-	const maxRankPoint = maxPoint * configuration.rankRatio;
-	const maxScorePoint = maxPoint - maxRankPoint;
-
-	const scorePoint = Math.min(maxScorePoint, rawScore * configuration.scoreWeight);
-	const rankPoint = maxRankPoint * configuration.rankWeight / (rank + configuration.rankWeight);
-
-	return scorePoint + rankPoint;
-};
-
-interface ScoreEntry extends Score {
-	rank: number,
-	point: number,
-	userId: string,
-}
-
 export const calculateRanking = (gameDocs: QuerySnapshot<Game>, scoreDocs: QuerySnapshot<Score>) => {
 	type ScoreUserId = Score & { userId: string };
 
@@ -62,50 +27,14 @@ export const calculateRanking = (gameDocs: QuerySnapshot<Game>, scoreDocs: Query
 
 	const usersSet = new Set<string>();
 
-	const gameScores: [string, ScoreEntry[]][] = [];
+	const gameScores: [string, RankedScore[]][] = [];
 
 	for (const game of gameDocs.docs) {
 		const gameId = game.id;
 		const scores = scoresMap.get(gameId) ?? [];
 		const sortedScores = orderBy(scores, ['rawScore', 'tiebreakScore'], ['desc', game.data().tiebreakOrder]);
-		const maxRawScore = Math.max(...scores.map(({rawScore}) => rawScore));
-
-		for (const score of scores) {
-			usersSet.add(score.userId);
-		}
-
-		let previousRawScore: number | null = null;
-		let previousTiebreakScore: number | null = null;
-		let previousRank = 0;
-		const sortedScoreEntries = sortedScores.map((score, index) => {
-			const scoreEntry = {
-				...score,
-				rank: index,
-				point: 0,
-				userId: score.userId,
-			} as ScoreEntry;
-
-			if (score.rawScore === previousRawScore && score.tiebreakScore === previousTiebreakScore) {
-				scoreEntry.rank = previousRank;
-			} else {
-				previousRank = index;
-			}
-
-			previousRawScore = score.rawScore;
-			previousTiebreakScore = score.tiebreakScore;
-
-			scoreEntry.point = calculateScore(
-				scoreEntry.rawScore,
-				scoreEntry.rank,
-				game.data().maxPoint,
-				game.data().scoreConfiguration,
-				maxRawScore,
-			);
-
-			return scoreEntry;
-		});
-
-		gameScores.push([gameId, sortedScoreEntries]);
+		const rankedScores = calculateGameRanking(game.data(), sortedScores);
+		gameScores.push([gameId, rankedScores]);
 	}
 
 	interface UserScoreEntry {
@@ -114,6 +43,7 @@ export const calculateRanking = (gameDocs: QuerySnapshot<Game>, scoreDocs: Query
 		games: {
 			gameId: string,
 			hasScore: boolean,
+			isAdmin: boolean,
 			point: number,
 			rawScore: number,
 			tiebreakScore: number,
@@ -123,11 +53,12 @@ export const calculateRanking = (gameDocs: QuerySnapshot<Game>, scoreDocs: Query
 
 	const userScoreEntries = Array.from(usersSet).map((userId) => {
 		const games = gameScores.map(([gameId, scores]) => {
-			const score: ScoreEntry | undefined = scores.find((s) => s.userId === userId);
+			const score = scores.find((s) => s.userId === userId);
 			if (!score) {
 				return {
 					gameId,
 					hasScore: false,
+					isAdmin: false,
 					point: 0,
 					rawScore: 0,
 					tiebreakScore: 0,
@@ -137,6 +68,7 @@ export const calculateRanking = (gameDocs: QuerySnapshot<Game>, scoreDocs: Query
 			return {
 				gameId,
 				hasScore: true,
+				isAdmin: score.isAdmin,
 				point: score.point,
 				rawScore: score.rawScore,
 				tiebreakScore: score.tiebreakScore,

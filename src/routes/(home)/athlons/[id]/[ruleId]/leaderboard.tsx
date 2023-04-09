@@ -1,5 +1,5 @@
 /* eslint-disable array-plural/array-plural */
-import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Avatar, Stack, Chip} from '@suid/material';
+import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Stack, Chip} from '@suid/material';
 import {blue} from '@suid/material/colors';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, where} from 'firebase/firestore';
@@ -7,18 +7,12 @@ import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {For, Show} from 'solid-js';
 import {A, useParams} from 'solid-start';
 import {useAthlon} from '../../[id]';
-import {calculateRanking} from '~/../lib/scores';
+import {calculateGameRanking} from '~/../lib/scores';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import PageTitle from '~/components/PageTitle';
 import Username from '~/components/Username';
 import type {Game, GameRule, Score} from '~/lib/schema';
-
-interface RankedScore extends Score {
-	rank: number,
-	score: number,
-	isAdmin: boolean,
-}
 
 const Leaderboard = () => {
 	const param = useParams();
@@ -117,7 +111,7 @@ const Leaderboard = () => {
 										<TableBody>
 											<Show when={scoresData.data} keyed>
 												{(scores) => {
-													const rankedScores = calculateRanking(game, scores);
+													const rankedScores = calculateGameRanking(game, scores);
 													const hasDecimalRawScore = scores.some((score) => !Number.isInteger(score.rawScore));
 
 													return (
@@ -152,7 +146,7 @@ const Leaderboard = () => {
 																		</TableCell>
 																		<TableCell align="right">
 																			<strong>
-																				{score.score.toFixed(2)}
+																				{score.point.toFixed(2)}
 																			</strong>
 																		</TableCell>
 																	</TableRow>
