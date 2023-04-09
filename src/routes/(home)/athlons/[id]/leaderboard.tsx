@@ -39,7 +39,7 @@ const Leaderboard = () => {
 					<PageTitle>[{athlon.name}] Leaderboard</PageTitle>
 				)}
 			</Doc>
-			<Container maxWidth="lg">
+			<Container maxWidth={false}>
 				<Breadcrumbs aria-label="breadcrumb" sx={{pt: 3, pb: 3}}>
 					<Link component={A} underline="hover" color="inherit" href="/athlons">
 						Athlons
