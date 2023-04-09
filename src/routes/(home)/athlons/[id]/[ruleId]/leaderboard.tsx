@@ -1,5 +1,5 @@
 /* eslint-disable array-plural/array-plural */
-import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Avatar, Stack} from '@suid/material';
+import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Avatar, Stack, Chip} from '@suid/material';
 import {blue} from '@suid/material/colors';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, where} from 'firebase/firestore';
@@ -7,14 +7,17 @@ import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {For, Show} from 'solid-js';
 import {A, useParams} from 'solid-start';
 import {useAthlon} from '../../[id]';
-import {calculateScore} from '~/../lib/scores';
+import {calculateRanking} from '~/../lib/scores';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import PageTitle from '~/components/PageTitle';
-import type {Game, GameRule, Score, User} from '~/lib/schema';
+import Username from '~/components/Username';
+import type {Game, GameRule, Score} from '~/lib/schema';
 
 interface RankedScore extends Score {
 	rank: number,
+	score: number,
+	isAdmin: boolean,
 }
 
 const Leaderboard = () => {
@@ -98,97 +101,71 @@ const Leaderboard = () => {
 						);
 
 						return (
-							<TableContainer component={Paper}>
-								<Table>
-									<TableHead>
-										<TableRow>
-											<TableCell>#</TableCell>
-											<TableCell>User</TableCell>
-											<TableCell align="right">Raw Score</TableCell>
-											<TableCell align="right">Tiebreak Score</TableCell>
-											<TableCell align="right">Point</TableCell>
-										</TableRow>
-									</TableHead>
-									<TableBody>
-										<Show when={scoresData.data} keyed>
-											{(scores) => {
-												let previousRawScore: number | null = null;
-												let previousTiebreakScore: number | null = null;
-												let previousRank = 0;
-												let hasDecimalRawScore = false;
-												const rankedScores = scores.map((score, index) => {
-													let rank = index;
-													if (score.rawScore === previousRawScore && score.tiebreakScore === previousTiebreakScore) {
-														rank = previousRank;
-													} else {
-														previousRank = index;
-													}
+							<>
+								<Typography variant="body2"><strong>作問者ボーナス</strong> ランキング上位{game.adminBonus.count}名の平均点</Typography>
+								<TableContainer component={Paper}>
+									<Table>
+										<TableHead>
+											<TableRow>
+												<TableCell>#</TableCell>
+												<TableCell>User</TableCell>
+												<TableCell align="right">Raw Score</TableCell>
+												<TableCell align="right">Tiebreak Score</TableCell>
+												<TableCell align="right">Point</TableCell>
+											</TableRow>
+										</TableHead>
+										<TableBody>
+											<Show when={scoresData.data} keyed>
+												{(scores) => {
+													const rankedScores = calculateRanking(game, scores);
+													const hasDecimalRawScore = scores.some((score) => !Number.isInteger(score.rawScore));
 
-													previousRawScore = score.rawScore;
-													previousTiebreakScore = score.tiebreakScore;
+													return (
+														<For each={rankedScores}>
+															{(score) => {
+																const isMe = authState?.data?.uid === score.id;
 
-													if (!Number.isInteger(score.rawScore)) {
-														hasDecimalRawScore = true;
-													}
-
-													return {...score, id: score.id, rank} as RankedScore;
-												});
-
-												const maxRawScore = Math.max(...scores.map(({rawScore}) => rawScore));
-
-												return (
-													<For each={rankedScores}>
-														{(score) => {
-															const userRef = doc(db, 'users', score.id) as DocumentReference<User>;
-															const userData = useFirestore(userRef);
-															const isMe = authState?.data?.uid === score.id;
-
-															return (
-																<TableRow sx={isMe ? {backgroundColor: blue[50]} : {}}>
-																	<TableCell>
-																		{score.rank + 1}
-																	</TableCell>
-																	<TableCell>
-																		<Doc data={userData}>
-																			{(user) => (
-																				<Stack direction="row" alignItems="center">
-																					<Avatar
-																						alt={user.displayName}
-																						src={user.photoURL}
-																						sx={{width: 30, height: 30, mr: 1}}
-																					/>
-																					<span>{user.displayName}</span>
-																				</Stack>
-																			)}
-																		</Doc>
-																	</TableCell>
-																	<TableCell align="right">
-																		{hasDecimalRawScore ? score.rawScore.toFixed(2) : score.rawScore}
-																	</TableCell>
-																	<TableCell align="right">
-																		{score.tiebreakScore}
-																	</TableCell>
-																	<TableCell align="right">
-																		<strong>
-																			{calculateScore(
-																				score.rawScore,
-																				score.rank,
-																				game.maxPoint,
-																				game.scoreConfiguration,
-																				maxRawScore,
-																			).toFixed(2)}
-																		</strong>
-																	</TableCell>
-																</TableRow>
-															);
+																return (
+																	<TableRow sx={isMe ? {backgroundColor: blue[50]} : {}}>
+																		<TableCell>
+																			<Show when={!score.isAdmin}>
+																				{score.rank + 1}
+																			</Show>
+																		</TableCell>
+																		<TableCell>
+																			<Stack direction="row">
+																				<Username userId={score.user}/>
+																				<Show when={score.isAdmin}>
+																					<Chip label="admin" color="primary" variant="outlined" sx={{ml: 1}}/>
+																				</Show>
+																			</Stack>
+																		</TableCell>
+																		<TableCell align="right">
+																			<Show when={!score.isAdmin}>
+																				{hasDecimalRawScore ? score.rawScore.toFixed(2) : score.rawScore}
+																			</Show>
+																		</TableCell>
+																		<TableCell align="right">
+																			<Show when={!score.isAdmin}>
+																				{score.tiebreakScore}
+																			</Show>
+																		</TableCell>
+																		<TableCell align="right">
+																			<strong>
+																				{score.score.toFixed(2)}
+																			</strong>
+																		</TableCell>
+																	</TableRow>
+																);
 														 }}
-													</For>
-												);
-											}}
-										</Show>
-									</TableBody>
-								</Table>
-							</TableContainer>
+														</For>
+													);
+												}}
+											</Show>
+										</TableBody>
+									</Table>
+								</TableContainer>
+							</>
 						);
 					}}
 				</Collection>

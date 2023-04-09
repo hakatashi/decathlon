@@ -1,5 +1,5 @@
 import {EmojiEvents} from '@suid/icons-material';
-import {Typography, Container, List, ListItem, ListItemAvatar, Avatar, ListItemText, Box, Button} from '@suid/material';
+import {Typography, Container, List, ListItem, ListItemAvatar, Avatar, ListItemText, Button} from '@suid/material';
 import {collection, CollectionReference, doc, getFirestore, orderBy, query, where} from 'firebase/firestore';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {For, Show} from 'solid-js';
@@ -71,7 +71,6 @@ const Home = () => {
 					<Collection data={gamesData}>
 						{(game, index) => {
 							const ruleData = useFirestore(game.rule);
-							const hasScore = ruleData?.data?.users?.some((user) => user.id === 'ZnYLOVTDhWVxlKt2vxhmCDmvqrJ3');
 
 							return (
 								<ListItem component={A} href={`/athlons/${param.id}/${game.rule.id}`}>

@@ -1,6 +1,6 @@
-import {ScoreConfiguration} from '../src/lib/schema';
+import {sum} from 'lodash';
+import type {Game, Score, ScoreConfiguration} from '../src/lib/schema';
 
-// eslint-disable-next-line import/prefer-default-export
 export const calculateScore = (
 	rawScore: number,
 	rank: number,
@@ -29,4 +29,70 @@ export const calculateScore = (
 	const rankPoint = maxRankPoint * configuration.rankWeight / (rank + configuration.rankWeight);
 
 	return scorePoint + rankPoint;
+};
+
+interface RankedScore extends Score {
+	rank: number,
+	score: number,
+	isAdmin: boolean,
+}
+
+export const calculateRanking = (game: Game, scores: Score[]) => {
+	const maxRawScore = Math.max(...scores.map(({rawScore}) => rawScore));
+
+	let previousRawScore: number | null = null;
+	let previousTiebreakScore: number | null = null;
+	let previousRank = 0;
+	// eslint-disable-next-line array-plural/array-plural
+	const rankedScoresWithoutAdmin = scores
+		.filter((score) => !game.admins.includes(score.user))
+		.map((score, index) => {
+			let rank = index;
+			if (score.rawScore === previousRawScore && score.tiebreakScore === previousTiebreakScore) {
+				rank = previousRank;
+			} else {
+				previousRank = index;
+			}
+
+			previousRawScore = score.rawScore;
+			previousTiebreakScore = score.tiebreakScore;
+
+			const scoreValue = calculateScore(
+				score.rawScore,
+				rank,
+				game.maxPoint,
+				game.scoreConfiguration,
+				maxRawScore,
+			);
+
+			return {
+				...score,
+				id: score.id,
+				rank,
+				score: scoreValue,
+				isAdmin: false,
+			} as RankedScore;
+		});
+
+
+	const adminBonus = sum(
+		rankedScoresWithoutAdmin
+			.slice(0, game.adminBonus.count)
+			.map((score) => score.score),
+	) / game.adminBonus.count;
+
+	const rankedScores = [
+		...rankedScoresWithoutAdmin,
+		...game.admins.map((admin) => ({
+			athlon: game.athlon,
+			rawScore: 0,
+			tiebreakScore: 0,
+			user: admin,
+			rank: 0,
+			isAdmin: true,
+			score: adminBonus,
+		} as RankedScore)),
+	];
+
+	return rankedScores;
 };

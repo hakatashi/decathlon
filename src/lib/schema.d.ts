@@ -55,12 +55,17 @@ export interface Game extends DocumentData {
 	maxPoint: number,
 	maxRawScore: number,
 	weight?: number,
-	endAt?: Timestamp,
+	endAt: Timestamp | null,
 	order: number,
 	description: string,
 	scoreConfiguration: ScoreConfiguration,
 	configuration: {[key: string]: any},
 	tiebreakOrder: 'asc' | 'desc',
+	admins: string[],
+	adminBonus: {
+		type: 'topPlayer',
+		count: number,
+	},
 	links: {
 		label: string,
 		url: string,
