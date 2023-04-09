@@ -183,6 +183,14 @@ const AthlonGame = () => {
 													</For>
 												)}
 											</Collection>
+											<Button
+												size="large"
+												variant="contained"
+												color="secondary"
+												onClick={handleClickOpen}
+											>
+												スコアを記録する
+											</Button>
 										</Stack>
 										<Typography
 											variant="body2"

@@ -1,11 +1,11 @@
 /* eslint-disable array-plural/array-plural */
 import {Star} from '@suid/icons-material';
-import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Avatar, Stack, FormControlLabel, Switch} from '@suid/material';
-import {blue, blueGrey, orange, red, yellow} from '@suid/material/colors';
+import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Avatar, Stack, FormControlLabel, Switch as SwitchControl} from '@suid/material';
+import {blue, orange, red} from '@suid/material/colors';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, where} from 'firebase/firestore';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
-import {createSignal, For, Show} from 'solid-js';
+import {createSignal, For, Match, Switch} from 'solid-js';
 import {A, useParams} from 'solid-start';
 import {useAthlon} from '../[id]';
 import Collection from '~/components/Collection';
@@ -67,7 +67,7 @@ const Leaderboard = () => {
 				</Typography>
 				<FormControlLabel
 					control={
-						<Switch
+						<SwitchControl
 							checked={showRawScore()}
 							onChange={(_event, value) => {
 								setShowRawScore(value);
@@ -154,26 +154,38 @@ const Leaderboard = () => {
 																return (
 																	<TableCell align="right">
 																		<Stack direction="row" justifyContent="flex-end">
-																			<Show when={game.rank === 0}>
-																				<Star
-																					sx={{
-																						color: red[600],
-																						width: '16px',
-																						height: '16px',
-																						mr: 0.3,
-																					}}
-																				/>
-																			</Show>
-																			<Show when={game.rank !== null && game.rank > 0 && game.rank < 5}>
-																				<Star
-																					sx={{
-																						color: orange[200],
-																						width: '16px',
-																						height: '16px',
-																						mr: 0.3,
-																					}}
-																				/>
-																			</Show>
+																			<Switch>
+																				<Match when={game.isAdmin}>
+																					<img
+																						src="https://firebasestorage.googleapis.com/v0/b/tsg-decathlon.appspot.com/o/assets%2Ftax-office.png?alt=media&token=f42b3170-c6c3-48e7-909e-88fbb1ffcc0e"
+																						style={{
+																							width: '24px',
+																							height: '24px',
+																							'margin-right': '0.3rem',
+																						}}
+																					/>
+																				</Match>
+																				<Match when={game.rank === 0}>
+																					<Star
+																						sx={{
+																							color: red[600],
+																							width: '16px',
+																							height: '16px',
+																							mr: 0.3,
+																						}}
+																					/>
+																				</Match>
+																				<Match when={game.rank !== null && game.rank > 0 && game.rank < 5}>
+																					<Star
+																						sx={{
+																							color: orange[200],
+																							width: '16px',
+																							height: '16px',
+																							mr: 0.3,
+																						}}
+																					/>
+																				</Match>
+																			</Switch>
 																			<span>{getScore()}</span>
 																		</Stack>
 																	</TableCell>

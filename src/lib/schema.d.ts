@@ -14,6 +14,7 @@ export interface RankingEntry {
 	games: {
 		gameId: string,
 		hasScore: boolean,
+		isAdmin: boolean,
 		point: number,
 		rawScore: number,
 		tiebreakScore: number,
@@ -61,6 +62,7 @@ export interface Game extends DocumentData {
 	scoreConfiguration: ScoreConfiguration,
 	configuration: {[key: string]: any},
 	tiebreakOrder: 'asc' | 'desc',
+	isScoreUserEditable: boolean,
 	admins: string[],
 	adminBonus: {
 		type: 'topPlayer',
