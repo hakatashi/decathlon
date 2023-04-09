@@ -128,6 +128,7 @@ const Home = () => {
 								direction="row"
 								width="100%"
 								justifyContent="space-around"
+								flexWrap="wrap"
 							>
 								<For each={athlon.ranking.slice(1, 5)} >
 									{(rankingEntry, i) => (
@@ -147,10 +148,11 @@ const Home = () => {
 								direction="row"
 								width="100%"
 								justifyContent="space-between"
+								flexWrap="wrap"
 							>
 								<For each={athlon.ranking.slice(5, 15)} >
 									{(rankingEntry, i) => (
-										<Box flex="1 1 0" style={{'word-break': 'break-all'}}>
+										<Box flex="1 0 64px" style={{'word-break': 'break-all'}}>
 											<Username
 												userId={rankingEntry.userId}
 												size={60}
