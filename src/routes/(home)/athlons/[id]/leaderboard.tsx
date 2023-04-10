@@ -91,7 +91,7 @@ const RankingTable = (props: {ranking: RankingEntry[], athlonId: string, showRaw
 												<TableCell align="right">
 													<Stack direction="row" justifyContent="flex-end">
 														<Switch>
-															<Match when={game.isAdmin}>
+															<Match when={game.isAuthor}>
 																<img
 																	src="https://firebasestorage.googleapis.com/v0/b/tsg-decathlon.appspot.com/o/assets%2Ftax-office.png?alt=media&token=f42b3170-c6c3-48e7-909e-88fbb1ffcc0e"
 																	style={{

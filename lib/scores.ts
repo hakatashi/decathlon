@@ -38,7 +38,7 @@ export const calculateScore = (
 export interface RankedScore extends Score {
 	rank: number,
 	point: number,
-	isAdmin: boolean,
+	isAuthor: boolean,
 }
 
 export const calculateGameRanking = (game: Game, scores: Score[]) => {
@@ -55,7 +55,7 @@ export const calculateGameRanking = (game: Game, scores: Score[]) => {
 	let previousRank = 0;
 	// eslint-disable-next-line array-plural/array-plural
 	const rankedScoresWithoutAdmin = sortedScores
-		.filter((score) => !game.admins.includes(score.user))
+		.filter((score) => !game.authors.includes(score.user))
 		.map((score, index) => {
 			let rank = index;
 			if (score.rawScore === previousRawScore && score.tiebreakScore === previousTiebreakScore) {
@@ -80,7 +80,7 @@ export const calculateGameRanking = (game: Game, scores: Score[]) => {
 				id: score.id,
 				rank,
 				point: scoreValue,
-				isAdmin: false,
+				isAuthor: false,
 			} as RankedScore;
 		});
 
@@ -92,13 +92,13 @@ export const calculateGameRanking = (game: Game, scores: Score[]) => {
 
 	const rankedScores = [
 		...rankedScoresWithoutAdmin,
-		...game.admins.map((admin) => ({
+		...game.authors.map((admin) => ({
 			athlon: game.athlon,
 			rawScore: 0,
 			tiebreakScore: 0,
 			user: admin,
 			rank: 0,
-			isAdmin: true,
+			isAuthor: true,
 			point: adminBonus,
 		} as RankedScore)),
 	];

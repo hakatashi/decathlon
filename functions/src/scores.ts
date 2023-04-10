@@ -42,7 +42,7 @@ export const calculateRanking = (gameDocs: QuerySnapshot<Game>, scoreDocs: Query
 		games: {
 			gameId: string,
 			hasScore: boolean,
-			isAdmin: boolean,
+			isAuthor: boolean,
 			point: number,
 			rawScore: number,
 			tiebreakScore: number,
@@ -57,7 +57,7 @@ export const calculateRanking = (gameDocs: QuerySnapshot<Game>, scoreDocs: Query
 				return {
 					gameId,
 					hasScore: false,
-					isAdmin: false,
+					isAuthor: false,
 					point: 0,
 					rawScore: 0,
 					tiebreakScore: 0,
@@ -67,7 +67,7 @@ export const calculateRanking = (gameDocs: QuerySnapshot<Game>, scoreDocs: Query
 			return {
 				gameId,
 				hasScore: true,
-				isAdmin: score.isAdmin,
+				isAuthor: score.isAuthor,
 				point: score.point,
 				rawScore: score.rawScore,
 				tiebreakScore: score.tiebreakScore,

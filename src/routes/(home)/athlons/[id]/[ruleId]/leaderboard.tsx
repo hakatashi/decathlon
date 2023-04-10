@@ -118,25 +118,25 @@ const Leaderboard = () => {
 																return (
 																	<TableRow sx={isMe ? {backgroundColor: blue[50]} : {}}>
 																		<TableCell>
-																			<Show when={!score.isAdmin}>
+																			<Show when={!score.isAuthor}>
 																				{score.rank + 1}
 																			</Show>
 																		</TableCell>
 																		<TableCell>
 																			<Stack direction="row">
 																				<Username userId={score.user}/>
-																				<Show when={score.isAdmin}>
-																					<Chip label="admin" color="primary" variant="outlined" sx={{ml: 1}}/>
+																				<Show when={score.isAuthor}>
+																					<Chip label="author" color="primary" variant="outlined" sx={{ml: 1}}/>
 																				</Show>
 																			</Stack>
 																		</TableCell>
 																		<TableCell align="right">
-																			<Show when={!score.isAdmin}>
+																			<Show when={!score.isAuthor}>
 																				{hasDecimalRawScore ? score.rawScore.toFixed(2) : score.rawScore}
 																			</Show>
 																		</TableCell>
 																		<TableCell align="right">
-																			<Show when={!score.isAdmin}>
+																			<Show when={!score.isAuthor}>
 																				{score.tiebreakScore}
 																			</Show>
 																		</TableCell>
