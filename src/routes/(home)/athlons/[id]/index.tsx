@@ -23,6 +23,7 @@ const Head = (props: {children: JSX.Element}) => (
 		fontSize={20}
 		fontWeight="bold"
 		mt={5}
+		paddingInlineStart={5}
 	>
 		{props.children}
 	</Typography>

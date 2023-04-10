@@ -17,7 +17,6 @@ export const calculateRanking = (gameDocs: QuerySnapshot<Game>, scoreDocs: Query
 			scoresMap.set(gameId, []);
 		}
 		scoresMap.get(gameId)!.push(score.data());
-		usersSet.add(score.data().user);
 	}
 
 	const gamesMap = new Map<string, Game>();
@@ -31,6 +30,9 @@ export const calculateRanking = (gameDocs: QuerySnapshot<Game>, scoreDocs: Query
 		const gameId = game.id;
 		const scores = scoresMap.get(gameId) ?? [];
 		const rankedScores = calculateGameRanking(game.data(), scores);
+		for (const rankedScore of rankedScores) {
+			usersSet.add(rankedScore.user);
+		}
 		gameScores.push([gameId, rankedScores]);
 	}
 

@@ -1,43 +1,43 @@
 html, body {
-  margin: 0;
-  width: 100%;
-  height: 100%;
+	margin: 0;
+	width: 100%;
+	height: 100%;
 }
 
 pre {
-  text-align: left;
-  margin: 1rem auto;
-  width: 50rem;
-  white-space: pre-wrap;
-  word-break: break-all;
+	text-align: left;
+	margin: 1rem auto;
+	width: 50rem;
+	white-space: pre-wrap;
+	word-break: break-all;
 }
 
 a {
-  text-decoration: inherit;
-  color: inherit;
+	text-decoration: inherit;
+	color: inherit;
 }
 
 .load-error {
-  display: inline-block;
-  word-break: break-all;
-  color: red;
-  font-size: 0.5em;
-  line-height: 1.2em;
+	display: inline-block;
+	word-break: break-all;
+	color: red;
+	font-size: 0.5em;
+	line-height: 1.2em;
 }
 
 @media (min-width: 480px) {
-  h1 {
-    max-width: none;
-  }
+	h1 {
+		max-width: none;
+	}
 
-  p {
-    max-width: none;
-  }
+	p {
+		max-width: none;
+	}
 }
 
 .markdown {
-  word-break: break-all;
-  padding-bottom: 1rem;
+	word-break: break-all;
+	padding-bottom: 1rem;
 }
 
 .markdown a {
@@ -45,11 +45,11 @@ a {
 }
 
 pre {
-  background: #EEE;
-  margin: 0;
-  padding: 0.5rem;
-  line-height: 1em;
-  border-radius: 0.3rem;
-  width: 100%;
-  box-sizing: border-box;
+	background: #EEE;
+	margin: 0;
+	padding: 0.5rem;
+	line-height: 1em;
+	border-radius: 0.3rem;
+	width: 100%;
+	box-sizing: border-box;
 }
