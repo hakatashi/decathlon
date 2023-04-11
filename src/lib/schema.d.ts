@@ -144,8 +144,11 @@ export interface DiffConfiguration {
 	}[],
 }
 
+export type CodegolfJudgeType = 'ignore-whitespaces' | 'ignore-newline-type';
+
 export interface CodegolfConfiguration {
 	enabled: boolean,
+	judgeType: CodegolfJudgeType,
 	testcases: {
 		input: string,
 		output: string,
