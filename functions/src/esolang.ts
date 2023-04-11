@@ -326,6 +326,12 @@ const updateCodegolfRanking = async (gameId: string, game: Game) => {
 			language.id === 'anything'
 				? submissions
 				: submissions.filter((s) => s.language === language.id);
+
+		if (filteredSubmissions.length === 0) {
+			languageRankings.push([]);
+			continue;
+		}
+
 		const submissionsByUser = groupBy(filteredSubmissions, (submission) => submission.userId);
 
 		const users = Object.entries(submissionsByUser).map(([userId, userSubmissions]) => {
