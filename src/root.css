@@ -44,6 +44,11 @@ a {
 	color: #2196f3;
 }
 
+.markdown img {
+	max-width: 100%;
+	max-height: 30vh;
+}
+
 pre {
 	background: #EEE;
 	margin: 0;
