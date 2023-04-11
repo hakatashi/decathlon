@@ -4,7 +4,7 @@ import {CollectionReference, DocumentReference, Timestamp} from 'firebase-admin/
 import {getFunctions} from 'firebase-admin/functions';
 import {firestore, logger, runWith} from 'firebase-functions';
 import {groupBy, last, max, minBy, reverse, sortBy, sum, zip} from 'lodash';
-import type {CodegolfConfiguration, CodegolfRanking, CodegolfSubmission, DiffConfiguration, Game, ReversingDiffRanking, ReversingDiffSubmission, Score} from '~/lib/schema';
+import type {CodegolfConfiguration, CodegolfJudgeType, CodegolfRanking, CodegolfSubmission, DiffConfiguration, Game, ReversingDiffRanking, ReversingDiffSubmission, Score} from '~/lib/schema';
 import {db, storage} from './firebase';
 
 export const executeDiffSubmission =
@@ -150,9 +150,16 @@ export const executeDiffSubmission =
 			}
 		});
 
-const isTestcaseCorrect = (result: string, expected: string) => {
-	const normalizedResult = result.replaceAll(/\s/g, '');
-	const normalizedExpected = expected.replaceAll(/\s/g, '');
+const normalizeCodegolfOutput = (text: string, judgeType: CodegolfJudgeType) => {
+	if (judgeType === 'ignore-newline-type') {
+		return text.replaceAll(/\r\n/g, '\n').replace(/\n+$/, '');
+	}
+	return text.replaceAll(/\s/g, '');
+};
+
+const isTestcaseCorrect = (result: string, expected: string, judgeType: CodegolfJudgeType) => {
+	const normalizedResult = normalizeCodegolfOutput(result, judgeType);
+	const normalizedExpected = normalizeCodegolfOutput(expected, judgeType);
 	return normalizedResult === normalizedExpected;
 };
 
@@ -257,7 +264,7 @@ export const executeCodegolfSubmission =
 				let status: TestcaseStatus | null = null;
 				if (error) {
 					status = 'error';
-				} else if (isTestcaseCorrect(stdout, testcase.output)) {
+				} else if (isTestcaseCorrect(stdout, testcase.output, config.judgeType)) {
 					status = 'success';
 				} else {
 					status = 'failed';
