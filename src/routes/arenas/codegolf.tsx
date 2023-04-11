@@ -145,6 +145,14 @@ const MainTab = (props: MainTabProps) => {
 		setSelectedAnyLanguage(event.target.value);
 	};
 
+	const isTestcaseLarge = (testcase: {input: string, output: string}) => {
+		const maxLineLength = Math.max(
+			...testcase.input.trim().split('\n').map((line) => line.length),
+			...testcase.output.trim().split('\n').map((line) => line.length),
+		);
+		return maxLineLength >= 40;
+	};
+
 	return (
 		<Doc data={gameData}>
 			{(game) => {
@@ -162,7 +170,7 @@ const MainTab = (props: MainTabProps) => {
 						<Grid container spacing={2} class={styles.rule}>
 							<For each={config.testcases}>
 								{(testcase, i) => (
-									<Grid item xs={12} md={3}>
+									<Grid item xs={12} md={isTestcaseLarge(testcase) ? 12 : 3}>
 										<Typography variant="h4" component="h2">Test case {i() + 1}</Typography>
 										<Typography variant="h5" component="h3">Input</Typography>
 										<pre>{testcase.input}</pre>
