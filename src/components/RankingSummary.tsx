@@ -1,7 +1,6 @@
 import {Stack, Box} from '@suid/material';
 import {For, Show} from 'solid-js';
 import styles from './RankingSummary.module.css';
-import crown from '~/../public/images/crown-solid.svg';
 import Username from '~/components/Username';
 
 interface Props {
@@ -17,7 +16,7 @@ const RankingSummary = (props: Props) => (
 					size="large"
 					direction="column"
 					accessory={
-						<img src={crown} class={styles.crown}/>
+						<img src="/images/crown-solid.svg" class={styles.crown}/>
 					}
 					sx={{mt: 5}}
 				/>

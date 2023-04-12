@@ -12,10 +12,15 @@ interface Props {
 	direction?: 'row' | 'column',
 	accessory?: JSX.Element,
 	sx?: SxProps,
+	noIcon?: boolean,
 }
 
 const Username = (providedProps: Props) => {
-	const props = mergeProps({size: 'small', direction: 'row' as const}, providedProps);
+	const props = mergeProps({
+		size: 'small',
+		direction: 'row' as const,
+		noIcon: false,
+	}, providedProps);
 
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
@@ -41,11 +46,13 @@ const Username = (providedProps: Props) => {
 			{(user) => (
 				<Stack direction={props.direction} alignItems="center" sx={props.sx}>
 					<div style={{position: 'relative'}}>
-						<Avatar
-							alt={user.displayName}
-							src={user.photoURL}
-							sx={{width: size(), height: size(), mr: props.direction === 'row' ? 1 : 0}}
-						/>
+						<Show when={!props.noIcon}>
+							<Avatar
+								alt={user.displayName}
+								src={user.photoURL}
+								sx={{width: size(), height: size(), mr: props.direction === 'row' ? 1 : 0}}
+							/>
+						</Show>
 						<Show when={props.accessory} keyed>
 							{(accessory) => accessory}
 						</Show>
