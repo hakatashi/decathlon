@@ -2,13 +2,15 @@ import {AppBar, Avatar, IconButton, Toolbar, Typography} from '@suid/material';
 import {getAuth} from 'firebase/auth';
 import type {User as AuthUser} from 'firebase/auth';
 import {doc, DocumentReference, getFirestore} from 'firebase/firestore';
+import last from 'lodash/last';
 import {useFirebaseApp, useAuth, useFirestore} from 'solid-firebase';
-import {createContext, createEffect, createSignal, Show, useContext} from 'solid-js';
-import {Outlet} from 'solid-start';
+import {createContext, createEffect, createMemo, createSignal, Show, useContext} from 'solid-js';
+import {A, Outlet, useSearchParams} from 'solid-start';
 import styles from './arenas.module.css';
 import Doc from '~/components/Doc';
 import LoginRequiredDialog from '~/components/LoginRequiredDialog';
-import type {UseFireStoreReturn, User} from '~/lib/schema';
+import PageNotFoundError from '~/lib/PageNotFoundError';
+import type {Game, UseFireStoreReturn, User} from '~/lib/schema';
 
 const UserContext = createContext<AuthUser>();
 
@@ -31,12 +33,38 @@ const ArenasLayout = () => {
 		}
 	});
 
+	const [searchParams] = useSearchParams();
+	if (typeof searchParams.gameId !== 'string') {
+		throw new PageNotFoundError();
+	}
+
+	const gameId = searchParams.gameId;
+
+	const gameRef = doc(db, 'games', gameId) as DocumentReference<Game>;
+	const gameData = useFirestore(gameRef);
+
+	const athlonId = createMemo(() => {
+		if (gameData.data?.athlon) {
+			return last(gameData.data.athlon.path.split('/'));
+		}
+		return '';
+	});
+
+	const ruleId = createMemo(() => {
+		if (gameData.data?.rule) {
+			return last(gameData.data.rule.path.split('/'));
+		}
+		return '';
+	});
+
 	return (
 		<div class={styles.wrap}>
 			<AppBar position="static" class={styles.header}>
 				<Toolbar variant="dense">
 					<Typography variant="h6" color="inherit" component="h1">
-						{arenaTitle()}
+						<A href={`/athlons/${athlonId()}/${ruleId()}`}>
+							{arenaTitle()}
+						</A>
 					</Typography>
 					<Typography variant="h6" component="div" color="inherit" sx={{flexGrow: 1, textAlign: 'center'}}>
 						{headerText()}
