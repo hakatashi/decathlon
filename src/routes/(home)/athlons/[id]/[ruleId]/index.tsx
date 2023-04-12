@@ -1,5 +1,4 @@
-import {EmojiEvents} from '@suid/icons-material';
-import {Typography, Container, Breadcrumbs, Link, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Stack, TextField, Grid, Popover, Box} from '@suid/material';
+import {Typography, Container, Breadcrumbs, Link, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Stack, TextField, Grid, Box} from '@suid/material';
 import dayjs from 'dayjs';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, query, setDoc, where} from 'firebase/firestore';
@@ -9,6 +8,7 @@ import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, For, Match, Show, Switch} from 'solid-js';
 import SolidMarkdown from 'solid-markdown';
 import {A, useParams} from 'solid-start';
+import {tippy} from 'solid-tippy';
 import {useAthlon} from '../../[id]';
 import styles from './index.module.scss';
 import Collection from '~/components/Collection';
@@ -16,6 +16,7 @@ import Doc from '~/components/Doc';
 import PageTitle from '~/components/PageTitle';
 import {useStorageBytes} from '~/lib/firebase';
 import type {Game, GameRule, Score} from '~/lib/schema';
+import 'tippy.js/dist/tippy.css';
 
 interface Props {
 	onSubmit: (score: number, tiebreakScore: number) => void,
@@ -26,6 +27,19 @@ interface Props {
 	scoreConfigurationType: string,
 	defaultValue?: number,
 	defaultTiebreakValue?: number,
+}
+
+declare module 'solid-js' {
+	namespace JSX {
+		interface Directives {
+			tippy: {
+				hidden?: boolean,
+				props?: {
+					content?: string | null,
+				},
+			},
+		}
+	}
 }
 
 const ScoreRecordDialog = (props: Props) => {
@@ -104,7 +118,6 @@ const AthlonGame = () => {
 	const ruleRef = doc(db, 'gameRules', param.ruleId) as DocumentReference<GameRule>;
 
 	const [myScore, setMyScore] = createSignal<string>('N/A');
-	const [popoverAnchorEl, setPopoverAnchorEl] = createSignal<Element | null>(null);
 	const [dialogOpen, setDialogOpen] = createSignal<boolean>(false);
 
 	const ruleData = useFirestore(ruleRef);
@@ -129,15 +142,8 @@ const AthlonGame = () => {
 		return null;
 	});
 
-	const handlePopoverOpen = (event: { currentTarget: Element }) => {
-		if (scoreRecordErrorMessage() !== null) {
-			setPopoverAnchorEl(event.currentTarget);
-		}
-	};
-
-	const handlePopoverClose = () => {
-		setPopoverAnchorEl(null);
-	};
+	// XXX: https://www.solidjs.com/guides/typescript#use___
+	false && tippy;
 
 	return (
 		<main>
@@ -230,10 +236,7 @@ const AthlonGame = () => {
 													</For>
 												)}
 											</Collection>
-											<div
-												onMouseEnter={handlePopoverOpen}
-												onMouseLeave={handlePopoverClose}
-											>
+											<div use:tippy={{hidden: true, props: {content: scoreRecordErrorMessage()}}} >
 												<Button
 													size="large"
 													variant="contained"
@@ -244,24 +247,6 @@ const AthlonGame = () => {
 													スコアを記録する
 												</Button>
 											</div>
-											<Popover
-												sx={{pointerEvents: 'none'}}
-												open={Boolean(popoverAnchorEl())}
-												anchorEl={popoverAnchorEl()}
-												anchorOrigin={{
-													vertical: 'top',
-													horizontal: 'center',
-												}}
-												transformOrigin={{
-													vertical: 'bottom',
-													horizontal: 'center',
-												}}
-												onClose={handlePopoverClose}
-												disableRestoreFocus
-												elevation={3}
-											>
-												<Typography sx={{p: 1}}>{scoreRecordErrorMessage()}</Typography>
-											</Popover>
 										</Stack>
 										<Typography
 											variant="body2"
