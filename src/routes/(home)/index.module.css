@@ -1,41 +1,46 @@
 .home {
-  width: 100%;
-  height: 100%;
-  background: #607d8b;
-  text-align: center;
+	width: 100%;
+	flex: 1 1 0;
+	background: #607d8b;
+	text-align: center;
+
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
 }
 
 .home h3 {
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  color: white;
+	text-transform: uppercase;
+	letter-spacing: 0.2em;
+	color: white;
 }
 
 .logo {
-  width: 100%;
-  height: 70vh;
+	width: 70vmin;
+	height: 70vmin;
 }
 
 .logoRotation {
-  transform: rotate(3deg);
-  animation: rotation 250s infinite linear;
+	transform: rotate(3deg);
+	animation: rotation 250s infinite linear;
 }
 
 .title {
-  color: white;
-  font-size: 5vmin;
-  font-family: monospace;
-  text-transform: uppercase;
-  text-align: center;
-  margin: 0;
-  letter-spacing: 0.7em;
+	color: white;
+	font-size: 5vmin;
+	font-family: monospace;
+	text-transform: uppercase;
+	text-align: center;
+	margin: 0;
+	letter-spacing: 0.7em;
 }
 
 @keyframes rotation {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
 }
