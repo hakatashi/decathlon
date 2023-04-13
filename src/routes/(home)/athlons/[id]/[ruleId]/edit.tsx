@@ -1,11 +1,11 @@
 import {Button, Container, TextField} from '@suid/material';
 import {getAuth} from 'firebase/auth';
-import {CollectionReference, DocumentReference, collection, doc, getFirestore, query, where} from 'firebase/firestore';
+import {CollectionReference, DocumentReference, collection, doc, getFirestore, query, updateDoc, where, writeBatch} from 'firebase/firestore';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
-import {createEffect, createSignal} from 'solid-js';
-import {useParams} from 'solid-start';
+import {Show, createEffect, createMemo, createSignal} from 'solid-js';
+import {Navigate, useParams} from 'solid-start';
 import Collection from '~/components/Collection';
-import type {Game, GameRule} from '~/lib/schema';
+import type {Game, GameRule, Score} from '~/lib/schema';
 
 const AthlonEdit = () => {
 	const param = useParams();
@@ -15,7 +15,6 @@ const AthlonEdit = () => {
 
 	const ruleRef = doc(db, 'gameRules', param.ruleId) as DocumentReference<GameRule>;
 
-	const ruleData = useFirestore(ruleRef);
 	const gameData = useFirestore(
 		query(
 			collection(db, 'games') as CollectionReference<Game>,
@@ -35,10 +34,64 @@ const AthlonEdit = () => {
 		}
 	});
 
+	const unauthorized = createMemo(() => (
+		authState.data?.uid &&
+		Array.isArray(gameData.data?.[0]?.admins) &&
+		!gameData.data?.[0]?.admins.includes(authState.data.uid)
+	));
+
+	const handleClickSubmit = async (gameId: string) => {
+		const gameRef = doc(db, 'games', gameId) as DocumentReference<Game>;
+		await updateDoc(gameRef, {
+			description: description(),
+		});
+		setHasDescriptionChange(false);
+	};
+
+	const handleClickImport = async (game: Game) => {
+		const scores: Score[] = [];
+
+		for (const line of importScores().split(/\r?\n/)) {
+			const [userId, rawScoreText, tiebreakScoreText] = line.split(/[\t,]/);
+			if (userId.length !== 28) {
+				console.error(`Invalid userId: ${userId}`);
+				return;
+			}
+			const rawScore = parseFloat(rawScoreText);
+			if (!Number.isFinite(rawScore)) {
+				console.error(`Invalid rawScore: ${rawScoreText}`);
+				return;
+			}
+			const tiebreakScore = parseFloat(tiebreakScoreText);
+			if (!Number.isFinite(tiebreakScore)) {
+				console.error(`Invalid tiebreakScore: ${tiebreakScoreText}`);
+				return;
+			}
+			scores.push({
+				athlon: game.athlon,
+				user: userId,
+				rawScore,
+				tiebreakScore,
+			});
+		}
+
+		console.log(scores);
+
+		const gameScoresRef = collection(db, 'games', game.id, 'scores') as CollectionReference<Score>;
+		const batch = writeBatch(db);
+		for (const score of scores) {
+			batch.set(doc(gameScoresRef, score.user), score, {merge: true});
+		}
+		await batch.commit();
+	};
+
 	return (
 		<Container maxWidth="lg" sx={{py: 3}}>
+			<Show when={unauthorized()}>
+				<Navigate href={`/athlons/${param.id}/${param.ruleId}`}/>;
+			</Show>
 			<Collection data={gameData}>
-				{() => (
+				{(game) => (
 					<>
 						<TextField
 							multiline
@@ -52,6 +105,7 @@ const AthlonEdit = () => {
 						/>
 						<Button
 							disabled={!hasDescriptionChange()}
+							onClick={() => handleClickSubmit(game.id)}
 							variant="contained"
 							sx={{my: 2}}
 						>
@@ -70,6 +124,7 @@ const AthlonEdit = () => {
 						<Button
 							variant="contained"
 							sx={{my: 2}}
+							onClick={() => handleClickImport(game)}
 						>
 							Import Scores
 						</Button>
