@@ -54,7 +54,10 @@ service cloud.firestore {
       match /scores/{userId} {
         allow read;
         allow write: if request.auth != null
-                     && request.auth.uid == userId
+                     && (
+                       request.auth.uid == userId
+                       || request.auth.uid in gameData().admins
+                     )
                      && request.resource.data.user == userId
                      && isValidGameScore(request.resource.data);
       }
