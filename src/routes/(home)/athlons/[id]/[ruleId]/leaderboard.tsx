@@ -3,6 +3,7 @@ import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, 
 import {blue} from '@suid/material/colors';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, query, where} from 'firebase/firestore';
+import {floor} from 'lodash';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {For, Show} from 'solid-js';
 import {A, useParams} from 'solid-start';
@@ -132,7 +133,7 @@ const Leaderboard = () => {
 																		</TableCell>
 																		<TableCell align="right">
 																			<Show when={!score.isAuthor}>
-																				{hasDecimalRawScore ? score.rawScore.toFixed(2) : score.rawScore}
+																				{hasDecimalRawScore ? floor(score.rawScore, 2).toFixed(2) : score.rawScore}
 																			</Show>
 																		</TableCell>
 																		<TableCell align="right">
@@ -142,7 +143,7 @@ const Leaderboard = () => {
 																		</TableCell>
 																		<TableCell align="right">
 																			<strong>
-																				{score.point.toFixed(2)}
+																				{floor(score.point, 2).toFixed(2)}
 																			</strong>
 																		</TableCell>
 																	</TableRow>

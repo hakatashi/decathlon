@@ -6,6 +6,7 @@ import {blue, green, red} from '@suid/material/colors';
 import {stripIndent} from 'common-tags';
 import dayjs from 'dayjs';
 import {addDoc, collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, serverTimestamp, where} from 'firebase/firestore';
+import {floor} from 'lodash';
 import zip from 'lodash/zip';
 import remarkGfm from 'remark-gfm';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
@@ -475,12 +476,12 @@ const RankingTab = () => {
 										{(language) => (
 											<TableCell>
 												<Show when={language.hasScore}>
-													<strong>{language.size}</strong>B ({language.score.toFixed(2)})
+													<strong>{language.size}</strong>B ({floor(language.score, 2).toFixed(2)})
 												</Show>
 											</TableCell>
 										)}
 									</For>
-									<TableCell align="right"><strong>{ranking.score.toFixed(2)}</strong></TableCell>
+									<TableCell align="right"><strong>{floor(ranking.score, 2).toFixed(2)}</strong></TableCell>
 								</TableRow>
 							);
 						 }}

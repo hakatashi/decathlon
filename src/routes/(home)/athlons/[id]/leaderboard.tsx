@@ -4,6 +4,7 @@ import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, 
 import {blue, orange, red} from '@suid/material/colors';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, getFirestore, orderBy, query, where} from 'firebase/firestore';
+import {floor} from 'lodash';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createSignal, For, Match, Switch} from 'solid-js';
 import {A, useParams} from 'solid-start';
@@ -84,7 +85,7 @@ const RankingTable = (props: {ranking: RankingEntry[], athlonId: string, showRaw
 													return game.rawScore.toString();
 												}
 
-												return game.point.toFixed(2);
+												return floor(game.point, 2).toFixed(2);
 											};
 
 											return (
@@ -130,7 +131,7 @@ const RankingTable = (props: {ranking: RankingEntry[], athlonId: string, showRaw
 									</For>
 									<TableCell align="right">
 										<strong>
-											{userEntry.point.toFixed(2)}
+											{floor(userEntry.point, 2).toFixed(2)}
 										</strong>
 									</TableCell>
 								</TableRow>
