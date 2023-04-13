@@ -72,6 +72,13 @@ const Athlons = () => {
 											)}
 										</For>
 									</Stack>
+									<Typography
+										variant="body2"
+										component="p"
+										textAlign="center"
+									>
+										参加者: {athlon.ranking.length} 人
+									</Typography>
 								</A>
 							</>
 						)}
