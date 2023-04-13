@@ -91,17 +91,6 @@ const Header = () => {
 										vertical: 'bottom',
 									}}
 								>
-									<MenuItem>
-										<Doc data={userData()}>
-											{({displayName}) => (
-												<span>{displayName}</span>
-											)}
-										</Doc>
-									</MenuItem>
-									<MenuItem component={A} href={`/athletes/${user.uid}`}>
-										Profile
-									</MenuItem>
-									<Divider/>
 									<MenuItem component={A} href="/settings">
 										<ListItemIcon>
 											<Settings fontSize="small"/>
