@@ -34,6 +34,7 @@ declare module 'solid-js' {
 		interface Directives {
 			tippy: {
 				hidden?: boolean,
+				disabled?: boolean,
 				props?: {
 					content?: string | null,
 				},
@@ -142,6 +143,14 @@ const AthlonGame = () => {
 		return null;
 	});
 
+	const tippyProps = createMemo(() => ({
+		disabled: scoreRecordErrorMessage() === null,
+		hidden: true,
+		props: {
+			content: scoreRecordErrorMessage(),
+		},
+	}));
+
 	// XXX: https://www.solidjs.com/guides/typescript#use___
 	false && tippy;
 
@@ -236,7 +245,7 @@ const AthlonGame = () => {
 													</For>
 												)}
 											</Collection>
-											<div use:tippy={{hidden: true, props: {content: scoreRecordErrorMessage()}}} >
+											<div use:tippy={tippyProps()}>
 												<Button
 													size="large"
 													variant="contained"
