@@ -13,7 +13,7 @@ export const calculateScore = (
 			throw new Error('Argument error: highestRawScore must be provided for max-ratio configuration');
 		}
 		if (rawScore > highestRawScore) {
-			throw new Error('highestRawScore cannot be larger than rawScore');
+			throw new Error('rawScore cannot be larger than highestRawScore');
 		}
 		return rawScore / highestRawScore * maxPoint;
 	}
