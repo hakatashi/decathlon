@@ -71,16 +71,6 @@ const RankingTable = (props: {ranking: RankingEntry[], athlonId: string, showRaw
 					</TableRow>
 				</TableHead>
 				<TableBody>
-					<TableRow sx={{backgroundColor: yellow[50]}}>
-						<TableCell size="small"><strong>参加者数</strong></TableCell>
-						<TableCell size="small"/>
-						<For each={participants()}>
-							{(participant) => (
-								<TableCell size="small" align="right"><strong>{participant}</strong></TableCell>
-							)}
-						</For>
-						<TableCell size="small"/>
-					</TableRow>
 					<For each={props.ranking}>
 						{(userEntry) => {
 							const isMe = authState?.data?.uid === userEntry.userId;
@@ -157,6 +147,16 @@ const RankingTable = (props: {ranking: RankingEntry[], athlonId: string, showRaw
 							);
 						}}
 					</For>
+					<TableRow sx={{backgroundColor: yellow[50]}}>
+						<TableCell size="small"><strong>参加者数</strong></TableCell>
+						<TableCell size="small"/>
+						<For each={participants()}>
+							{(participant) => (
+								<TableCell size="small" align="right"><strong>{participant}</strong></TableCell>
+							)}
+						</For>
+						<TableCell size="small" align="right"><strong>{props.ranking.length}</strong></TableCell>
+					</TableRow>
 				</TableBody>
 			</Table>
 		</TableContainer>
