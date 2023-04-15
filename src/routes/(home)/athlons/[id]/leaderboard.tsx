@@ -1,5 +1,5 @@
 /* eslint-disable array-plural/array-plural */
-import {Star} from '@suid/icons-material';
+import {ElectricBolt, Star} from '@suid/icons-material';
 import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Stack, FormControlLabel, Switch as SwitchControl} from '@suid/material';
 import {blue, orange, red} from '@suid/material/colors';
 import {getAuth} from 'firebase/auth';
@@ -93,12 +93,12 @@ const RankingTable = (props: {ranking: RankingEntry[], athlonId: string, showRaw
 													<Stack direction="row" justifyContent="flex-end">
 														<Switch>
 															<Match when={game.isAuthor}>
-																<img
-																	src="https://firebasestorage.googleapis.com/v0/b/tsg-decathlon.appspot.com/o/assets%2Ftax-office.png?alt=media&token=f42b3170-c6c3-48e7-909e-88fbb1ffcc0e"
-																	style={{
-																		width: '24px',
-																		height: '24px',
-																		'margin-right': '0.3rem',
+																<ElectricBolt
+																	sx={{
+																		color: blue[500],
+																		width: '16px',
+																		height: '16px',
+																		mr: 0.3,
 																	}}
 																/>
 															</Match>
