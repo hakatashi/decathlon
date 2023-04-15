@@ -1,4 +1,4 @@
-import {Typography, Container, Breadcrumbs, Link, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Stack, TextField, Grid, Box} from '@suid/material';
+import {Typography, Container, Breadcrumbs, Link, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Stack, TextField, Grid, Box, Checkbox, FormControlLabel} from '@suid/material';
 import dayjs from 'dayjs';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, query, setDoc, where} from 'firebase/firestore';
@@ -46,6 +46,7 @@ declare module 'solid-js' {
 const ScoreRecordDialog = (props: Props) => {
 	const [score, setScore] = createSignal<number>(props.defaultValue ?? 0);
 	const [tiebreakScore, setTiebreakScore] = createSignal<number>(props.defaultTiebreakValue ?? 0);
+	const [isSolved, setIsSolved] = createSignal<boolean>(false);
 
 	const handleClickSubmit = () => {
 		props.onSubmit(score(), tiebreakScore());
@@ -66,20 +67,40 @@ const ScoreRecordDialog = (props: Props) => {
 					<p>{props.scoreInputNote}</p>
 					<Switch>
 						<Match when={props.scoreConfigurationType === 'timestamp'}>
-							<input
-								class={styles.timestampInput}
-								type="time"
-								step="1"
-								value={dayjs(tiebreakScore() || 0).format('HH:mm:ss')}
-								onChange={(event) => {
-									const time = event.currentTarget.value;
-									const [hours, minutes, seconds] = time.split(':').map((component) => parseInt(component));
-									const timeData = dayjs().set('hours', hours).set('minutes', minutes).set('seconds', seconds);
+							<Box>
+								<FormControlLabel
+									control={
+										<Checkbox
+											checked={isSolved()}
+											onChange={(_event, checked) => {
+												setIsSolved(checked);
+												if (checked) {
+													setScore(props.maxRawScore);
+												} else {
+													setScore(0);
+													setTiebreakScore(0);
+												}
+											}}
+										/>
+									}
+									label="解けた"
+								/>
+							</Box>
+							<Show when={isSolved()}>
+								<input
+									class={styles.timestampInput}
+									type="time"
+									step="1"
+									value={dayjs(tiebreakScore() || 0).format('HH:mm:ss')}
+									onChange={(event) => {
+										const time = event.currentTarget.value;
+										const [hours, minutes, seconds] = time.split(':').map((component) => parseInt(component));
+										const timeData = dayjs().set('hours', hours).set('minutes', minutes).set('seconds', seconds);
 
-									setScore(props.maxRawScore);
-									setTiebreakScore(timeData.valueOf());
-								}}
-							/>
+										setTiebreakScore(timeData.valueOf());
+									}}
+								/>
+							</Show>
 						</Match>
 						<Match when>
 							<TextField
