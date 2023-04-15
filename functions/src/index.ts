@@ -41,6 +41,10 @@ export const onScoreChanged = firestore
 		await db.runTransaction(async (transaction) => {
 			const gameDoc = await transaction.get(gamesRef.doc(changedGameId));
 			const athlon = gameDoc.get('athlon') as DocumentReference<Athlon>;
+			const athlonData = (await athlon.get()).data();
+			if (athlonData && athlonData.endAt.toDate() < new Date()) {
+				return;
+			}
 			const gameDocs = await transaction.get(
 				(db.collection('games') as CollectionReference<Game>)
 					.where('athlon', '==', athlon)
