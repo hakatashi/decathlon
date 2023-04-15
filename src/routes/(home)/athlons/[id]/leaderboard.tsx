@@ -1,11 +1,11 @@
 /* eslint-disable array-plural/array-plural */
 import {ElectricBolt, Star} from '@suid/icons-material';
 import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Stack, FormControlLabel, Switch as SwitchControl} from '@suid/material';
-import {blue, orange, red} from '@suid/material/colors';
+import {blue, orange, red, yellow} from '@suid/material/colors';
 import dayjs from 'dayjs';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, getFirestore, orderBy, query, where} from 'firebase/firestore';
-import {floor} from 'lodash';
+import {floor, unzip, filter} from 'lodash';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createMemo, createSignal, For, Match, onCleanup, Show, Switch} from 'solid-js';
 import {A, useParams} from 'solid-start';
@@ -29,6 +29,14 @@ const RankingTable = (props: {ranking: RankingEntry[], athlonId: string, showRaw
 			orderBy('order'),
 		),
 	);
+
+	const participants = createMemo(() => (
+		unzip(
+			props.ranking.map((user) => (
+				user.games.map((game) => game.hasScore && game.point > 0 && !game.isAuthor)
+			)),
+		).map((users) => filter(users).length)
+	));
 
 	const authState = useAuth(auth);
 	return (
@@ -63,12 +71,22 @@ const RankingTable = (props: {ranking: RankingEntry[], athlonId: string, showRaw
 					</TableRow>
 				</TableHead>
 				<TableBody>
+					<TableRow sx={{backgroundColor: yellow[50]}}>
+						<TableCell size="small"><strong>参加者数</strong></TableCell>
+						<TableCell size="small"/>
+						<For each={participants()}>
+							{(participant) => (
+								<TableCell size="small" align="right"><strong>{participant}</strong></TableCell>
+							)}
+						</For>
+						<TableCell size="small"/>
+					</TableRow>
 					<For each={props.ranking}>
 						{(userEntry) => {
 							const isMe = authState?.data?.uid === userEntry.userId;
 
 							return (
-								<TableRow sx={isMe ? {backgroundColor: blue[50]} : {}} >
+								<TableRow sx={isMe ? {backgroundColor: blue[50]} : {}}>
 									<TableCell>
 										{userEntry.rank + 1}
 									</TableCell>
