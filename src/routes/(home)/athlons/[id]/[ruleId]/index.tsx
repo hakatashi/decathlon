@@ -46,7 +46,7 @@ declare module 'solid-js' {
 const ScoreRecordDialog = (props: Props) => {
 	const [score, setScore] = createSignal<number>(props.defaultValue ?? 0);
 	const [tiebreakScore, setTiebreakScore] = createSignal<number>(props.defaultTiebreakValue ?? 0);
-	const [isSolved, setIsSolved] = createSignal<boolean>(false);
+	const [isSolved, setIsSolved] = createSignal<boolean>(props.defaultValue === props.maxRawScore);
 
 	const handleClickSubmit = () => {
 		props.onSubmit(score(), tiebreakScore());
