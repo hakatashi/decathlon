@@ -2,11 +2,12 @@
 import {ElectricBolt, Star} from '@suid/icons-material';
 import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Stack, FormControlLabel, Switch as SwitchControl} from '@suid/material';
 import {blue, orange, red} from '@suid/material/colors';
+import dayjs from 'dayjs';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, getFirestore, orderBy, query, where} from 'firebase/firestore';
 import {floor} from 'lodash';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
-import {createSignal, For, Match, Switch} from 'solid-js';
+import {createMemo, createSignal, For, Match, onCleanup, Show, Switch} from 'solid-js';
 import {A, useParams} from 'solid-start';
 import {useAthlon} from '../[id]';
 import Collection from '~/components/Collection';
@@ -148,6 +149,17 @@ const Leaderboard = () => {
 	const athlonData = useAthlon();
 
 	const [showRawScore, setShowRawScore] = createSignal<boolean>(false);
+	const [now, setNow] = createSignal<number>(Date.now());
+
+	const intervalId = setInterval(() => {
+		setNow(Date.now());
+	}, 1000);
+	onCleanup(() => {
+		clearInterval(intervalId);
+	});
+
+	const endAt = createMemo(() => athlonData?.data && dayjs(athlonData.data.endAt.toDate()));
+	const isEnded = createMemo(() => endAt()?.isBefore(now()));
 
 	return (
 		<main>
@@ -182,6 +194,17 @@ const Leaderboard = () => {
 				>
 					Leaderboard
 				</Typography>
+				<Show when={isEnded() && endAt()} keyed>
+					{(day) => (
+						<Typography
+							component="p"
+							variant="body2"
+							my={1}
+						>
+							コンテスト終了時 ({day.format('YYYY/MM/DD HH:mm:ss')}) のランキングを表示しています。
+						</Typography>
+					)}
+				</Show>
 				<FormControlLabel
 					control={
 						<SwitchControl
