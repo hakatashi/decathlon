@@ -26,7 +26,7 @@
   "dependencies": {
     "@solid-primitives/resize-observer": "^2.0.12",
     "@solidjs/meta": "^0.28.2",
-    "@solidjs/router": "^0.7.0",
+    "@solidjs/router": "^0.7.1",
     "@suid/base": "^0.7.0",
     "@suid/icons-material": "^0.5.9",
     "@suid/material": "^0.11.0",
