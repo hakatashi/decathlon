@@ -28,7 +28,7 @@
     "@solidjs/meta": "^0.28.4",
     "@solidjs/router": "^0.7.1",
     "@suid/base": "^0.8.1",
-    "@suid/icons-material": "^0.5.9",
+    "@suid/icons-material": "^0.6.1",
     "@suid/material": "^0.12.1",
     "common-tags": "^1.8.2",
     "dayjs": "^1.11.7",
