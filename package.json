@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@solid-primitives/resize-observer": "^2.0.16",
-    "@solidjs/meta": "^0.28.4",
+    "@solidjs/meta": "^0.28.5",
     "@solidjs/router": "^0.7.1",
     "@suid/base": "^0.8.1",
     "@suid/icons-material": "^0.6.1",
