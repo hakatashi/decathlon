@@ -15,7 +15,7 @@
     "@types/lodash": "^4.14.196",
     "@types/node": "^20.4.5",
     "esbuild": "^0.18.17",
-    "eslint": "^8.45.0",
+    "eslint": "^8.46.0",
     "postcss": "^8.4.27",
     "sass": "^1.64.1",
     "solid-start-node": "^0.2.29",
