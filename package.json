@@ -20,7 +20,7 @@
     "sass": "^1.64.2",
     "solid-start-node": "^0.2.30",
     "typescript": "^5.1.6",
-    "vite": "^4.4.8",
+    "vite": "^4.4.9",
     "vite-plugin-solid": "^2.7.0"
   },
   "dependencies": {
