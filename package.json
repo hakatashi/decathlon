@@ -18,7 +18,7 @@
     "eslint": "^8.46.0",
     "postcss": "^8.4.27",
     "sass": "^1.64.2",
-    "solid-start-node": "^0.2.31",
+    "solid-start-node": "^0.3.1",
     "typescript": "^5.1.6",
     "vite": "^4.4.9",
     "vite-plugin-solid": "^2.7.0"
