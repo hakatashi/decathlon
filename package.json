@@ -39,7 +39,7 @@
     "solid-firebase": "^0.3.0",
     "solid-js": "^1.7.11",
     "solid-markdown": "^1.2.2",
-    "solid-start": "^0.3.1",
+    "solid-start": "^0.3.2",
     "solid-tippy": "^0.2.1",
     "tippy.js": "^6.3.7",
     "undici": "^5.23.0"
