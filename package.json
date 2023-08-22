@@ -32,7 +32,7 @@
     "@suid/material": "^0.14.1",
     "common-tags": "^1.8.2",
     "dayjs": "^1.11.9",
-    "firebase": "^10.2.0",
+    "firebase": "^10.3.0",
     "lodash": "^4.17.21",
     "nanoid": "^4.0.2",
     "remark-gfm": "^3.0.1",
