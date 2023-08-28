@@ -24,7 +24,7 @@
     "vite-plugin-solid": "^2.7.0"
   },
   "dependencies": {
-    "@solid-primitives/resize-observer": "^2.0.20",
+    "@solid-primitives/resize-observer": "^2.0.21",
     "@solidjs/meta": "^0.28.6",
     "@solidjs/router": "^0.8.3",
     "@suid/base": "^0.8.4",
