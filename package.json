@@ -16,7 +16,7 @@
     "@types/node": "^20.6.1",
     "esbuild": "^0.19.3",
     "eslint": "^8.49.0",
-    "postcss": "^8.4.29",
+    "postcss": "^8.4.30",
     "sass": "^1.67.0",
     "solid-start-node": "^0.3.5",
     "typescript": "^5.2.2",
