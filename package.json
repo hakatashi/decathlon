@@ -35,7 +35,7 @@
     "firebase": "^10.4.0",
     "lodash": "^4.17.21",
     "nanoid": "^5.0.1",
-    "remark-gfm": "^3.0.1",
+    "remark-gfm": "^4.0.0",
     "solid-firebase": "^0.3.0",
     "solid-js": "^1.7.11",
     "solid-markdown": "^1.2.2",
