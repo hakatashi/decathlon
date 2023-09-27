@@ -29,7 +29,7 @@
     "@solidjs/router": "^0.8.3",
     "@suid/base": "^0.8.5",
     "@suid/icons-material": "^0.6.10",
-    "@suid/material": "^0.15.0",
+    "@suid/material": "^0.15.1",
     "common-tags": "^1.8.2",
     "dayjs": "^1.11.10",
     "firebase": "^10.4.0",
