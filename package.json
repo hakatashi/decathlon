@@ -17,7 +17,7 @@
     "esbuild": "^0.19.4",
     "eslint": "^8.51.0",
     "postcss": "^8.4.31",
-    "sass": "^1.69.0",
+    "sass": "^1.69.2",
     "solid-start-node": "^0.3.6",
     "typescript": "^5.2.2",
     "vite": "^4.4.11",
