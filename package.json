@@ -21,7 +21,7 @@
     "solid-start-node": "^0.3.6",
     "typescript": "^5.2.2",
     "vite": "^4.4.11",
-    "vite-plugin-solid": "^2.7.0"
+    "vite-plugin-solid": "^2.7.1"
   },
   "dependencies": {
     "@solid-primitives/resize-observer": "^2.0.22",
