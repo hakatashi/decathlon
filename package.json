@@ -12,7 +12,7 @@
     "@hakatashi/eslint-config": "^1.20.0",
     "@suid/vite-plugin": "^0.1.5",
     "@types/common-tags": "^1.8.2",
-    "@types/lodash": "^4.14.199",
+    "@types/lodash": "^4.14.200",
     "@types/node": "^20.8.7",
     "esbuild": "^0.19.5",
     "eslint": "^8.51.0",
