@@ -42,7 +42,7 @@
     "solid-start": "^0.3.8",
     "solid-tippy": "^0.2.1",
     "tippy.js": "^6.3.7",
-    "undici": "^5.27.0"
+    "undici": "^5.27.2"
   },
   "engines": {
     "node": ">=16.8"
