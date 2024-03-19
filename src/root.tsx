@@ -16,6 +16,7 @@ import {
 } from 'solid-start';
 import {HttpStatusCode} from 'solid-start/server';
 import PageNotFoundError from './lib/PageNotFoundError';
+import { initializeApp } from 'firebase/app'
 import './root.css';
 
 const firebaseConfig = {
@@ -27,6 +28,8 @@ const firebaseConfig = {
 	appId: '1:621156302243:web:c0724b4636cb8e42cb6e16',
 	measurementId: 'G-SSBBNLVY2E',
 };
+
+const app = initializeApp(firebaseConfig);
 
 const Root = () => (
 	<Html lang="en">
@@ -66,7 +69,7 @@ const Root = () => (
 );
 
 const App = () => (
-	<FirebaseProvider config={firebaseConfig}>
+	<FirebaseProvider app={app}>
 		<Root/>
 	</FirebaseProvider>
 );
