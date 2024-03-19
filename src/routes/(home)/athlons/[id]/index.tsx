@@ -4,7 +4,7 @@ import {collection, CollectionReference, doc, getFirestore, orderBy, query, wher
 import remarkGfm from 'remark-gfm';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {For, JSX, Show} from 'solid-js';
-import SolidMarkdown from 'solid-markdown';
+import {SolidMarkdown} from "solid-markdown";
 import {A, useParams} from 'solid-start';
 import {useAthlon} from '../[id]';
 import styles from './index.module.css';

@@ -6,7 +6,7 @@ import {getStorage, ref} from 'firebase/storage';
 import remarkGfm from 'remark-gfm';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, For, Match, Show, Switch} from 'solid-js';
-import SolidMarkdown from 'solid-markdown';
+import {SolidMarkdown} from "solid-markdown";
 import {A, useParams} from 'solid-start';
 import {tippy} from 'solid-tippy';
 import {useAthlon} from '../../[id]';

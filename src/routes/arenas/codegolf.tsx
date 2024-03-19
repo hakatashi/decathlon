@@ -11,7 +11,7 @@ import zip from 'lodash/zip';
 import remarkGfm from 'remark-gfm';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, For, Match, onCleanup, Show, Switch} from 'solid-js';
-import SolidMarkdown from 'solid-markdown';
+import {SolidMarkdown} from "solid-markdown";
 import {useSearchParams} from 'solid-start';
 import {setArenaTitle, useUser} from '../arenas';
 import styles from './reversing-diff.module.css';

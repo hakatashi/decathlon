@@ -8,7 +8,7 @@ import {getStorage, ref} from 'firebase/storage';
 import remarkGfm from 'remark-gfm';
 import {useDownloadURL, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, For, Match, onCleanup, Show, Switch} from 'solid-js';
-import SolidMarkdown from 'solid-markdown';
+import {SolidMarkdown} from "solid-markdown";
 import {A, useSearchParams} from 'solid-start';
 import {setArenaTitle, setHeaderText, useUser} from '../arenas';
 import styles from './reversing-diff.module.css';
