@@ -1,10 +1,10 @@
 import {EmojiEvents} from '@suid/icons-material';
 import {Typography, Container, List, ListItem, ListItemAvatar, Avatar, ListItemText, Button, Box} from '@suid/material';
 import {collection, CollectionReference, doc, getFirestore, orderBy, query, where} from 'firebase/firestore';
-import remarkGfm from 'remark-gfm';
+// import remarkGfm from 'remark-gfm';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {For, JSX, Show} from 'solid-js';
-import {SolidMarkdown} from "solid-markdown";
+import {SolidMarkdown} from 'solid-markdown';
 import {A, useParams} from 'solid-start';
 import {useAthlon} from '../[id]';
 import styles from './index.module.css';
@@ -75,7 +75,7 @@ const Home = () => {
 						<SolidMarkdown
 							class="markdown"
 							children={athlon.description}
-							remarkPlugins={[remarkGfm]}
+							// remarkPlugins={[remarkGfm]}
 							linkTarget="_blank"
 						/>
 					)}

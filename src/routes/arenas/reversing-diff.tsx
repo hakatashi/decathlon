@@ -5,10 +5,10 @@ import {blue} from '@suid/material/colors';
 import dayjs from 'dayjs';
 import {addDoc, collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, serverTimestamp, where} from 'firebase/firestore';
 import {getStorage, ref} from 'firebase/storage';
-import remarkGfm from 'remark-gfm';
+// import remarkGfm from 'remark-gfm';
 import {useDownloadURL, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, For, Match, onCleanup, Show, Switch} from 'solid-js';
-import {SolidMarkdown} from "solid-markdown";
+import {SolidMarkdown} from 'solid-markdown';
 import {A, useSearchParams} from 'solid-start';
 import {setArenaTitle, setHeaderText, useUser} from '../arenas';
 import styles from './reversing-diff.module.css';
@@ -133,7 +133,7 @@ const MainTab = (props: MainTabProps) => {
 								class="markdown"
 								// eslint-disable-next-line react/no-children-prop
 								children={config.rule}
-								remarkPlugins={[remarkGfm]}
+								// remarkPlugins={[remarkGfm]}
 								linkTarget="_blank"
 							/>
 						</Typography>
