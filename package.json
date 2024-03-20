@@ -34,7 +34,7 @@
     "dayjs": "^1.11.10",
     "firebase": "^10.5.2",
     "lodash": "^4.17.21",
-    "nanoid": "^5.0.2",
+    "nanoid": "^5.0.6",
     "remark-gfm": "^4.0.0",
     "solid-firebase": "^0.3.0",
     "solid-js": "^1.8.5",
