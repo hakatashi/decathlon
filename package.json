@@ -14,7 +14,7 @@
     "@types/common-tags": "^1.8.4",
     "@types/lodash": "^4.14.200",
     "@types/node": "^20.11.30",
-    "esbuild": "^0.19.5",
+    "esbuild": "^0.20.2",
     "eslint": "^8.57.0",
     "postcss": "^8.4.31",
     "sass": "^1.69.5",
