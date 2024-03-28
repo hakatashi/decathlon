@@ -120,7 +120,7 @@ export const executeDiffSubmission =
 				}
 
 				const [fileMetadata] = await storage.bucket().file(`assets/reversing-diff/${mainFile.filename}`).getMetadata();
-				const fileSize: number = fileMetadata.size;
+				const fileSize = fileMetadata.size;
 
 				logger.info(`correct file size: ${fileSize}`);
 
@@ -135,7 +135,7 @@ export const executeDiffSubmission =
 						createdAt: minScoreSubmission.createdAt,
 					});
 
-					const rawScore = Math.max((fileSize - minScoreSubmission.score!) / fileSize, 0);
+					const rawScore = typeof fileSize === 'number' ? Math.max((fileSize - minScoreSubmission.score!) / fileSize, 0) : 0;
 
 					const scoreRef = db.doc(`games/${data.gameId}/scores/${minScoreSubmission.userId}`) as DocumentReference<Score>;
 					batch.set(scoreRef, {

@@ -143,7 +143,7 @@ const MainTab = (props: MainTabProps) => {
 									const urlData = useDownloadURL(ref(storage, `assets/reversing-diff/${file.filename}`));
 
 									return (
-										<Show when={urlData.data} keyed>
+										<Show when={urlData.latest} keyed>
 											{(url) => (
 												<Button
 													variant={file.isMain ? 'contained' : 'outlined'}

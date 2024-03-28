@@ -18,7 +18,7 @@ const Collection = <T extends DocumentData, >(props: Props<T>) => (
 			<Skeleton variant="text"/>
 		</Match>
 		<Match when={props.data?.error}>
-			<span class="load-error">{props.data.error?.toString()}</span>
+			<span class="load-error">{props.data?.error?.toString()}</span>
 		</Match>
 		<Match when={props.data?.data} keyed>
 			{(docs) => (
