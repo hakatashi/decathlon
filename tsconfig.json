@@ -16,6 +16,6 @@
     },
     "noEmit": true,
     "noUnusedLocals": false,
-    "skipLibCheck": false
+    "skipLibCheck": true
   }
 }
