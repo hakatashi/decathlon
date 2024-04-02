@@ -42,7 +42,7 @@ const MainTab = (props: MainTabProps) => {
 
 	const user = useUser();
 
-	const gameRef = doc(db, 'games', gameId) as DocumentReference<Game>;
+	const gameRef = doc(db, 'games', gameId ?? '') as DocumentReference<Game>;
 	const gameData = useFirestore(gameRef);
 
 	const [code, setCode] = createSignal<string>(DEFAULT_CODE);
@@ -425,7 +425,7 @@ const ReversingDiff = () => {
 	});
 
 	createEffect(() => {
-		if (!['main', 'submissions', 'ranking'].includes(searchParams.tab)) {
+		if (!(['main', 'submissions', 'ranking'] as (string | undefined)[]).includes(searchParams.tab)) {
 			setSearchParams({tab: 'main'});
 		}
 	});
