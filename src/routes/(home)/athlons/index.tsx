@@ -1,8 +1,8 @@
+import {A} from '@solidjs/router';
 import {Typography, Container, Divider, Stack} from '@suid/material';
 import {collection, CollectionReference, getFirestore} from 'firebase/firestore';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {For, Show} from 'solid-js';
-import {A} from 'solid-start';
 import styles from './index.module.css';
 import Collection from '~/components/Collection';
 import Username from '~/components/Username';

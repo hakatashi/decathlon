@@ -1,9 +1,9 @@
+import {RouteSectionProps, useIsRouting, useLocation} from '@solidjs/router';
 import {Divider, LinearProgress, Link, Stack, Typography} from '@suid/material';
 import {Show} from 'solid-js';
-import {Outlet, useIsRouting, useLocation} from 'solid-start';
 import Header from '~/components/Header';
 
-const RootLayout = () => {
+const RootLayout = (props: RouteSectionProps) => {
 	const isRoot = () => {
 		const location = useLocation();
 		return location.pathname === '/';
@@ -33,7 +33,7 @@ const RootLayout = () => {
 				/>
 			</Show>
 			<Header/>
-			<Outlet/>
+			{props.children}
 			<Show when={!isRoot()}>
 				<Stack
 					direction="row"

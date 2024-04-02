@@ -1,5 +1,6 @@
 /* eslint-disable array-plural/array-plural */
 
+import {A, useSearchParams} from '@solidjs/router';
 import {Alert, Box, Button, ButtonGroup, CircularProgress, Container, Link as LinkUi, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from '@suid/material';
 import {blue} from '@suid/material/colors';
 import dayjs from 'dayjs';
@@ -9,7 +10,6 @@ import {getStorage, ref} from 'firebase/storage';
 import {useDownloadURL, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, For, Match, onCleanup, Show, Switch} from 'solid-js';
 import {SolidMarkdown} from 'solid-markdown';
-import {A, useSearchParams} from 'solid-start';
 import {setArenaTitle, setHeaderText, useUser} from '../arenas';
 import styles from './reversing-diff.module.css';
 import Collection from '~/components/Collection';
@@ -42,7 +42,7 @@ const MainTab = (props: MainTabProps) => {
 
 	const user = useUser();
 
-	const gameRef = doc(db, 'games', gameId) as DocumentReference<Game>;
+	const gameRef = doc(db, 'games', gameId ?? '') as DocumentReference<Game>;
 	const gameData = useFirestore(gameRef);
 
 	const [code, setCode] = createSignal<string>(DEFAULT_CODE);
@@ -425,7 +425,7 @@ const ReversingDiff = () => {
 	});
 
 	createEffect(() => {
-		if (!['main', 'submissions', 'ranking'].includes(searchParams.tab)) {
+		if (!(['main', 'submissions', 'ranking'] as (string | undefined)[]).includes(searchParams.tab)) {
 			setSearchParams({tab: 'main'});
 		}
 	});

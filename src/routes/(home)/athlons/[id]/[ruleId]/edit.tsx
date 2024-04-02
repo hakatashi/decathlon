@@ -1,9 +1,9 @@
+import {Navigate, useParams} from '@solidjs/router';
 import {Button, Container, TextField} from '@suid/material';
 import {getAuth} from 'firebase/auth';
 import {CollectionReference, DocumentReference, collection, doc, getFirestore, query, updateDoc, where, writeBatch} from 'firebase/firestore';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {Show, createEffect, createMemo, createSignal} from 'solid-js';
-import {Navigate, useParams} from 'solid-start';
 import Collection from '~/components/Collection';
 import type {Game, GameRule, Score} from '~/lib/schema';
 

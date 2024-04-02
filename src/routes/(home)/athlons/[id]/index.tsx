@@ -1,12 +1,11 @@
-import {EmojiEvents} from '@suid/icons-material';
+import {A, useParams} from '@solidjs/router';
+import EmojiEvents from '@suid/icons-material/EmojiEvents';
 import {Typography, Container, List, ListItem, ListItemAvatar, Avatar, ListItemText, Button, Box} from '@suid/material';
 import {collection, CollectionReference, doc, getFirestore, orderBy, query, where} from 'firebase/firestore';
 // import remarkGfm from 'remark-gfm';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {For, JSX, Show} from 'solid-js';
 import {SolidMarkdown} from 'solid-markdown';
-import {A, useParams} from 'solid-start';
-import {useAthlon} from '../[id]';
 import styles from './index.module.css';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
@@ -14,6 +13,7 @@ import PageTitle from '~/components/PageTitle';
 import RankingSummary from '~/components/RankingSummary';
 import {athlonNames} from '~/lib/const';
 import type {Game} from '~/lib/schema';
+import useAthlon from '~/lib/useAthlon';
 
 const Head = (props: {children: JSX.Element}) => (
 	<Typography
@@ -31,7 +31,7 @@ const Head = (props: {children: JSX.Element}) => (
 
 const Home = () => {
 	const param = useParams();
-	const athlonData = useAthlon();
+	const athlonData = useAthlon(param.id);
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
 	const gamesData = useFirestore(

@@ -1,5 +1,7 @@
 /* eslint-disable array-plural/array-plural */
-import {ElectricBolt, Star} from '@suid/icons-material';
+import {A, useParams} from '@solidjs/router';
+import ElectricBolt from '@suid/icons-material/ElectricBolt';
+import Star from '@suid/icons-material/Star';
 import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Stack, FormControlLabel, Switch as SwitchControl} from '@suid/material';
 import {blue, orange, red, yellow} from '@suid/material/colors';
 import dayjs from 'dayjs';
@@ -8,13 +10,12 @@ import {collection, CollectionReference, doc, getFirestore, orderBy, query, wher
 import {floor, unzip, filter} from 'lodash';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createMemo, createSignal, For, Match, onCleanup, Show, Switch} from 'solid-js';
-import {A, useParams} from 'solid-start';
-import {useAthlon} from '../[id]';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import PageTitle from '~/components/PageTitle';
 import Username from '~/components/Username';
 import type {Game, RankingEntry} from '~/lib/schema';
+import useAthlon from '~/lib/useAthlon';
 
 const RankingTable = (props: {ranking: RankingEntry[], athlonId: string, showRawScore: boolean}) => {
 	const param = useParams();
@@ -164,7 +165,8 @@ const RankingTable = (props: {ranking: RankingEntry[], athlonId: string, showRaw
 };
 
 const Leaderboard = () => {
-	const athlonData = useAthlon();
+	const param = useParams();
+	const athlonData = useAthlon(param.id);
 
 	const [showRawScore, setShowRawScore] = createSignal<boolean>(false);
 	const [now, setNow] = createSignal<number>(Date.now());
