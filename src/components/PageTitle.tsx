@@ -1,5 +1,5 @@
-import {JSX} from 'solid-js';
-import {Title} from 'solid-start';
+import {Title} from '@solidjs/meta';
+import type {JSX} from 'solid-js';
 
 interface Props {
 	children: JSX.Element,

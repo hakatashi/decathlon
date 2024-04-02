@@ -1,3 +1,4 @@
+import {A, useParams} from '@solidjs/router';
 import {Typography, Container, Breadcrumbs, Link, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Stack, TextField, Grid, Box, Checkbox, FormControlLabel} from '@suid/material';
 import dayjs from 'dayjs';
 import {getAuth} from 'firebase/auth';
@@ -7,9 +8,7 @@ import {getStorage, ref} from 'firebase/storage';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, For, Match, Show, Switch} from 'solid-js';
 import {SolidMarkdown} from 'solid-markdown';
-import {A, useParams} from 'solid-start';
 import {tippy} from 'solid-tippy';
-import {useAthlon} from '../../[id]';
 import styles from './index.module.scss';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
@@ -17,6 +16,7 @@ import PageTitle from '~/components/PageTitle';
 import {useStorageBytes} from '~/lib/firebase';
 import type {Game, GameRule, Score} from '~/lib/schema';
 import 'tippy.js/dist/tippy.css';
+import useAthlon from '~/lib/useAthlon';
 
 interface Props {
 	onSubmit: (score: number, tiebreakScore: number) => void,
@@ -131,7 +131,7 @@ const ScoreRecordDialog = (props: Props) => {
 
 const AthlonGame = () => {
 	const param = useParams();
-	const athlonData = useAthlon();
+	const athlonData = useAthlon(param.id);
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
 	const storage = getStorage(app);

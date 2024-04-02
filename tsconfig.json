@@ -2,17 +2,19 @@
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
+    "isolatedModules": true,
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "node",
     "jsxImportSource": "solid-js",
     "jsx": "preserve",
     "strict": true,
-    "types": ["solid-start/env"],
+    "types": ["vinxi/client", "vite/client"],
     "baseUrl": "./",
     "paths": {
       "~/*": ["./src/*"]
     },
+    "noEmit": true,
     "noUnusedLocals": false
   }
 }

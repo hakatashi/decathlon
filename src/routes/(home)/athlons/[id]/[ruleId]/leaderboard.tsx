@@ -1,4 +1,5 @@
 /* eslint-disable array-plural/array-plural */
+import {A, useParams} from '@solidjs/router';
 import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Stack, Chip} from '@suid/material';
 import {blue} from '@suid/material/colors';
 import {getAuth} from 'firebase/auth';
@@ -6,18 +7,17 @@ import {collection, CollectionReference, doc, DocumentReference, getFirestore, q
 import {floor} from 'lodash';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {For, Show} from 'solid-js';
-import {A, useParams} from 'solid-start';
-import {useAthlon} from '../../[id]';
 import {calculateGameRanking} from '~/../lib/scores';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import PageTitle from '~/components/PageTitle';
 import Username from '~/components/Username';
 import type {Game, GameRule, Score} from '~/lib/schema';
+import useAthlon from '~/lib/useAthlon';
 
 const Leaderboard = () => {
 	const param = useParams();
-	const athlonData = useAthlon();
+	const athlonData = useAthlon(param.id);
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
 	const auth = getAuth(app);

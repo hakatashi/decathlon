@@ -1,4 +1,6 @@
 import {createWindowSize} from '@solid-primitives/resize-observer';
+import {Link} from '@solidjs/meta';
+import {A, useSearchParams} from '@solidjs/router';
 import TextareaAutosize from '@suid/base/TextareaAutosize';
 import {Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography, useMediaQuery} from '@suid/material';
 import {doc, DocumentReference, getFirestore} from 'firebase/firestore';
@@ -6,7 +8,6 @@ import {getFunctions, httpsCallable} from 'firebase/functions';
 import last from 'lodash/last';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, For, onCleanup, onMount, Show} from 'solid-js';
-import {A, Link, useSearchParams} from 'solid-start';
 import {setArenaTitle, setHeaderText, useUser} from '../arenas';
 import styles from './typing-japanese.module.css';
 import Doc from '~/components/Doc';

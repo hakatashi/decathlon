@@ -1,10 +1,11 @@
-import {Logout, Settings} from '@suid/icons-material';
+import {A} from '@solidjs/router';
+import Logout from '@suid/icons-material/Logout';
+import Settings from '@suid/icons-material/Settings';
 import {Box, AppBar, Avatar, IconButton, Toolbar, Typography, Button, Menu, MenuItem, Divider, ListItemIcon} from '@suid/material';
 import {getAuth, signOut} from 'firebase/auth';
 import {doc, DocumentReference, getFirestore} from 'firebase/firestore';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createSignal, Match, Switch} from 'solid-js';
-import {A} from 'solid-start';
 import LoginButton from './LoginButton';
 import Doc from '~/components/Doc';
 import type {UseFireStoreReturn, User} from '~/lib/schema';

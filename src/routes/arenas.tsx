@@ -1,3 +1,4 @@
+import {A, RouteSectionProps, useSearchParams} from '@solidjs/router';
 import {AppBar, Avatar, IconButton, Toolbar, Typography} from '@suid/material';
 import {getAuth} from 'firebase/auth';
 import type {User as AuthUser} from 'firebase/auth';
@@ -5,7 +6,6 @@ import {doc, DocumentReference, getFirestore} from 'firebase/firestore';
 import last from 'lodash/last';
 import {useFirebaseApp, useAuth, useFirestore} from 'solid-firebase';
 import {createContext, createEffect, createMemo, createSignal, Show, useContext} from 'solid-js';
-import {A, Outlet, useSearchParams} from 'solid-start';
 import styles from './arenas.module.css';
 import Doc from '~/components/Doc';
 import LoginRequiredDialog from '~/components/LoginRequiredDialog';
@@ -17,7 +17,7 @@ const UserContext = createContext<AuthUser>();
 export const [headerText, setHeaderText] = createSignal<string>('');
 export const [arenaTitle, setArenaTitle] = createSignal<string>('');
 
-const ArenasLayout = () => {
+const ArenasLayout = (props: RouteSectionProps) => {
 	const app = useFirebaseApp();
 	const auth = getAuth(app);
 	const db = getFirestore(app);
@@ -89,7 +89,7 @@ const ArenasLayout = () => {
 				{(user) => (
 					<UserContext.Provider value={user}>
 						<div class={styles.mainArea}>
-							<Outlet/>
+							{props.children}
 						</div>
 					</UserContext.Provider>
 				)}

@@ -1,11 +1,13 @@
+import {Title} from '@solidjs/meta';
+import {A} from '@solidjs/router';
 import {Button} from '@suid/material';
 import range from 'lodash/range';
 import {Index} from 'solid-js';
-import {A} from 'solid-start';
 import styles from './index.module.css';
 
 const Home = () => (
 	<main class={styles.home}>
+		<Title>TSG Decathlon Portal</Title>
 		<svg viewBox="-225 -225 450 450" class={styles.logo}>
 			<g class={styles.logoRotation}>
 				<circle cx={0} cy={0} r={100} stroke="white" fill="transparent"/>
