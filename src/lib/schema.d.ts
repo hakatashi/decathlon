@@ -68,6 +68,7 @@ export interface Game extends DocumentData {
 	configuration: {[key: string]: any},
 	tiebreakOrder: 'asc' | 'desc',
 	isScoreUserEditable: boolean,
+	isUserResettable?: boolean,
 	admins: string[],
 	authors: string[],
 	adminBonus: {

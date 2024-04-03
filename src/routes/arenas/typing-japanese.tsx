@@ -8,7 +8,7 @@ import {getFunctions, httpsCallable} from 'firebase/functions';
 import last from 'lodash/last';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, For, onCleanup, onMount, Show} from 'solid-js';
-import {setArenaTitle, setHeaderText, useUser} from '../arenas';
+import {headerText, setArenaTitle, setHeaderText, useUser} from '../arenas';
 import styles from './typing-japanese.module.css';
 import Doc from '~/components/Doc';
 import PageNotFoundError from '~/lib/PageNotFoundError';
@@ -27,11 +27,12 @@ const OnGameFinishedDialog = (props: onGameFinishedDialogProps) => {
 	const submitTypingJapaneseScore = httpsCallable(functions, 'submitTypingJapaneseScore');
 
 	const [submissionData, setSubmissionData] = createSignal<UseFireStoreReturn<TypingJapaneseSubmission | null | undefined> | null>(null);
+	const user = useUser();
 
 	createEffect(() => {
-		const user = useUser();
-		if (user?.uid) {
-			const submissionRef = doc(db, 'games', props.gameId, 'submissions', user.uid) as DocumentReference<TypingJapaneseSubmission>;
+		const userData = user();
+		if (userData?.uid) {
+			const submissionRef = doc(db, 'games', props.gameId, 'submissions', userData.uid) as DocumentReference<TypingJapaneseSubmission>;
 			setSubmissionData(useFirestore(submissionRef));
 		}
 	});
@@ -114,6 +115,7 @@ const TypingJapanese = () => {
 	const gameData = useFirestore(gameRef);
 
 	const isMobileLayout = useMediaQuery('(max-width: 480px)');
+	const user = useUser();
 
 	const zoom = createMemo(() => {
 		const size = createWindowSize();
@@ -138,9 +140,9 @@ const TypingJapanese = () => {
 	const [submissionData, setSubmissionData] = createSignal<UseFireStoreReturn<TypingJapaneseSubmission | null | undefined> | null>(null);
 
 	createEffect(() => {
-		const user = useUser();
-		if (user?.uid) {
-			const submissionRef = doc(db, 'games', gameId, 'submissions', user.uid) as DocumentReference<TypingJapaneseSubmission>;
+		const userData = user();
+		if (userData?.uid) {
+			const submissionRef = doc(db, 'games', gameId, 'submissions', userData.uid) as DocumentReference<TypingJapaneseSubmission>;
 			setSubmissionData(useFirestore(submissionRef));
 		}
 	});
@@ -294,6 +296,11 @@ const TypingJapanese = () => {
 					>
 						{text()}
 					</TextareaAutosize>
+				</div>
+				<div class={styles.selfHeaderText}>
+					<Typography variant="h5" component="p">
+						{headerText()}
+					</Typography>
 				</div>
 			</div>
 

@@ -5,7 +5,7 @@ import type {User as AuthUser} from 'firebase/auth';
 import {doc, DocumentReference, getFirestore} from 'firebase/firestore';
 import last from 'lodash/last';
 import {useFirebaseApp, useAuth, useFirestore} from 'solid-firebase';
-import {createContext, createEffect, createMemo, createSignal, Show, useContext} from 'solid-js';
+import {createContext, createEffect, createMemo, createSignal, Show} from 'solid-js';
 import styles from './arenas.module.css';
 import Doc from '~/components/Doc';
 import LoginRequiredDialog from '~/components/LoginRequiredDialog';
@@ -98,5 +98,21 @@ const ArenasLayout = (props: RouteSectionProps) => {
 	);
 };
 
-export const useUser = () => useContext(UserContext);
+// export const useUser = () => useContext(UserContext);
+
+export const useUser = () => {
+	const app = useFirebaseApp();
+	const auth = getAuth(app);
+	const [user, setUser] = createSignal<AuthUser | null>(null);
+	const authState = useAuth(auth);
+
+	createEffect(() => {
+		if (authState.data) {
+			setUser(authState.data);
+		}
+	});
+
+	return user;
+};
+
 export default ArenasLayout;

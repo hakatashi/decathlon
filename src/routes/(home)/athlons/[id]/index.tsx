@@ -1,5 +1,5 @@
 import {A, useParams} from '@solidjs/router';
-import EmojiEvents from '@suid/icons-material/EmojiEvents';
+import {EmojiEvents} from '@suid/icons-material';
 import {Typography, Container, List, ListItem, ListItemAvatar, Avatar, ListItemText, Button, Box} from '@suid/material';
 import {collection, CollectionReference, doc, getFirestore, orderBy, query, where} from 'firebase/firestore';
 // import remarkGfm from 'remark-gfm';

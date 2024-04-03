@@ -55,6 +55,13 @@
 	resize: none;
 }
 
+.selfHeaderText {
+	position: absolute;
+	top: 0;
+	left: 50%;
+	transform: translateX(-50%);
+}
+
 .onGameFinishedDialog .addition {
 	color: #4CAF50;
 	background-color: #c8e6c9;

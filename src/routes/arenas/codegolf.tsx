@@ -71,7 +71,8 @@ const MainTab = (props: MainTabProps) => {
 
 	const handleClickSubmit = async () => {
 		const language = executionLanguage();
-		if (!gameData.data || !user?.uid || code().length === 0 || language === null) {
+		const userData = user();
+		if (!gameData.data || !userData?.uid || code().length === 0 || language === null) {
 			return;
 		}
 
@@ -82,7 +83,7 @@ const MainTab = (props: MainTabProps) => {
 			collection(gameRef, 'submissions') as CollectionReference<CodegolfSubmission>,
 			{
 				athlon: gameData.data.athlon,
-				userId: user.uid,
+				userId: userData.uid,
 				status: 'pending',
 				language,
 				code: code(),
@@ -125,9 +126,10 @@ const MainTab = (props: MainTabProps) => {
 
 	createEffect(() => {
 		const submissionsData = props.submissions;
+		const userData = user();
 		if (submissionsData && Array.isArray(submissionsData.data) && gameData.data) {
 			const successSubmissions = submissionsData.data.filter(({status, userId}) => (
-				status === 'success' && userId === user?.uid
+				status === 'success' && userId === userData?.uid
 			));
 			const config = gameData.data.configuration as CodegolfConfiguration;
 			const newLanguageInfos = config.languages.map((language) => {
@@ -466,7 +468,8 @@ const RankingTab = () => {
 				<TableBody>
 					<Collection data={rankingDocs}>
 						{(ranking, i) => {
-							const isMe = user?.uid === ranking.userId;
+							const userData = user();
+							const isMe = userData?.uid === ranking.userId;
 
 							return (
 								<TableRow sx={isMe ? {backgroundColor: blue[50]} : {}}>
@@ -513,12 +516,13 @@ const Codegolf = () => {
 	setArenaTitle('コードゴルフ');
 
 	createEffect(() => {
-		if (user?.uid) {
+		const userData = user();
+		if (userData?.uid) {
 			if (phase() === 'playing') {
 				const submissionsData = useFirestore(
 					query(
 					collection(gameRef, 'submissions') as CollectionReference<CodegolfSubmission>,
-					where('userId', '==', user.uid),
+					where('userId', '==', userData.uid),
 					orderBy('createdAt', 'desc'),
 					),
 				);

@@ -3,6 +3,7 @@ import {Typography, Container, Breadcrumbs, Link, Button, Dialog, DialogTitle, D
 import dayjs from 'dayjs';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, query, setDoc, where} from 'firebase/firestore';
+import {getFunctions, httpsCallable} from 'firebase/functions';
 import {getStorage, ref} from 'firebase/storage';
 // import remarkGfm from 'remark-gfm';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
@@ -129,6 +130,36 @@ const ScoreRecordDialog = (props: Props) => {
 	);
 };
 
+const ResetDialog = (props: {open: boolean, onClose: () => void, onReset: () => void}) => {
+	const handleClickReset = () => {
+		props.onReset();
+	};
+
+	return (
+		<Dialog
+			open={props.open}
+			onClose={props.onClose}
+			aria-labelledby="alert-dialog-title"
+			aria-describedby="alert-dialog-description"
+		>
+			<DialogTitle id="alert-dialog-title">
+				進捗をリセットする
+			</DialogTitle>
+			<DialogContent>
+				<DialogContentText id="alert-dialog-description">
+					<p>進捗をリセットしますか？</p>
+					<p>※この操作は一部のシステムテストコンテストでのみ実行することができます。</p>
+				</DialogContentText>
+			</DialogContent>
+			<DialogActions>
+				<Button onClick={handleClickReset} color="error">
+					リセット
+				</Button>
+			</DialogActions>
+		</Dialog>
+	);
+};
+
 const AthlonGame = () => {
 	const param = useParams();
 	const athlonData = useAthlon(param.id);
@@ -140,7 +171,8 @@ const AthlonGame = () => {
 	const ruleRef = doc(db, 'gameRules', param.ruleId) as DocumentReference<GameRule>;
 
 	const [myScore, setMyScore] = createSignal<string>('N/A');
-	const [dialogOpen, setDialogOpen] = createSignal<boolean>(false);
+	const [scoreRecordDialogOpen, setScoreRecordDialogOpen] = createSignal<boolean>(false);
+	const [resetDialogOpen, setResetDialogOpen] = createSignal<boolean>(false);
 
 	const ruleData = useFirestore(ruleRef);
 	const gameData = useFirestore(
@@ -163,6 +195,8 @@ const AthlonGame = () => {
 
 		return null;
 	});
+
+	const isUserResettable = createMemo(() => gameData.data?.[0]?.isUserResettable === true);
 
 	const tippyProps = createMemo(() => ({
 		disabled: scoreRecordErrorMessage() === null,
@@ -272,11 +306,21 @@ const AthlonGame = () => {
 													variant="contained"
 													color="secondary"
 													disabled={scoreRecordErrorMessage() !== null}
-													onClick={() => setDialogOpen(true)}
+													onClick={() => setScoreRecordDialogOpen(true)}
 												>
 													スコアを記録する
 												</Button>
 											</div>
+											{isUserResettable() && (
+												<Button
+													size="large"
+													variant="contained"
+													color="error"
+													onClick={() => setResetDialogOpen(true)}
+												>
+													進捗をリセットする
+												</Button>
+											)}
 										</Stack>
 										<Typography
 											variant="body2"
@@ -316,6 +360,9 @@ const AthlonGame = () => {
 						const scoreRef = doc(db, 'games', game.id, 'scores', uid) as DocumentReference<Score>;
 						const scoreData = useFirestore(scoreRef);
 
+						const functions = getFunctions();
+						const resetGameSubmission = httpsCallable(functions, 'resetGameSubmission');
+
 						const handleScoreSubmit = async (score: number, tiebreakScore: number) => {
 							if (athlonData?.data?.id) {
 								await setDoc(scoreRef, {
@@ -325,11 +372,19 @@ const AthlonGame = () => {
 									tiebreakScore,
 								});
 							}
-							setDialogOpen(false);
+							setScoreRecordDialogOpen(false);
+						};
+
+						const handleReset = async () => {
+							await resetGameSubmission({
+								gameId: game.id,
+							});
+							setResetDialogOpen(false);
 						};
 
 						const handleCloseDialog = () => {
-							setDialogOpen(false);
+							setScoreRecordDialogOpen(false);
+							setResetDialogOpen(false);
 						};
 
 						createEffect(() => {
@@ -339,32 +394,39 @@ const AthlonGame = () => {
 						});
 
 						return (
-							<Doc
-								data={scoreData}
-								fallback={
-									<ScoreRecordDialog
-										open={dialogOpen()}
-										scoreInputNote={game.scoreInputNote}
-										scoreConfigurationType={game.scoreConfiguration.type}
-										maxRawScore={game.maxRawScore}
-										onSubmit={handleScoreSubmit}
-										onClose={handleCloseDialog}
-									/>
-								}
-							>
-								{(score) => (
-									<ScoreRecordDialog
-										open={dialogOpen()}
-										scoreInputNote={game.scoreInputNote}
-										scoreConfigurationType={game.scoreConfiguration.type}
-										maxRawScore={game.maxRawScore}
-										onSubmit={handleScoreSubmit}
-										onClose={handleCloseDialog}
-										defaultValue={score.rawScore}
-										defaultTiebreakValue={score.tiebreakScore}
-									/>
-								)}
-							</Doc>
+							<>
+								<Doc
+									data={scoreData}
+									fallback={
+										<ScoreRecordDialog
+											open={scoreRecordDialogOpen()}
+											scoreInputNote={game.scoreInputNote}
+											scoreConfigurationType={game.scoreConfiguration.type}
+											maxRawScore={game.maxRawScore}
+											onSubmit={handleScoreSubmit}
+											onClose={handleCloseDialog}
+										/>
+									}
+								>
+									{(score) => (
+										<ScoreRecordDialog
+											open={scoreRecordDialogOpen()}
+											scoreInputNote={game.scoreInputNote}
+											scoreConfigurationType={game.scoreConfiguration.type}
+											maxRawScore={game.maxRawScore}
+											onSubmit={handleScoreSubmit}
+											onClose={handleCloseDialog}
+											defaultValue={score.rawScore}
+											defaultTiebreakValue={score.tiebreakScore}
+										/>
+									)}
+								</Doc>
+								<ResetDialog
+									open={resetDialogOpen()}
+									onClose={handleCloseDialog}
+									onReset={handleReset}
+								/>
+							</>
 						);
 					}}
 				</Collection>
