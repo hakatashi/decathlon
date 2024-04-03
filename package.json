@@ -4,12 +4,15 @@
     "dev": "vinxi dev",
     "build": "vinxi build",
     "start": "vinxi start",
+    "serve": "npm run build && serve .output/public",
+    "test": "playwright test",
     "lint": "eslint --ignore-path .gitignore . --fix",
     "install": "cd functions && npm install"
   },
   "type": "module",
   "devDependencies": {
     "@hakatashi/eslint-config": "^1.20.0",
+    "@playwright/test": "^1.42.1",
     "@suid/vite-plugin": "^0.2.0",
     "@types/common-tags": "^1.8.4",
     "@types/lodash": "^4.17.0",
@@ -17,6 +20,7 @@
     "eslint": "^8.57.0",
     "postcss": "^8.4.38",
     "sass": "^1.72.0",
+    "serve": "^14.2.1",
     "typescript": "^5.4.3",
     "vite": "^5.2.7"
   },
