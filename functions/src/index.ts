@@ -63,6 +63,33 @@ export const onScoreChanged = firestore
 		});
 	});
 
+export const resetGameSubmission = https.onCall(async (data, context) => {
+	const {gameId} = data;
+	const uid = context.auth?.uid;
+
+	assert(typeof gameId === 'string');
+	assert(typeof uid === 'string');
+
+	const gameDoc = await (db.collection('games') as CollectionReference<Game>).doc(gameId).get();
+	assert(gameDoc.exists);
+
+	const gameData = gameDoc.data();
+	assert(gameData);
+	assert(gameData.isUserResettable);
+
+	const submissionRef = db.doc(`games/${gameId}/submissions/${uid}`) as DocumentReference<TypingJapaneseSubmission>;
+	const submissionData = await submissionRef.get();
+	if (submissionData.exists) {
+		await submissionRef.delete();
+	}
+
+	const scoreRef = db.doc(`games/${gameId}/scores/${uid}`) as DocumentReference<Score>;
+	const scoreData = await scoreRef.get();
+	if (scoreData.exists) {
+		await scoreRef.delete();
+	}
+});
+
 const normalizeTypingJapaneseText = (input: string) => (
 	input.normalize('NFKC')
 		.replaceAll(',', '、')
