@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@solid-primitives/resize-observer": "^2.0.25",
-    "@solidjs/meta": "^0.28.7",
+    "@solidjs/meta": "^0.29.3",
     "@solidjs/router": "^0.13.1",
     "@solidjs/start": "^1.0.0-rc.0",
     "@suid/base": "^0.9.0",
