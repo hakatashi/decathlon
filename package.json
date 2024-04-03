@@ -13,7 +13,7 @@
     "@suid/vite-plugin": "^0.2.0",
     "@types/common-tags": "^1.8.4",
     "@types/lodash": "^4.17.0",
-    "@types/node": "^20.11.30",
+    "@types/node": "^20.12.3",
     "eslint": "^8.57.0",
     "postcss": "^8.4.38",
     "sass": "^1.72.0",
@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@solid-primitives/resize-observer": "^2.0.25",
-    "@solidjs/meta": "^0.28.7",
+    "@solidjs/meta": "^0.29.3",
     "@solidjs/router": "^0.13.1",
     "@solidjs/start": "^1.0.0-rc.0",
     "@suid/base": "^0.9.0",
@@ -30,7 +30,7 @@
     "@suid/material": "^0.16.0",
     "common-tags": "^1.8.2",
     "dayjs": "^1.11.10",
-    "firebase": "^10.9.0",
+    "firebase": "^10.10.0",
     "lodash": "^4.17.21",
     "nanoid": "^5.0.6",
     "remark-gfm": "^4.0.0",
@@ -39,7 +39,7 @@
     "solid-markdown": "^2.0.1",
     "solid-tippy": "^0.2.1",
     "tippy.js": "^6.3.7",
-    "undici": "^6.10.2",
+    "undici": "^6.11.1",
     "vinxi": "^0.3.11"
   },
   "engines": {
