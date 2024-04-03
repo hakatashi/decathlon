@@ -1,6 +1,6 @@
 import {A} from '@solidjs/router';
 import {Typography, Container, Divider, Stack} from '@suid/material';
-import {collection, CollectionReference, getFirestore} from 'firebase/firestore';
+import {collection, CollectionReference, getFirestore, orderBy, query} from 'firebase/firestore';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {For, Show} from 'solid-js';
 import styles from './index.module.css';
@@ -12,7 +12,10 @@ import type {Athlon} from '~/lib/schema';
 const Athlons = () => {
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
-	const athlonsData = useFirestore(collection(db, 'athlons') as CollectionReference<Athlon>);
+	const athlonsData = useFirestore(query(
+		collection(db, 'athlons') as CollectionReference<Athlon>,
+		orderBy('startAt', 'desc'),
+	));
 
 	return (
 		<main>
