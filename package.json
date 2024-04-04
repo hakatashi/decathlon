@@ -16,13 +16,13 @@
     "@suid/vite-plugin": "^0.2.0",
     "@types/common-tags": "^1.8.4",
     "@types/lodash": "^4.17.0",
-    "@types/node": "^20.12.3",
+    "@types/node": "^20.12.4",
     "eslint": "^8.57.0",
     "postcss": "^8.4.38",
     "sass": "^1.72.0",
     "serve": "^14.2.1",
     "typescript": "^5.4.3",
-    "vite": "^5.2.7"
+    "vite": "^5.2.8"
   },
   "dependencies": {
     "@solid-primitives/resize-observer": "^2.0.25",
