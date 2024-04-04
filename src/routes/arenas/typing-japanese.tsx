@@ -311,4 +311,9 @@ const TypingJapanese = () => {
 	);
 };
 
+export const reset = (gameId: string) => {
+	localStorage.removeItem(`typing-japanese_${gameId}_autosave`);
+	localStorage.removeItem(`typing-japanese_${gameId}_startTime`);
+};
+
 export default TypingJapanese;

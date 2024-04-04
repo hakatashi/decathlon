@@ -18,6 +18,7 @@ import {useStorageBytes} from '~/lib/firebase';
 import type {Game, GameRule, Score} from '~/lib/schema';
 import 'tippy.js/dist/tippy.css';
 import useAthlon from '~/lib/useAthlon';
+import {reset as resetTypingJapanese} from '~/routes/arenas/typing-japanese';
 
 interface Props {
 	onSubmit: (score: number, tiebreakScore: number) => void,
@@ -379,6 +380,11 @@ const AthlonGame = () => {
 							await resetGameSubmission({
 								gameId: game.id,
 							});
+
+							if (game.rule.path === 'gameRules/typing-japanese') {
+								resetTypingJapanese(game.id);
+							}
+
 							setResetDialogOpen(false);
 						};
 
