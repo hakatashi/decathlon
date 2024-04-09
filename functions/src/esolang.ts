@@ -4,7 +4,7 @@ import {CollectionReference, DocumentReference, Timestamp} from 'firebase-admin/
 import {getFunctions} from 'firebase-admin/functions';
 import {firestore, logger, runWith} from 'firebase-functions';
 import {groupBy, last, max, minBy, reverse, sortBy, sum, zip} from 'lodash';
-import type {CodegolfConfiguration, CodegolfJudgeType, CodegolfRanking, CodegolfSubmission, DiffConfiguration, Game, ReversingDiffRanking, ReversingDiffSubmission, Score} from '~/lib/schema';
+import type {CodegolfConfiguration, CodegolfJudgeType, CodegolfRanking, CodegolfSubmission, DiffConfiguration, Game, QuantumComputingConfiguration, QuantumComputingResult, QuantumComputingSubmission, ReversingDiffRanking, ReversingDiffSubmission, Score} from '~/lib/schema';
 import {db, storage} from './firebase';
 
 export const executeDiffSubmission =
@@ -426,6 +426,127 @@ const updateCodegolfRanking = async (gameId: string, game: Game) => {
 	await batch.commit();
 };
 
+export const executeQuantumComputingSubmission =
+	runWith({secrets: ['ESOLANG_BATTLE_API_TOKEN']})
+		.tasks.taskQueue({
+			retryConfig: {
+				maxAttempts: 5,
+				minBackoffSeconds: 60,
+			},
+			rateLimits: {
+				maxConcurrentDispatches: 1,
+			},
+		}).onDispatch(async (data) => {
+			assert(typeof data.gameId === 'string');
+			assert(typeof data.submissionId === 'string');
+
+			const submissionRef = db.doc(`games/${data.gameId}/submissions/${data.submissionId}`) as DocumentReference<QuantumComputingSubmission>;
+			const gameDoc = await db.collection('games').doc(data.gameId).get();
+			const game = gameDoc.data() as Game;
+			const config = game.configuration as QuantumComputingConfiguration;
+
+			logger.info('Getting lock...');
+			const isOk = await db.runTransaction(async (transaction) => {
+				const submissionDoc = await transaction.get(submissionRef);
+				const submission = submissionDoc.data();
+				if (submission?.status !== 'pending') {
+					return false;
+				}
+
+				transaction.update(submissionDoc.ref, {status: 'executing'});
+				return true;
+			});
+
+			if (!isOk) {
+				logger.warn('Lock failed.');
+				return;
+			}
+
+			const submissionDoc = await submissionRef.get();
+			const submission = submissionDoc.data();
+
+			if (!submission || typeof submission.code !== 'string') {
+				throw new AssertionError();
+			}
+
+			const input = [
+				Buffer.from(submission.code, 'utf-8').toString('base64'),
+				Buffer.from(config.judgeCode, 'utf-8').toString('base64'),
+			].join('\n');
+
+			const result = await axios({
+				method: 'POST',
+				url: 'https://esolang.hakatashi.com/api/execution',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded',
+				},
+				data: new URLSearchParams({
+					token: process.env.ESOLANG_BATTLE_API_TOKEN!,
+					code: Buffer.from(input, 'utf-8').toString('base64'),
+					input: '',
+					language: 'clang-cpp',
+					imageId: 'hakatashi/quantum-computing-challenge',
+				}),
+				validateStatus: null,
+			});
+
+			const {duration, stderr, stdout, error: errorMessage} = result.data;
+
+			// eslint-disable-next-line no-undef-init
+			let error = null;
+			if (typeof duration !== 'number') {
+				error = 'duration is not a number';
+			}
+			if (typeof stderr !== 'string') {
+				error = 'stderr is not a string';
+			}
+			if (typeof stdout !== 'string') {
+				error = 'stdout is not a string';
+			}
+			if (typeof errorMessage === 'string') {
+				error = errorMessage;
+			}
+			if (!error && result.status !== 200) {
+				error = JSON.stringify(result.data) || 'unknown error';
+			}
+
+			const isCorrect = stdout.trim() === 'CORRECT';
+
+			let status: QuantumComputingResult = 'failed';
+			if (error) {
+				status = 'error';
+			} else if (isCorrect) {
+				status = 'success';
+			}
+
+			await submissionRef.update({
+				status,
+				...(error ? {errorMessage: error} : {}),
+				duration,
+				stderr,
+				stdout,
+				executedAt: new Date(),
+			});
+
+			if (status === 'success') {
+				db.runTransaction(async (transaction) => {
+					const scoreRef = db.doc(`games/${data.gameId}/scores/${submission.userId}`) as DocumentReference<Score>;
+					const scoreDoc = await transaction.get(scoreRef);
+
+					if (scoreDoc.exists) {
+						return;
+					}
+
+					transaction.set(scoreRef, {
+						athlon: submission.athlon,
+						user: submission.userId,
+						rawScore: game.maxRawScore,
+						tiebreakScore: submission.createdAt.toMillis(),
+					});
+				});
+			}
+		});
+
 export const onSubmissionCreated = firestore
 	.document('games/{gameId}/submissions/{submissionId}')
 	.onCreate(async (snapshot, context) => {
@@ -453,6 +574,20 @@ export const onSubmissionCreated = firestore
 
 		if (game.rule.path === 'gameRules/codegolf') {
 			const queue = getFunctions().taskQueue('executeCodegolfSubmission');
+			queue.enqueue(
+				{
+					gameId: changedGameId,
+					submissionId: changedSubmissionId,
+				},
+				{
+					scheduleDelaySeconds: 0,
+					dispatchDeadlineSeconds: 60 * 5,
+				},
+			);
+		}
+
+		if (game.rule.path === 'gameRules/quantum-computing') {
+			const queue = getFunctions().taskQueue('executeQuantumComputingSubmission');
 			queue.enqueue(
 				{
 					gameId: changedGameId,

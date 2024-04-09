@@ -135,7 +135,7 @@ export interface CodegolfSubmission extends DocumentData {
 	executedAt: Timestamp | null,
 }
 
-export type QuantumComputingResult = 'failed' | 'success' | 'error' | 'invalid';
+export type QuantumComputingResult = 'failed' | 'success' | 'error';
 export type QuantumComputingStatus = 'pending' | 'executing' | QuantumComputingResult;
 
 export interface QuantumComputingSubmission extends DocumentData {
@@ -202,13 +202,6 @@ export interface CodegolfRanking extends DocumentData {
 		rank: number,
 		hasScore: boolean,
 	}[],
-	updatedAt: Timestamp,
-}
-
-export interface QuantumComputingRanking extends DocumentData {
-	athlon: DocumentReference<Athlon>,
-	userId: string,
-	result: QuantumComputingResult,
 	updatedAt: Timestamp,
 }
 

@@ -15,7 +15,7 @@ import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import Username from '~/components/Username';
 import PageNotFoundError from '~/lib/PageNotFoundError';
-import {Game, QuantumComputingConfiguration, QuantumComputingRanking, QuantumComputingSubmission, UseFireStoreReturn} from '~/lib/schema';
+import {Game, QuantumComputingConfiguration, QuantumComputingSubmission, UseFireStoreReturn} from '~/lib/schema';
 
 interface MainTabProps {
 	phase: 'loading' | 'waiting' | 'playing' | 'finished',
@@ -292,55 +292,6 @@ const SubmissionsTab = (props: SubmissionsTabProps) => {
 	);
 };
 
-const RankingTab = () => {
-	const [searchParams] = useSearchParams();
-	const gameId = searchParams.gameId;
-
-	const app = useFirebaseApp();
-	const db = getFirestore(app);
-
-	const user = useUser();
-
-	const rankingRef = collection(db, `games/${gameId}/ranking`) as CollectionReference<QuantumComputingRanking>;
-	const rankingDocs = useFirestore(query(rankingRef, orderBy('score', 'asc'), orderBy('createdAt', 'asc')));
-
-	return (
-		<TableContainer component={Paper}>
-			<Table>
-				<TableHead>
-					<TableRow>
-						<TableCell>#</TableCell>
-						<TableCell>User</TableCell>
-						<TableCell align="right">Score</TableCell>
-						<TableCell align="right">Date</TableCell>
-					</TableRow>
-				</TableHead>
-				<TableBody>
-					<Collection data={rankingDocs}>
-						{(ranking, i) => {
-							const userData = user();
-							const isMe = userData?.uid === ranking.userId;
-
-							return (
-								<TableRow sx={isMe ? {backgroundColor: blue[50]} : {}}>
-									<TableCell>{i() + 1}</TableCell>
-									<TableCell><Username userId={ranking.userId}/></TableCell>
-									<TableCell align="right"><strong>{ranking.score}</strong></TableCell>
-									<TableCell align="right">
-										<Box component="span" sx={{display: 'inline-box', whiteSpace: 'pre'}}>
-											{dayjs(ranking.createdAt.toDate()).format('YYYY-MM-DD HH:mm:ss')}
-										</Box>
-									</TableCell>
-								</TableRow>
-							);
-						 }}
-					</Collection>
-				</TableBody>
-			</Table>
-		</TableContainer>
-	);
-};
-
 const QuantumComputing = () => {
 	const [searchParams, setSearchParams] = useSearchParams();
 	if (typeof searchParams.gameId !== 'string') {
@@ -386,7 +337,7 @@ const QuantumComputing = () => {
 	});
 
 	createEffect(() => {
-		if (!(['main', 'submissions', 'ranking'] as (string | undefined)[]).includes(searchParams.tab)) {
+		if (!(['main', 'submissions'] as (string | undefined)[]).includes(searchParams.tab)) {
 			setSearchParams({tab: 'main'});
 		}
 	});
@@ -462,12 +413,6 @@ const QuantumComputing = () => {
 								>
 									提出一覧
 								</Button>
-								<Button
-									variant={searchParams.tab === 'ranking' ? 'contained' : 'outlined'}
-									onClick={() => setSearchParams({tab: 'ranking', submissionId: undefined})}
-								>
-									ランキング
-								</Button>
 							</ButtonGroup>
 						</Box>
 						<Switch>
@@ -476,9 +421,6 @@ const QuantumComputing = () => {
 							</Match>
 							<Match when={searchParams.tab === 'submissions'}>
 								<SubmissionsTab submissions={submissions()}/>
-							</Match>
-							<Match when={searchParams.tab === 'ranking'}>
-								<RankingTab/>
 							</Match>
 						</Switch>
 					</Container>
