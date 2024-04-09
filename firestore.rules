@@ -122,7 +122,7 @@ service cloud.firestore {
         );
         allow create: if (
           (request.auth != null && request.resource.data.userId == request.auth.uid) &&
-          (!('endAt' in gameData()) || gameData().endAt >= request.time) &&
+          (!('endAt' in gameData()) || gameData().endAt == null || gameData().endAt >= request.time) &&
           (
             (
               gameData().rule == /databases/$(database)/documents/gameRules/reversing-diff &&
