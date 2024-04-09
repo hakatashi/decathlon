@@ -293,7 +293,7 @@ const SubmissionsTab = (props: SubmissionsTabProps) => {
 								{(submission) => (
 									<TableRow>
 										<TableCell><Username userId={submission.userId}/></TableCell>
-										<TableCell align="right" sx={{'font-weight': 'bold'}}>
+										<TableCell align="right" sx={{fontWeight: 'bold'}}>
 											<Switch>
 												<Match when={submission.status === 'pending'}>
 													<span style={{color: 'gray'}}>WJ</span>

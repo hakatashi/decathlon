@@ -115,10 +115,28 @@ service cloud.firestore {
           && submission.executedAt == null;
       }
 
+      function isValidPromptEngineeringSubmission(submission, game) {
+        return submission.keys().hasOnly([
+            'athlon', 'userId', 'prompt', 'status', 'result',
+            'parsedOutput', 'formatScore', 'rawVoteScore', 'voteScore', 'updatedAt'])
+          && submission.athlon is path
+          && game.athlon == submission.athlon
+          && game.configuration.phase == 'submission'
+          && submission.userId is string
+          && submission.prompt is string
+          && submission.status == 'pending'
+          && submission.result == null
+          && submission.parsedOutput == null
+          && submission.formatScore == null
+          && submission.rawVoteScore == null
+          && submission.voteScore == null
+          && submission.updatedAt == request.time;
+      }
+
       match /submissions/{submissionId} {
         allow read: if (
           (request.auth != null && resource.data.userId == request.auth.uid) ||
-          ('endAt' in gameData() && gameData().endAt <= request.time)
+          ('endAt' in gameData() && gameData().endAt != null && gameData().endAt <= request.time)
         );
         allow create: if (
           (request.auth != null && request.resource.data.userId == request.auth.uid) &&
@@ -135,6 +153,20 @@ service cloud.firestore {
             (
               gameData().rule == /databases/$(database)/documents/gameRules/quantum-computing &&
               isValidQuantumComputingSubmission(request.resource.data, gameData())
+            ) ||
+            (
+              gameData().rule == /databases/$(database)/documents/gameRules/prompt-engineering &&
+              isValidPromptEngineeringSubmission(request.resource.data, gameData())
+            )
+          )
+        );
+        allow update: if (
+          (request.auth != null && request.resource.data.userId == request.auth.uid) &&
+          (!('endAt' in gameData()) || gameData().endAt == null || gameData().endAt >= request.time) &&
+          (
+            (
+              gameData().rule == /databases/$(database)/documents/gameRules/prompt-engineering &&
+              isValidPromptEngineeringSubmission(request.resource.data, gameData())
             )
           )
         );

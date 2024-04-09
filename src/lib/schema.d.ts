@@ -152,6 +152,25 @@ export interface QuantumComputingSubmission extends DocumentData {
 	executedAt: Timestamp | null,
 }
 
+export interface PromptEngineeringHaikuOutput {
+	haiku: string[],
+	ruby: string[],
+}
+
+export interface PromptEngineeringSubmission extends DocumentData {
+	athlon: DocumentReference<Athlon>,
+	userId: string,
+	prompt: string,
+	status: 'pending' | 'done',
+	result: string | null,
+	parsedOutput: PromptEngineeringHaikuOutput | null,
+	errorMessage?: string,
+	formatScore: number | null,
+	rawVoteScore: number | null,
+	voteScore: number | null,
+	updatedAt: Timestamp,
+}
+
 export interface DiffConfiguration {
 	enabled: boolean,
 	rule: string,
@@ -183,6 +202,18 @@ export interface QuantumComputingConfiguration {
 	description: string,
 	judgeCode: string,
 	submissionTemplate: string,
+}
+
+export type PromptEngineeringPhase = 'submission' | 'vote' | 'finished';
+
+export interface PromptEngineeringConfiguration {
+	phase: PromptEngineeringPhase,
+	type: string,
+	briefRegulation: string,
+	regulation: string,
+	voteRegulation: string,
+	parserScript: string,
+	promptTemplate: string,
 }
 
 export interface ReversingDiffRanking extends DocumentData {
