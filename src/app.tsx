@@ -1,11 +1,9 @@
 import {MetaProvider} from '@solidjs/meta';
 import {Router} from '@solidjs/router';
-import {HttpStatusCode} from '@solidjs/start';
 import {FileRoutes} from '@solidjs/start/router';
 import {initializeApp} from 'firebase/app';
 import {FirebaseProvider} from 'solid-firebase';
-import {ErrorBoundary, Match, Suspense, Switch} from 'solid-js';
-import PageNotFoundError from './lib/PageNotFoundError';
+import {Suspense} from 'solid-js';
 import './app.css';
 
 const firebaseConfig = {
@@ -26,21 +24,7 @@ const App = () => (
 			root={(props) => (
 				<MetaProvider>
 					<Suspense>
-						<ErrorBoundary
-							fallback={(error: any) => (
-								<Switch>
-									<Match when={error instanceof PageNotFoundError}>
-										<HttpStatusCode code={404}/>
-										<h1>Page Not Found</h1>
-									</Match>
-									<Match when>
-										{error}
-									</Match>
-								</Switch>
-							)}
-						>
-							{props.children}
-						</ErrorBoundary>
+						{props.children}
 					</Suspense>
 				</MetaProvider>
 			)}

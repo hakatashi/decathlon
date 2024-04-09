@@ -135,6 +135,23 @@ export interface CodegolfSubmission extends DocumentData {
 	executedAt: Timestamp | null,
 }
 
+export type QuantumComputingResult = 'failed' | 'success' | 'error' | 'invalid';
+export type QuantumComputingStatus = 'pending' | 'executing' | QuantumComputingResult;
+
+export interface QuantumComputingSubmission extends DocumentData {
+	athlon: DocumentReference<Athlon>,
+	userId: string,
+	status: QuantumComputingStatus,
+	code: string,
+	size?: number,
+	stdout: string | null,
+	stderr: string | null,
+	duration: number | null,
+	errorMessage?: string,
+	createdAt: Timestamp,
+	executedAt: Timestamp | null,
+}
+
 export interface DiffConfiguration {
 	enabled: boolean,
 	rule: string,
@@ -161,6 +178,13 @@ export interface CodegolfConfiguration {
 	}[],
 }
 
+export interface QuantumComputingConfiguration {
+	enabled: boolean,
+	description: string,
+	judgeCode: string,
+	submissionTemplate: string,
+}
+
 export interface ReversingDiffRanking extends DocumentData {
 	athlon: DocumentReference<Athlon>,
 	userId: string,
@@ -178,6 +202,13 @@ export interface CodegolfRanking extends DocumentData {
 		rank: number,
 		hasScore: boolean,
 	}[],
+	updatedAt: Timestamp,
+}
+
+export interface QuantumComputingRanking extends DocumentData {
+	athlon: DocumentReference<Athlon>,
+	userId: string,
+	result: QuantumComputingResult,
 	updatedAt: Timestamp,
 }
 
