@@ -143,7 +143,7 @@ export interface QuantumComputingSubmission extends DocumentData {
 	userId: string,
 	status: QuantumComputingStatus,
 	code: string,
-	size?: number,
+	size: number,
 	stdout: string | null,
 	stderr: string | null,
 	duration: number | null,

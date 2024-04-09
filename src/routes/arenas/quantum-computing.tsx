@@ -61,6 +61,7 @@ const MainTab = (props: MainTabProps) => {
 				userId: userData.uid,
 				status: 'pending',
 				code: codeData,
+				size: codeData.length,
 				stdout: null,
 				stderr: null,
 				duration: null,

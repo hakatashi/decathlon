@@ -97,6 +97,24 @@ service cloud.firestore {
           && submission.executedAt == null;
       }
 
+      function isValidQuantumComputingSubmission(submission, game) {
+        return submission.keys().hasOnly([
+            'athlon', 'userId', 'status', 'code', 'size',
+            'stdout', 'stderr', 'duration', 'createdAt', 'executedAt'])
+          && submission.athlon is path
+          && game.athlon == submission.athlon
+          && submission.userId is string
+          && submission.status == 'pending'
+          && submission.code is string
+          && submission.code.size() > 0
+          && submission.size == submission.code.size()
+          && submission.stdout == null
+          && submission.stderr == null
+          && submission.duration == null
+          && submission.createdAt == request.time
+          && submission.executedAt == null;
+      }
+
       match /submissions/{submissionId} {
         allow read: if (
           (request.auth != null && resource.data.userId == request.auth.uid) ||
@@ -113,6 +131,10 @@ service cloud.firestore {
             (
               gameData().rule == /databases/$(database)/documents/gameRules/codegolf &&
               isValidCodegolfSubmission(request.resource.data, gameData())
+            ) ||
+            (
+              gameData().rule == /databases/$(database)/documents/gameRules/quantum-computing &&
+              isValidQuantumComputingSubmission(request.resource.data, gameData())
             )
           )
         );
