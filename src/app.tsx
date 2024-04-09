@@ -18,6 +18,11 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
+/*
+const db = getFirestore();
+connectFirestoreEmulator(db, '127.0.0.1', 8080);
+*/
+
 const App = () => (
 	<FirebaseProvider app={app}>
 		<Router

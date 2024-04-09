@@ -470,8 +470,8 @@ export const executeQuantumComputingSubmission =
 			}
 
 			const input = [
-				Buffer.from(submission.code, 'utf-8').toString('base64'),
 				Buffer.from(config.judgeCode, 'utf-8').toString('base64'),
+				Buffer.from(submission.code, 'utf-8').toString('base64'),
 			].join('\n');
 
 			const result = await axios({

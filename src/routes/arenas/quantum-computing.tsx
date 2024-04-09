@@ -2,7 +2,6 @@
 
 import {useSearchParams} from '@solidjs/router';
 import {Alert, Box, Button, ButtonGroup, CircularProgress, Container, Link as LinkUi, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from '@suid/material';
-import {blue} from '@suid/material/colors';
 import dayjs from 'dayjs';
 import {addDoc, collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, serverTimestamp, where} from 'firebase/firestore';
 // import remarkGfm from 'remark-gfm';
@@ -46,9 +45,12 @@ const MainTab = (props: MainTabProps) => {
 			return;
 		}
 
-		const codeData = code();
+		let codeData = code();
 		if (codeData === null) {
-			return;
+			codeData = gameData.data.configuration.submissionTemplate;
+			if (codeData === null) {
+				return;
+			}
 		}
 
 		setSubmission(null);
@@ -77,7 +79,11 @@ const MainTab = (props: MainTabProps) => {
 	createEffect(() => {
 		const submissionDoc = submission();
 		if (submitStatus() === 'executing') {
-			if (submissionDoc?.data?.status === 'success' || submissionDoc?.data?.status === 'error') {
+			if (
+				submissionDoc?.data?.status === 'success' ||
+				submissionDoc?.data?.status === 'error' ||
+				submissionDoc?.data?.status === 'failed'
+			) {
 				setSubmitStatus('throttled');
 			}
 		}
@@ -146,7 +152,7 @@ const MainTab = (props: MainTabProps) => {
 												提出成功
 											</Alert>
 										</Match>
-										<Match when={submissionData.status === 'error'}>
+										<Match when={submissionData.status === 'failed'}>
 											<Alert severity="error" sx={{my: 2}}>
 												提出失敗
 												{' - '}
@@ -235,10 +241,29 @@ const SubmissionsTab = (props: SubmissionsTabProps) => {
 									<p>{dayjs(createdAt.toDate()).format('YYYY-MM-DD HH:mm:ss')}</p>
 								)}
 							</Show>
+							<Typography variant="h4" component="h2" my={1}>Status</Typography>
+							<Show when={submission()} keyed>
+								{({status}) => (
+									<div style={{'font-weight': 'bold'}}>
+										<Switch>
+											<Match when={status === 'pending'}>
+												<span style={{color: 'gray'}}>WJ</span>
+											</Match>
+											<Match when={status === 'executing'}>
+												<span style={{color: 'gray'}}>Running...</span>
+											</Match>
+											<Match when={status === 'failed'}>
+												<span style={{color: 'red'}}>WA</span>
+											</Match>
+											<Match when={status === 'success'}>
+												<span style={{color: 'green'}}>AC</span>
+											</Match>
+										</Switch>
+									</div>
+								)}
+							</Show>
 							<Typography variant="h4" component="h2" my={1}>Execution Time</Typography>
 							<p>{submission()?.duration}ms</p>
-							<Typography variant="h4" component="h2" my={1}>Score</Typography>
-							<p>{submission()?.score ?? '-'}</p>
 							<Typography variant="h4" component="h2" my={1}>Code</Typography>
 							<pre>{submission()?.code}</pre>
 							<Show when={submission()?.errorMessage}>
@@ -259,7 +284,6 @@ const SubmissionsTab = (props: SubmissionsTabProps) => {
 						<TableHead>
 							<TableRow>
 								<TableCell>User</TableCell>
-								<TableCell align="right">Score</TableCell>
 								<TableCell align="right">Status</TableCell>
 								<TableCell align="right">Date</TableCell>
 							</TableRow>
@@ -269,8 +293,22 @@ const SubmissionsTab = (props: SubmissionsTabProps) => {
 								{(submission) => (
 									<TableRow>
 										<TableCell><Username userId={submission.userId}/></TableCell>
-										<TableCell align="right"><strong>{submission.score ?? '-'}</strong></TableCell>
-										<TableCell align="right">{submission.status}</TableCell>
+										<TableCell align="right" sx={{'font-weight': 'bold'}}>
+											<Switch>
+												<Match when={submission.status === 'pending'}>
+													<span style={{color: 'gray'}}>WJ</span>
+												</Match>
+												<Match when={submission.status === 'executing'}>
+													<span style={{color: 'gray'}}>Running...</span>
+												</Match>
+												<Match when={submission.status === 'failed'}>
+													<span style={{color: 'red'}}>WA</span>
+												</Match>
+												<Match when={submission.status === 'success'}>
+													<span style={{color: 'green'}}>AC</span>
+												</Match>
+											</Switch>
+										</TableCell>
 										<TableCell align="right">
 											<LinkUi
 												href="#"
