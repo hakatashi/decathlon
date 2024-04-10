@@ -66,7 +66,7 @@ export const executeDiffSubmission =
 					code: Buffer.from(input, 'utf-8').toString('base64'),
 					input: '',
 					language: 'clang-cpp',
-					imageId: 'hakatashi/diff-challenge-cpp',
+					imageId: 'hakatashi/diff-challenge-python',
 				}),
 				validateStatus: null,
 			});
