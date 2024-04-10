@@ -18,12 +18,16 @@ import Username from '~/components/Username';
 import PageNotFoundError from '~/lib/PageNotFoundError';
 import {DiffConfiguration, Game, ReversingDiffRanking, ReversingDiffSubmission, UseFireStoreReturn} from '~/lib/schema';
 
-const DEFAULT_CODE = `
+const DEFAULT_CPP_CODE = `
 #include <iostream>
 int main() {
   std::cout << "Hello, World!" << std::endl;
   return 0;
 }
+`.trim();
+
+const DEFAULT_PYTHON_CODE = `
+print('Hello, World!')
 `.trim();
 
 interface MainTabProps {
@@ -45,7 +49,7 @@ const MainTab = (props: MainTabProps) => {
 	const gameRef = doc(db, 'games', gameId ?? '') as DocumentReference<Game>;
 	const gameData = useFirestore(gameRef);
 
-	const [code, setCode] = createSignal<string>(DEFAULT_CODE);
+	const [code, setCode] = createSignal<string | null>(null);
 	const [submitStatus, setSubmitStatus] = createSignal<'ready' | 'executing' | 'throttled'>('ready');
 	const [submission, setSubmission] = createSignal<UseFireStoreReturn<ReversingDiffSubmission | null | undefined> | null>(null);
 	const [lastSubmissionTime, setLastSubmissionTime] = createSignal<number | null>(null);
@@ -60,6 +64,19 @@ const MainTab = (props: MainTabProps) => {
 		setSubmission(null);
 		setSubmitStatus('executing');
 
+		let codeData = code();
+		if (codeData === null) {
+			const language = gameData.data.configuration.language;
+			if (language === 'cpp') {
+				codeData = DEFAULT_CPP_CODE;
+			} else if (language === 'python') {
+				codeData = DEFAULT_PYTHON_CODE;
+			}
+			if (codeData === null) {
+				return;
+			}
+		}
+
 		const submissionRef = await addDoc(
 			collection(gameRef, 'submissions') as CollectionReference<ReversingDiffSubmission>,
 			{
@@ -67,7 +84,7 @@ const MainTab = (props: MainTabProps) => {
 				userId: userData.uid,
 				status: 'pending',
 				language: 'cpp',
-				code: code(),
+				code: codeData,
 				stdout: null,
 				stderr: null,
 				duration: null,
@@ -128,6 +145,17 @@ const MainTab = (props: MainTabProps) => {
 			{(game) => {
 				const config = game.configuration as DiffConfiguration;
 
+				const defaultCode = (() => {
+					switch (config.language) {
+						case 'cpp':
+							return DEFAULT_CPP_CODE;
+						case 'python':
+							return DEFAULT_PYTHON_CODE;
+						default:
+							return '';
+					}
+				})();
+
 				return (
 					<>
 						<Typography variant="body1">
@@ -166,7 +194,7 @@ const MainTab = (props: MainTabProps) => {
 							label="提出コード"
 							multiline
 							minRows={4}
-							value={code()}
+							value={code() === null ? defaultCode : code()}
 							onChange={(_event, value) => setCode(value)}
 							disabled={props.phase === 'finished' || submitStatus() === 'executing'}
 							// @ts-expect-error: type error

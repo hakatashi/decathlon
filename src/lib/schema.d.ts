@@ -173,6 +173,7 @@ export interface PromptEngineeringSubmission extends DocumentData {
 
 export interface DiffConfiguration {
 	enabled: boolean,
+	language: string,
 	rule: string,
 	files: {
 		filename: string,
