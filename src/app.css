@@ -50,8 +50,14 @@ a {
 	max-height: 30vh;
 }
 
+.markdown code:not(pre code) {
+	background-color: #DDD;
+	padding: 0.2em;
+	border-radius: 0.2em;
+}
+
 pre {
-	background: #EEE;
+	background: #DDD;
 	margin: 0;
 	padding: 0.5rem;
 	line-height: 1em;
