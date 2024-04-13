@@ -26,10 +26,10 @@
     "@types/common-tags": "^1.8.4",
     "@types/lodash": "^4.17.0",
     "common-tags": "^1.8.2",
-    "eslint": "^8.57.0",
-    "firebase-functions-test": "^3.1.1",
+    "eslint": "^9.0.0",
+    "firebase-functions-test": "^3.2.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.3"
+    "typescript": "^5.4.5"
   },
   "private": true
 }
