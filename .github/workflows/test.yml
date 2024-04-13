@@ -58,6 +58,7 @@ jobs:
           args: deploy --except hosting
         env:
           FIREBASE_TOKEN: '${{ secrets.FIREBASE_TOKEN }}'
+          ESLINT_USE_FLAT_CONFIG: 'false'
 
   deploy_hosting:
     name: Deploy Firebase Hosting
