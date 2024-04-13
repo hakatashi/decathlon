@@ -1,5 +1,6 @@
 /* eslint-disable array-plural/array-plural */
 
+import {Link} from '@solidjs/meta';
 import {useSearchParams} from '@solidjs/router';
 import {Alert, Box, Button, ButtonGroup, CircularProgress, Container, Link as LinkUi, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from '@suid/material';
 import dayjs from 'dayjs';
@@ -38,6 +39,21 @@ const MainTab = (props: MainTabProps) => {
 	const [submission, setSubmission] = createSignal<UseFireStoreReturn<QuantumComputingSubmission | null | undefined> | null>(null);
 	const [lastSubmissionTime, setLastSubmissionTime] = createSignal<number | null>(null);
 	const [throttleTime, setThrottleTime] = createSignal<number>(0);
+
+	// eslint-disable-next-line init-declarations
+	let descriptionEl: HTMLElement;
+
+	createEffect(async () => {
+		// @ts-expect-error: URL import
+		// eslint-disable-next-line import/no-unresolved
+		const {default: renderMathInElement} = await import('https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.mjs');
+		renderMathInElement(descriptionEl, {
+			delimiters: [
+				{left: '$$', right: '$$', display: true},
+				{left: '$', right: '$', display: false},
+			],
+		});
+	});
 
 	const handleClickSubmit = async () => {
 		const userData = user();
@@ -114,7 +130,8 @@ const MainTab = (props: MainTabProps) => {
 
 				return (
 					<>
-						<Typography variant="body1">
+						<Link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css"/>
+						<Typography variant="body1" ref={descriptionEl}>
 							<SolidMarkdown
 								class="markdown"
 								// eslint-disable-next-line react/no-children-prop

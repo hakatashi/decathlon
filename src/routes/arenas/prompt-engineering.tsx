@@ -367,7 +367,7 @@ const ResultsTab = (props: ResultsTabProps) => {
 					const submission = createMemo(() => (
 						props.submissions?.data?.find(({id}) => submissionId === id)
 					));
-					const resultDoc = useFirestore(doc(db, 'games', gameId, 'results', submissionId) as DocumentReference<PromptEngineeringResult>);
+					const resultDoc = useFirestore(doc(db, 'games', gameId!, 'results', submissionId) as DocumentReference<PromptEngineeringResult>);
 
 					return (
 						<div class={styles.submission}>

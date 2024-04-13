@@ -1,5 +1,6 @@
 /* eslint-disable array-plural/array-plural */
 
+import {Link} from '@solidjs/meta';
 import {useSearchParams} from '@solidjs/router';
 import {Alert, Box, Button, ButtonGroup, Card, CardContent, CircularProgress, Container, FormControl, Grid, InputLabel, Link as LinkUi, MenuItem, Paper, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from '@suid/material';
 import {SelectChangeEvent} from '@suid/material/Select';
@@ -62,11 +63,26 @@ const MainTab = (props: MainTabProps) => {
 	const [selectedAnyLanguage, setSelectedAnyLanguage] = createSignal<string | null>(null);
 	const [languageInfos, setLanguageInfos] = createSignal<{shortestSize: number | null}[]>([]);
 
+	// eslint-disable-next-line init-declarations
+	let descriptionEl: HTMLElement;
+
 	const executionLanguage = createMemo(() => {
 		if (selectedLanguage() !== 'anything') {
 			return selectedLanguage();
 		}
 		return selectedAnyLanguage();
+	});
+
+	createEffect(async () => {
+		// @ts-expect-error: URL import
+		// eslint-disable-next-line import/no-unresolved
+		const {default: renderMathInElement} = await import('https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.mjs');
+		renderMathInElement(descriptionEl, {
+			delimiters: [
+				{left: '$$', right: '$$', display: true},
+				{left: '$', right: '$', display: false},
+			],
+		});
 	});
 
 	const handleClickSubmit = async () => {
@@ -163,13 +179,16 @@ const MainTab = (props: MainTabProps) => {
 
 				return (
 					<>
-						<SolidMarkdown
-							class="markdown"
-							// eslint-disable-next-line react/no-children-prop
-							children={config.description}
-							// remarkPlugins={[remarkGfm]}
-							linkTarget="_blank"
-						/>
+						<Link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css"/>
+						<Typography variant="body1" ref={descriptionEl}>
+							<SolidMarkdown
+								class="markdown"
+								// eslint-disable-next-line react/no-children-prop
+								children={config.description}
+								// remarkPlugins={[remarkGfm]}
+								linkTarget="_blank"
+							/>
+						</Typography>
 						<Grid container spacing={2} class={styles.rule}>
 							<For each={config.testcases}>
 								{(testcase, i) => (
