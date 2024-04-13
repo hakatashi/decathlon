@@ -3,9 +3,9 @@ import {DocumentReference} from 'firebase-admin/firestore';
 import type {CollectionReference, CollectionGroup} from 'firebase-admin/firestore';
 import {auth, firestore, https} from 'firebase-functions';
 import mdiff from 'mdiff';
-import type {Athlon, Game, Score, TypingJapaneseSubmission} from '~/lib/schema';
+import type {Athlon, Game, PromptEngineeringVote, Score, TypingJapaneseSubmission} from '~/lib/schema';
 import {db} from './firebase';
-import {calculateRanking} from './scores';
+import {calculateRanking, updatePromptEngineeringScores} from './scores';
 
 export * from './esolang';
 
@@ -184,3 +184,51 @@ export const submitTypingJapaneseScore = https.onCall(async (data, context) => {
 
 	return score;
 });
+
+export const submitPromptEngineeringVote = https.onCall(async (data, context) => {
+	const {gameId, choices} = data;
+	const uid = context.auth?.uid;
+
+	assert(typeof gameId === 'string');
+	assert(Array.isArray(choices));
+	assert(typeof uid === 'string');
+
+	const gameDoc = await (db.collection('games') as CollectionReference<Game>).doc(gameId).get();
+	assert(gameDoc.exists);
+
+	const gameData = gameDoc.data();
+	assert(gameData);
+
+	assert(gameData.rule && gameData.rule.path === 'gameRules/prompt-engineering');
+
+	const voteRef = db.doc(`games/${gameId}/votes/${uid}`) as DocumentReference<PromptEngineeringVote>;
+
+	const voteData = await voteRef.get();
+	assert(!voteData.exists, 'You already voted for this game.');
+
+	assert(choices.length === 3);
+	assert(choices.every((choice) => typeof choice === 'string'));
+
+	// TODO: Add more validation (uniqueness, existence of vote target, etc.)
+
+	await voteRef.set({
+		choices,
+		userId: uid,
+	});
+});
+
+export const onVoteChanged = firestore
+	.document('games/{gameId}/votes/{userId}')
+	.onWrite(async (_change, context) => {
+		const changedGameId = context.params.gameId;
+
+		const gameDoc = await (db.collection('games') as CollectionReference<Game>).doc(changedGameId).get();
+		const gameData = gameDoc.data();
+		if (!gameData) {
+			return;
+		}
+
+		if (gameData.rule.path === 'gameRules/prompt-engineering') {
+			await updatePromptEngineeringScores(gameDoc);
+		}
+	});

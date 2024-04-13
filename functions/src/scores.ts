@@ -2,9 +2,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 
-import type {QuerySnapshot} from 'firebase-admin/firestore';
+import type {CollectionReference, DocumentReference, DocumentSnapshot, QuerySnapshot} from 'firebase-admin/firestore';
 import {sortBy, sum} from 'lodash';
-import type {Game, Score} from '~/lib/schema';
+import type {Game, PromptEngineeringResult, PromptEngineeringSubmission, PromptEngineeringVote, Score} from '~/lib/schema';
+import {db} from './firebase';
 import {RankedScore, calculateGameRanking} from './lib/scores';
 
 // eslint-disable-next-line import/prefer-default-export
@@ -110,4 +111,74 @@ export const calculateRanking = (gameDocs: QuerySnapshot<Game>, scoreDocs: Query
 	});
 
 	return ranking;
+};
+
+export const updatePromptEngineeringScores = async (game: DocumentSnapshot<Game>) => {
+	const gameData = game.data();
+	if (!gameData) {
+		throw new Error('Invalid game data');
+	}
+
+	if (gameData.rule.path !== 'gameRules/prompt-engineering') {
+		throw new Error('Invalid game rule');
+	}
+
+	await db.runTransaction(async (transaction) => {
+		const submissionsRef = game.ref.collection('submissions') as CollectionReference<PromptEngineeringSubmission>;
+		const submissions = await transaction.get(submissionsRef);
+		const votesRef = game.ref.collection('votes') as CollectionReference<PromptEngineeringVote>;
+		const votes = await transaction.get(votesRef);
+		const resultsRef = game.ref.collection('results') as CollectionReference<PromptEngineeringResult>;
+		const results = await transaction.get(resultsRef);
+
+		const formatScoreMap = new Map<string, number>();
+		for (const result of results.docs) {
+			const {point} = result.data();
+			formatScoreMap.set(result.id, point);
+		}
+
+		const rawVoteScoreMap = new Map<string, number>();
+		const votesMap = new Map<string, {userId: string, order: number}[]>();
+		for (const vote of votes.docs) {
+			const {userId, choices} = vote.data();
+			for (const [order, choice] of choices.entries()) {
+				if (!votesMap.has(choice)) {
+					votesMap.set(choice, []);
+				}
+				votesMap.get(choice)!.push({userId, order});
+				rawVoteScoreMap.set(choice, (rawVoteScoreMap.get(choice) ?? 0) + (3 - order));
+			}
+		}
+
+		const maxRawVoteScore = Math.max(...rawVoteScoreMap.values());
+		const voteScoreMap = new Map<string, number>();
+		for (const [userId, rawVoteScore] of rawVoteScoreMap) {
+			voteScoreMap.set(userId, rawVoteScore / maxRawVoteScore * 50);
+		}
+
+		for (const submission of submissions.docs) {
+			const {userId} = submission.data();
+			const formatScore = formatScoreMap.get(userId) ?? 0;
+			const rawVoteScore = rawVoteScoreMap.get(userId) ?? 0;
+			const voteScore = voteScoreMap.get(userId) ?? 0;
+			const targetVotes = votesMap.get(userId) ?? [];
+			const score = formatScore + voteScore;
+
+			transaction.update(submission.ref, {
+				formatScore,
+				rawVoteScore,
+				voteScore,
+				votes: targetVotes,
+				score,
+			});
+
+			const scoreRef = game.ref.collection('scores').doc(userId) as DocumentReference<Score>;
+			transaction.set(scoreRef, {
+				athlon: gameData.athlon,
+				rawScore: score,
+				tiebreakScore: 0,
+				user: userId,
+			});
+		}
+	});
 };

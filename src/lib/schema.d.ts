@@ -168,6 +168,11 @@ export interface PromptEngineeringSubmission extends DocumentData {
 	formatScore: number | null,
 	rawVoteScore: number | null,
 	voteScore: number | null,
+	votes: {
+		userId: string,
+		order: number,
+	}[],
+	score: number | null,
 	updatedAt: Timestamp,
 }
 
@@ -235,6 +240,28 @@ export interface CodegolfRanking extends DocumentData {
 		hasScore: boolean,
 	}[],
 	updatedAt: Timestamp,
+}
+
+export interface PromptEngineeringResult extends DocumentData {
+	openaiResponse: any,
+	output: string,
+	parsedOutput: {
+		haiku: string[],
+		ruby: string[],
+	},
+	point: number,
+	points: {
+		haiku: number,
+		ruby: number,
+		jiamari: number,
+		extraneous: number,
+	},
+	seed: number,
+}
+
+export interface PromptEngineeringVote extends DocumentData {
+	userId: string,
+	choices: string[],
 }
 
 export interface GameRule extends DocumentData {

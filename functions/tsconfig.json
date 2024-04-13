@@ -5,7 +5,8 @@
     "outDir": "lib",
     "sourceMap": true,
     "target": "es2021",
-    "noEmit": false
+    "noEmit": false,
+    "noImplicitAny": true
   },
   "compileOnSave": true,
   "include": [

@@ -2,19 +2,24 @@
 
 import {useSearchParams} from '@solidjs/router';
 import {Check} from '@suid/icons-material';
-import {Switch as SwitchEl, Alert, Box, Button, ButtonGroup, Container, Stack, TextField, Typography} from '@suid/material';
-
+import {Switch as SwitchUi, Alert, Box, Button, ButtonGroup, Container, Stack, Link as LinkUi, TextField, Typography, CardContent, Card, Grid, Badge, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Paper} from '@suid/material';
+import {blue} from '@suid/material/colors';
 import dayjs from 'dayjs';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, serverTimestamp, setDoc, where} from 'firebase/firestore';
 // import remarkGfm from 'remark-gfm';
+import {getFunctions, httpsCallable} from 'firebase/functions';
+import {zip} from 'lodash';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
-import {createEffect, createSignal, Match, onCleanup, Show, Switch} from 'solid-js';
+import {createEffect, createMemo, createSignal, For, Match, Show, Switch} from 'solid-js';
+import {createStore, produce} from 'solid-js/store';
 import {SolidMarkdown} from 'solid-markdown';
 import {setArenaTitle, useUser} from '../arenas';
 import styles from './reversing-diff.module.css';
+import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
+import Username from '~/components/Username';
 import PageNotFoundError from '~/lib/PageNotFoundError';
-import {Game, PromptEngineeringConfiguration, PromptEngineeringPhase, PromptEngineeringSubmission, UseFireStoreReturn} from '~/lib/schema';
+import {Game, PromptEngineeringConfiguration, PromptEngineeringPhase, PromptEngineeringResult, PromptEngineeringSubmission, PromptEngineeringVote, UseFireStoreReturn} from '~/lib/schema';
 
 interface SubmissionTabProps {
 	submissions: UseFireStoreReturn<PromptEngineeringSubmission[] | null | undefined> | null,
@@ -65,6 +70,8 @@ const SubmissionTab = (props: SubmissionTabProps) => {
 				formatScore: null,
 				rawVoteScore: null,
 				voteScore: null,
+				votes: [],
+				score: null,
 				updatedAt: serverTimestamp(),
 			},
 			{merge: true},
@@ -72,8 +79,6 @@ const SubmissionTab = (props: SubmissionTabProps) => {
 	};
 
 	createEffect(() => {
-		console.log(props.submissions);
-
 		if (!props.submissions?.data) {
 			return;
 		}
@@ -108,7 +113,7 @@ const SubmissionTab = (props: SubmissionTabProps) => {
 								linkTarget="_blank"
 							/>
 						</Typography>
-						<SwitchEl
+						<SwitchUi
 							checked={isDetailedRegulationShown()}
 							onChange={
 								(event, value) => setIsDetailedRegulationShown(value)
@@ -125,7 +130,7 @@ const SubmissionTab = (props: SubmissionTabProps) => {
 								/>
 							</Typography>
 						</Show>
-						<SwitchEl
+						<SwitchUi
 							checked={isParserScriptShown()}
 							onChange={
 								(event, value) => setIsParserScriptShown(value)
@@ -142,7 +147,7 @@ const SubmissionTab = (props: SubmissionTabProps) => {
 							minRows={1}
 							value={prompt() === null ? config.promptTemplate : prompt()}
 							onChange={(_event, value) => setPrompt(value)}
-							disabled={props.phase === 'finished'}
+							disabled={props.phase !== 'submission'}
 							// @ts-expect-error: type error
 							sx={{
 								mt: 5,
@@ -190,16 +195,282 @@ const SubmissionTab = (props: SubmissionTabProps) => {
 };
 
 interface VoteTabProps {
-	submissions: UseFireStoreReturn<PromptEngineeringSubmission[] | null | undefined> | null,
+	results: UseFireStoreReturn<PromptEngineeringResult[] | null | undefined> | null,
+	voteRegulation: string | undefined,
+	phase: 'loading' | PromptEngineeringPhase,
+	isVoted: boolean,
 }
 
-const VoteTab = (props: VoteTabProps) => (
-	'未実装です'
-);
+const [choices, setChoices] = createStore<number[]>([]);
 
-const ResultsTab = () => (
-	'未実装です'
-);
+const VoteTab = (props: VoteTabProps) => {
+	const [searchParams] = useSearchParams();
+	const gameId = searchParams.gameId;
+
+	const app = useFirebaseApp();
+
+	const functions = getFunctions(app);
+	const submitPromptEngineeringVote = httpsCallable(functions, 'submitPromptEngineeringVote');
+
+	const handleClick = (index: number) => {
+		if (props.phase !== 'vote') {
+			return;
+		}
+
+		setChoices(produce((newChoices) => {
+			if (newChoices.includes(index)) {
+				newChoices.splice(newChoices.indexOf(index), 1);
+			} else if (newChoices.length < 3) {
+				newChoices.push(index);
+			}
+			return newChoices;
+		}));
+	};
+
+	const handleClickSubmit = async () => {
+		if (props.phase !== 'vote') {
+			return;
+		}
+
+		await submitPromptEngineeringVote({
+			gameId,
+			choices: choices.map((index) => props.results?.data?.[index].id),
+		});
+	};
+
+	return (
+		<Switch>
+			<Match when={props.phase === 'submission'}>
+				<Typography
+					variant="h3"
+					component="p"
+					textAlign="center"
+					py={6}
+				>
+					投票開始までしばらくお待ち下さい。
+				</Typography>
+			</Match>
+			<Match
+				when={props.phase === 'vote' || props.phase === 'finished'}
+			>
+				<Box>
+					<Typography variant="body1">
+						以下の俳句を、好きなものから順番に3つクリックして選び、投票してください。
+						<SolidMarkdown
+							class="markdown"
+							// eslint-disable-next-line react/no-children-prop
+							children={props.voteRegulation}
+							// remarkPlugins={[remarkGfm]}
+							linkTarget="_blank"
+						/>
+					</Typography>
+					<Grid container spacing={3}>
+						<Collection data={props.results}>
+							{(result, index) => {
+								const components = zip(result.parsedOutput.haiku, result.parsedOutput.ruby);
+
+								return (
+									<Grid item xs="auto" maxWidth="100%">
+										<Badge
+											badgeContent={choices.indexOf(index()) + 1}
+											color="secondary"
+											showZero={false}
+										>
+											<Card
+												sx={{
+													minWidth: 275,
+													maxWidth: '100%',
+													cursor: 'pointer',
+												}}
+												style={{
+													...(choices.includes(index()) ? {'background-color': blue[100]} : {}),
+												}}
+												onClick={[handleClick, index()]}
+											>
+												<CardContent>
+													<Typography variant="h4">
+														<For each={components}>
+															{([haiku, ruby]) => (
+																<ruby style={{display: 'inline-block', 'margin-inline-end': '2em'}}>
+																	<span style={{'font-family': 'serif'}}>{haiku}</span>
+																	<rp>(</rp>
+																	<rt>{ruby}</rt>
+																	<rp>)</rp>
+																</ruby>
+															)}
+														</For>
+													</Typography>
+												</CardContent>
+											</Card>
+										</Badge>
+									</Grid>
+								);
+							}}
+						</Collection>
+					</Grid>
+					<Button
+						disabled={choices.length !== 3 || props.phase !== 'vote' || props.isVoted}
+						variant="contained"
+						sx={{mt: 2}}
+						onClick={handleClickSubmit}
+						size="large"
+					>
+						<Switch>
+							<Match when={props.isVoted}>
+								投票済です
+							</Match>
+							<Match when={props.phase === 'vote'}>
+								投票する
+							</Match>
+							<Match when>
+								投票は終了しました
+							</Match>
+						</Switch>
+					</Button>
+				</Box>
+			</Match>
+		</Switch>
+	);
+};
+
+interface ResultsTabProps {
+	submissions: UseFireStoreReturn<PromptEngineeringSubmission[] | null | undefined> | null,
+	phase: 'loading' | PromptEngineeringPhase,
+}
+
+const ResultsTab = (props: ResultsTabProps) => {
+	const [searchParams, setSearchParams] = useSearchParams();
+	const gameId = searchParams.gameId;
+
+	const app = useFirebaseApp();
+	const db = getFirestore(app);
+
+	const handleClickSubmission = (submissionId: string, event: MouseEvent) => {
+		event.preventDefault();
+		setSearchParams({submissionId});
+	};
+
+	return (
+		<Switch>
+			<Match when={props.phase !== 'finished'}>
+				<Typography
+					variant="h3"
+					component="p"
+					textAlign="center"
+					py={6}
+				>
+					投票終了までしばらくお待ち下さい。
+				</Typography>
+			</Match>
+			<Match when={searchParams.submissionId} keyed>
+				{(submissionId) => {
+					const submission = createMemo(() => (
+						props.submissions?.data?.find(({id}) => submissionId === id)
+					));
+					const resultDoc = useFirestore(doc(db, 'games', gameId, 'results', submissionId) as DocumentReference<PromptEngineeringResult>);
+
+					return (
+						<div class={styles.submission}>
+							<LinkUi
+								href="#"
+								underline="hover"
+								onClick={() => setSearchParams({submissionId: undefined})}
+							>
+								提出一覧に戻る
+							</LinkUi>
+							<Typography variant="h4" component="h2" my={1}>ユーザー</Typography>
+							<Show when={submission()} keyed>
+								{({userId}) => (
+									<Username userId={userId}/>
+								)}
+							</Show>
+							<Typography variant="h4" component="h2" my={1}>提出日時</Typography>
+							<Show when={submission()} keyed>
+								{({updatedAt}) => (
+									<p>{dayjs(updatedAt.toDate()).format('YYYY-MM-DD HH:mm:ss')}</p>
+								)}
+							</Show>
+							<Typography variant="h4" component="h2" my={1}>プロンプト</Typography>
+							<pre>{submission()?.prompt}</pre>
+							<Doc data={resultDoc}>
+								{(result) => (
+									<>
+										<Typography variant="h4" component="h2" my={1}>AIによる出力</Typography>
+										<pre>{result.output}</pre>
+										<Typography variant="h4" component="h2" my={1}>パース結果</Typography>
+										<pre>{JSON.stringify(result.parsedOutput, null, 2)}</pre>
+										<Typography variant="h4" component="h2" my={1}>出力形式に関する採点結果</Typography>
+										<pre>{JSON.stringify(result.points, null, 2)}</pre>
+									</>
+								)}
+							</Doc>
+							<Typography variant="h4" component="h2" my={1}>出力形式に関する得点</Typography>
+							<p>{submission()?.formatScore ?? '-'} / 50</p>
+							<Typography variant="h4" component="h2" my={1}>投票者一覧</Typography>
+							<ul>
+								<For each={submission()?.votes}>
+									{(vote) => (
+										<li>
+											<Username userId={vote.userId}/>
+											<ul>
+												<li>
+													{vote.order + 1}番目 (+{3 - vote.order}点)
+												</li>
+											</ul>
+										</li>
+									)}
+								</For>
+							</ul>
+							<Typography variant="h4" component="h2" my={1}>投票による得点</Typography>
+							<p>{submission()?.rawVoteScore ?? '-'}</p>
+							<Typography variant="h4" component="h2" my={1}>投票による得点 (補正)</Typography>
+							<p>{submission()?.voteScore?.toFixed?.(2) ?? '-'} / 50.00</p>
+						</div>
+					);
+				 }}
+			</Match>
+			<Match when>
+				<TableContainer component={Paper}>
+					<Table size="small">
+						<TableHead>
+							<TableRow>
+								<TableCell>#</TableCell>
+								<TableCell>User</TableCell>
+								<TableCell align="right">Format Score</TableCell>
+								<TableCell align="right">Vote Score</TableCell>
+								<TableCell align="right">Score</TableCell>
+								<TableCell align="right">Date</TableCell>
+							</TableRow>
+						</TableHead>
+						<TableBody>
+							<Collection data={props.submissions}>
+								{(submission, index) => (
+									<TableRow>
+										<TableCell>{index() + 1}</TableCell>
+										<TableCell><Username userId={submission.userId}/></TableCell>
+										<TableCell align="right">{submission.formatScore ?? '-'}</TableCell>
+										<TableCell align="right">{submission.rawVoteScore ?? '-'}</TableCell>
+										<TableCell align="right"><strong>{submission.score?.toFixed?.(2) ?? '-'}</strong></TableCell>
+										<TableCell align="right">
+											<LinkUi
+												href="#"
+												underline="hover"
+												sx={{display: 'inline-box', whiteSpace: 'pre'}}
+												onClick={(event) => handleClickSubmission(submission.id, event)}
+											>
+												{dayjs(submission.updatedAt.toDate()).format('YYYY-MM-DD HH:mm:ss')}
+											</LinkUi>
+										</TableCell>
+									</TableRow>
+								)}
+							</Collection>
+						</TableBody>
+					</Table>
+				</TableContainer>
+			</Match>
+		</Switch>
+	);
+};
 
 const PromptEngineering = () => {
 	const [searchParams, setSearchParams] = useSearchParams();
@@ -214,34 +485,43 @@ const PromptEngineering = () => {
 
 	const user = useUser();
 	const [submissions, setSubmissions] = createSignal<UseFireStoreReturn<PromptEngineeringSubmission[] | null | undefined> | null>(null);
+	const [vote, setVote] = createSignal<UseFireStoreReturn<PromptEngineeringVote | null | undefined> | null>(null);
+	const [isVoted, setIsVoted] = createSignal(false);
 	const [phase, setPhase] = createSignal<'loading' | PromptEngineeringPhase>('loading');
 
 	const gameRef = doc(db, 'games', gameId) as DocumentReference<Game>;
 	const gameData = useFirestore(gameRef);
+
+	const resultDocs = useFirestore(
+		query(
+			collection(gameRef, 'results') as CollectionReference<PromptEngineeringResult>,
+			orderBy('seed', 'asc'),
+		),
+	);
 
 	setArenaTitle('diff');
 
 	createEffect(() => {
 		const userData = user();
 		if (userData?.uid) {
-			if (phase() === 'submission') {
+			if (phase() === 'finished') {
+				const submissionsData = useFirestore(
+					query(
+						collection(gameRef, 'submissions') as CollectionReference<PromptEngineeringSubmission>,
+						orderBy('score', 'desc'),
+					),
+				);
+				setSubmissions(submissionsData);
+			} else {
 				const submissionsData = useFirestore(
 					query(
 						collection(gameRef, 'submissions') as CollectionReference<PromptEngineeringSubmission>,
 						where('userId', '==', userData.uid),
-						orderBy('updatedAt', 'desc'),
-					),
-				);
-				setSubmissions(submissionsData);
-			} else if (phase() === 'finished') {
-				const submissionsData = useFirestore(
-					query(
-						collection(gameRef, 'submissions') as CollectionReference<PromptEngineeringSubmission>,
-						orderBy('updatedAt', 'desc'),
 					),
 				);
 				setSubmissions(submissionsData);
 			}
+			setVote(useFirestore(doc(gameRef, 'votes', userData.uid) as DocumentReference<PromptEngineeringVote>));
 		}
 	});
 
@@ -264,17 +544,28 @@ const PromptEngineering = () => {
 			throw new PageNotFoundError();
 		}
 
-		setPhase('submission');
+		const config = gameData.data.configuration as PromptEngineeringConfiguration;
+		setPhase(config.phase);
+	});
 
-		if (gameData.data.endAt && gameData.data.endAt.toDate() <= new Date()) {
-			setPhase('finished');
+	createEffect(() => {
+		const voteData = vote();
+		const resultsData = resultDocs.data;
+
+		if (!voteData?.data || resultsData === undefined) {
+			return;
 		}
+
+		setChoices(voteData.data.choices.map((choice) => (
+			resultsData.findIndex(({id}) => id === choice)
+		)));
+		setIsVoted(true);
 	});
 
 	return (
 		<Switch>
 			<Match
-				when={phase() === 'submission' || phase() === 'finished'}
+				when={phase() !== 'loading'}
 			>
 				<main class={styles.app}>
 					<Container maxWidth="lg" sx={{py: 3}}>
@@ -308,10 +599,15 @@ const PromptEngineering = () => {
 								<SubmissionTab submissions={submissions()} phase={phase()}/>
 							</Match>
 							<Match when={searchParams.tab === 'vote'}>
-								<VoteTab submissions={submissions()}/>
+								<VoteTab
+									results={resultDocs}
+									voteRegulation={gameData.data?.configuration?.voteRegulation ?? undefined}
+									phase={phase()}
+									isVoted={isVoted()}
+								/>
 							</Match>
 							<Match when={searchParams.tab === 'results'}>
-								<ResultsTab/>
+								<ResultsTab submissions={submissions()} phase={phase()}/>
 							</Match>
 						</Switch>
 					</Container>

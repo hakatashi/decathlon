@@ -118,7 +118,8 @@ service cloud.firestore {
       function isValidPromptEngineeringSubmission(submission, game) {
         return submission.keys().hasOnly([
             'athlon', 'userId', 'prompt', 'status', 'result',
-            'parsedOutput', 'formatScore', 'rawVoteScore', 'voteScore', 'updatedAt'])
+            'parsedOutput', 'formatScore', 'rawVoteScore', 'voteScore',
+            'score', 'votes', 'updatedAt'])
           && submission.athlon is path
           && game.athlon == submission.athlon
           && game.configuration.phase == 'submission'
@@ -130,6 +131,9 @@ service cloud.firestore {
           && submission.formatScore == null
           && submission.rawVoteScore == null
           && submission.voteScore == null
+          && submission.score == null
+          && submission.votes is list
+          && submission.votes.size() == 0
           && submission.updatedAt == request.time;
       }
 
@@ -174,6 +178,14 @@ service cloud.firestore {
 
       match /ranking/{userId} {
         allow read;
+      }
+
+      match /results/{resultId} {
+        allow read: if request.auth != null;
+      }
+
+      match /votes/{resultId} {
+        allow read: if request.auth != null;
       }
     }
 
