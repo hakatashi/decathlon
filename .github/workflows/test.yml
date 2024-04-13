@@ -32,6 +32,9 @@ jobs:
           path: playwright-report/
           retention-days: 30
 
+      - name: Run Firebase Functions predeploy scripts
+        run: npm --prefix functions run lint && npm --prefix functions run build
+
   deploy_firebase:
     name: Deploy Firebase Configurations
 
