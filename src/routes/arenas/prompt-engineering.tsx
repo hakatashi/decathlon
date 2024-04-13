@@ -37,6 +37,7 @@ const SubmissionTab = (props: SubmissionTabProps) => {
 	const [prompt, setPrompt] = createSignal<string | null>(null);
 	const [submissionDate, setSubmissionDate] = createSignal<Date | null>(null);
 	const [isDetailedRegulationShown, setIsDetailedRegulationShown] = createSignal(false);
+	const [isParserScriptShown, setIsParserScriptShown] = createSignal(false);
 
 	const handleClickSubmit = async () => {
 		const userData = user();
@@ -122,6 +123,17 @@ const SubmissionTab = (props: SubmissionTabProps) => {
 									// remarkPlugins={[remarkGfm]}
 									linkTarget="_blank"
 								/>
+							</Typography>
+						</Show>
+						<SwitchEl
+							checked={isParserScriptShown()}
+							onChange={
+								(event, value) => setIsParserScriptShown(value)
+							}
+						/> パーサを表示する
+						<Show when={isParserScriptShown()}>
+							<Typography variant="body1">
+								<pre>{config.parserScript}</pre>
 							</Typography>
 						</Show>
 						<TextField
