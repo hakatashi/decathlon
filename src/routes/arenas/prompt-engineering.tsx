@@ -345,6 +345,8 @@ const ResultsTab = (props: ResultsTabProps) => {
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
 
+	const resultsDoc = useFirestore(collection(db, 'games', gameId!, 'results') as CollectionReference<PromptEngineeringResult>);
+
 	const handleClickSubmission = (submissionId: string, event: MouseEvent) => {
 		event.preventDefault();
 		setSearchParams({submissionId});
@@ -436,6 +438,7 @@ const ResultsTab = (props: ResultsTabProps) => {
 							<TableRow>
 								<TableCell>#</TableCell>
 								<TableCell>User</TableCell>
+								<TableCell align="right">Output</TableCell>
 								<TableCell align="right">Format Score</TableCell>
 								<TableCell align="right">Vote Score</TableCell>
 								<TableCell align="right">Score</TableCell>
@@ -444,25 +447,31 @@ const ResultsTab = (props: ResultsTabProps) => {
 						</TableHead>
 						<TableBody>
 							<Collection data={props.submissions}>
-								{(submission, index) => (
-									<TableRow>
-										<TableCell>{index() + 1}</TableCell>
-										<TableCell><Username userId={submission.userId}/></TableCell>
-										<TableCell align="right">{submission.formatScore ?? '-'}</TableCell>
-										<TableCell align="right">{submission.rawVoteScore ?? '-'}</TableCell>
-										<TableCell align="right"><strong>{submission.score?.toFixed?.(2) ?? '-'}</strong></TableCell>
-										<TableCell align="right">
-											<LinkUi
-												href="#"
-												underline="hover"
-												sx={{display: 'inline-box', whiteSpace: 'pre'}}
-												onClick={(event) => handleClickSubmission(submission.id, event)}
-											>
-												{dayjs(submission.updatedAt.toDate()).format('YYYY-MM-DD HH:mm:ss')}
-											</LinkUi>
-										</TableCell>
-									</TableRow>
-								)}
+								{(submission, index) => {
+									const results = resultsDoc.data ?? [];
+									const result = results.find((r) => r.id === submission.id);
+
+									return (
+										<TableRow>
+											<TableCell>{index() + 1}</TableCell>
+											<TableCell><Username userId={submission.userId}/></TableCell>
+											<TableCell align="right">{result?.parsedOutput?.haiku?.join?.(' ')}</TableCell>
+											<TableCell align="right">{submission.formatScore ?? '-'}</TableCell>
+											<TableCell align="right">{submission.rawVoteScore ?? '-'}</TableCell>
+											<TableCell align="right"><strong>{submission.score?.toFixed?.(2) ?? '-'}</strong></TableCell>
+											<TableCell align="right">
+												<LinkUi
+													href="#"
+													underline="hover"
+													sx={{display: 'inline-box', whiteSpace: 'pre'}}
+													onClick={(event) => handleClickSubmission(submission.id, event)}
+												>
+													{dayjs(submission.updatedAt.toDate()).format('YYYY-MM-DD HH:mm:ss')}
+												</LinkUi>
+											</TableCell>
+										</TableRow>
+									);
+								}}
 							</Collection>
 						</TableBody>
 					</Table>
