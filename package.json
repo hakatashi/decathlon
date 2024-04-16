@@ -22,7 +22,7 @@
     "sass": "^1.75.0",
     "serve": "^14.2.1",
     "typescript": "^5.4.5",
-    "vite": "^5.2.8"
+    "vite": "^5.2.9"
   },
   "dependencies": {
     "@solid-primitives/resize-observer": "^2.0.25",
