@@ -13,6 +13,7 @@ interface Props {
 	accessory?: JSX.Element,
 	sx?: SxProps,
 	noIcon?: boolean,
+	display?: 'block' | 'inline',
 }
 
 const Username = (providedProps: Props) => {
@@ -20,6 +21,7 @@ const Username = (providedProps: Props) => {
 		size: 'small',
 		direction: 'row' as const,
 		noIcon: false,
+		display: 'block',
 	}, providedProps);
 
 	const app = useFirebaseApp();
@@ -44,13 +46,25 @@ const Username = (providedProps: Props) => {
 	return (
 		<Doc data={userData}>
 			{(user) => (
-				<Stack direction={props.direction} alignItems="center" sx={props.sx}>
-					<div style={{position: 'relative'}}>
+				<Stack
+					direction={props.direction}
+					alignItems="center"
+					sx={{
+						...props.sx,
+						display: props.display === 'inline' ? 'inline-flex' : 'flex',
+						...(props.display === 'inline' ? {verticalAlign: 'middle'} : {}),
+					}}
+				>
+					<div style={{position: 'relative', display: props.display}}>
 						<Show when={!props.noIcon}>
 							<Avatar
 								alt={user.displayName}
 								src={user.photoURL}
-								sx={{width: size(), height: size(), mr: props.direction === 'row' ? 1 : 0}}
+								sx={{
+									width: size(),
+									height: size(),
+									mr: props.direction === 'row' ? 1 : 0,
+								}}
 							/>
 						</Show>
 						<Show when={props.accessory} keyed>

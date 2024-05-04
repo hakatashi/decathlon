@@ -75,8 +75,6 @@ const AthlonEdit = () => {
 			});
 		}
 
-		console.log(scores);
-
 		const gameScoresRef = collection(db, 'games', game.id, 'scores') as CollectionReference<Score>;
 		const batch = writeBatch(db);
 		for (const score of scores) {

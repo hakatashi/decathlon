@@ -7,6 +7,7 @@ interface Props<T extends DocumentData> {
 	data: UseFireStoreReturn<T[] | null | undefined> | null | undefined,
 	// eslint-disable-next-line no-unused-vars
 	children: (item: T, index: () => number) => JSX.Element,
+	empty?: JSX.Element,
 }
 
 const Collection = <T extends DocumentData, >(props: Props<T>) => (
@@ -22,9 +23,16 @@ const Collection = <T extends DocumentData, >(props: Props<T>) => (
 		</Match>
 		<Match when={props.data?.data} keyed>
 			{(docs) => (
-				<For each={docs}>
-					{(doc, index) => props.children(doc, index)}
-				</For>
+				<Switch>
+					<Match when={docs.length === 0 && props.empty !== undefined}>
+						{props.empty}
+					</Match>
+					<Match when>
+						<For each={docs}>
+							{(doc, index) => props.children(doc, index)}
+						</For>
+					</Match>
+				</Switch>
 			)}
 		</Match>
 		<Match when>

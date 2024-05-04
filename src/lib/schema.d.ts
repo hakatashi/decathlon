@@ -264,6 +264,13 @@ export interface PromptEngineeringVote extends DocumentData {
 	choices: string[],
 }
 
+export interface Writeup extends DocumentData {
+	content: string,
+	title: string,
+	createdAt: Timestamp,
+	updatedAt: Timestamp,
+}
+
 export interface GameRule extends DocumentData {
 	name: string,
 	icon: string,
