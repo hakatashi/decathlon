@@ -51,6 +51,10 @@ service cloud.firestore {
           && score.user is string;
       }
 
+      function isGameEnded() {
+        return 'endAt' in gameData() && gameData().endAt != null && gameData().endAt <= request.time;
+      }
+
       match /scores/{userId} {
         allow read;
         allow write: if request.auth != null
@@ -140,11 +144,11 @@ service cloud.firestore {
       match /submissions/{submissionId} {
         allow read: if (
           (request.auth != null && resource.data.userId == request.auth.uid) ||
-          ('endAt' in gameData() && gameData().endAt != null && gameData().endAt <= request.time)
+          isGameEnded()
         );
         allow create: if (
           (request.auth != null && request.resource.data.userId == request.auth.uid) &&
-          (!('endAt' in gameData()) || gameData().endAt == null || gameData().endAt >= request.time) &&
+          !isGameEnded() &&
           (
             (
               gameData().rule == /databases/$(database)/documents/gameRules/reversing-diff &&
@@ -186,6 +190,35 @@ service cloud.firestore {
 
       match /votes/{resultId} {
         allow read: if request.auth != null;
+      }
+
+      match /writeups/{userId} {
+        allow read: if isGameEnded();
+        allow create: if request.auth != null
+                      && request.auth.uid == userId
+                      && isGameEnded()
+                      && request.resource.data.keys()
+                         .hasOnly(['content', 'title', 'createdAt', 'updatedAt'])
+                      && request.resource.data.content is string
+                      && request.resource.data.content.size() > 0
+                      && request.resource.data.title is string
+                      && request.resource.data.title.size() > 0
+                      && request.resource.data.createdAt == request.time
+                      && request.resource.data.updatedAt == request.time;
+        allow update: if request.auth != null
+                      && request.auth.uid == userId
+                      && isGameEnded()
+                      && request.resource.data.diff(resource.data)
+                         .affectedKeys()
+                         .hasOnly(['content', 'title', 'updatedAt'])
+                      && request.resource.data.content is string
+                      && request.resource.data.content.size() > 0
+                      && request.resource.data.title is string
+                      && request.resource.data.title.size() > 0
+                      && request.resource.data.updatedAt == request.time;
+        allow delete: if request.auth != null
+                      && request.auth.uid == userId
+                      && isGameEnded();
       }
     }
 

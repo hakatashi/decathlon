@@ -199,13 +199,21 @@ const AthlonGame = () => {
 
 	const isUserResettable = createMemo(() => gameData.data?.[0]?.isUserResettable === true);
 
-	const tippyProps = createMemo(() => ({
+	const scoreRecordTippyProps = createMemo(() => ({
 		disabled: scoreRecordErrorMessage() === null,
 		hidden: true,
 		props: {
 			content: scoreRecordErrorMessage(),
 		},
 	}));
+
+	const isGameEnded = createMemo(() => {
+		if (gameData.data?.[0]?.endAt) {
+			return dayjs().isAfter(dayjs(gameData.data[0].endAt.toDate()));
+		}
+
+		return false;
+	});
 
 	// XXX: https://www.solidjs.com/guides/typescript#use___
 	false && tippy;
@@ -301,7 +309,7 @@ const AthlonGame = () => {
 													</For>
 												)}
 											</Collection>
-											<div use:tippy={tippyProps()}>
+											<div use:tippy={scoreRecordTippyProps()}>
 												<Button
 													size="large"
 													variant="contained"
@@ -322,6 +330,27 @@ const AthlonGame = () => {
 													進捗をリセットする
 												</Button>
 											)}
+											<div
+												use:tippy={{
+													disabled: isGameEnded(),
+													hidden: true,
+													props: {
+														content: '競技終了後のみ閲覧できます',
+													},
+												}}
+											>
+												<A href="./writeups">
+													<Button
+														size="large"
+														variant="contained"
+														color="info"
+														disabled={!isGameEnded()}
+														onClick={() => setScoreRecordDialogOpen(true)}
+													>
+														解説を見る
+													</Button>
+												</A>
+											</div>
 										</Stack>
 										<Typography
 											variant="body2"
