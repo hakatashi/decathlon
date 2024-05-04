@@ -5,6 +5,7 @@ import {getAuth} from 'firebase/auth';
 import {CollectionReference, DocumentReference, collection, deleteDoc, doc, getFirestore, query, serverTimestamp, setDoc, updateDoc, where} from 'firebase/firestore';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal} from 'solid-js';
+import {SolidMarkdown} from 'solid-markdown';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import Username from '~/components/Username';
@@ -22,7 +23,7 @@ const AthlonWriteup = (props: WriteupProps) => {
 	let ref: HTMLDivElement;
 
 	createEffect(async () => {
-		ref.textContent = props.content;
+		console.log(`Writeup content was updated: ${props.content}`);
 
 		// @ts-expect-error: URL import
 		// eslint-disable-next-line import/no-unresolved
@@ -41,7 +42,13 @@ const AthlonWriteup = (props: WriteupProps) => {
 				{props.title} by <Username userId={props.id} display="inline" size={64}/>
 			</Typography>
 			<div ref={ref}>
-				{props.content}
+				<SolidMarkdown
+					class="markdown"
+					// eslint-disable-next-line react/no-children-prop
+					children={props.content}
+					// remarkPlugins={[remarkGfm]}
+					linkTarget="_blank"
+				/>
 			</div>
 		</div>
 	);
