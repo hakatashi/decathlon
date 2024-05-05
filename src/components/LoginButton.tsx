@@ -33,6 +33,8 @@ const LoginButton = () => {
 				} else {
 					setLoginErrorMessage(`ログインに失敗しました: ${error.message}`);
 				}
+			} else {
+				setLoginErrorMessage(`ログインに失敗しました: ${error}`);
 			}
 		}
 	};
