@@ -1,3 +1,4 @@
+import type {User as SlackUser} from '@slack/web-api/dist/types/response/UsersInfoResponse';
 import type {DocumentData, DocumentReference, FirestoreError, Timestamp} from 'firebase/firestore';
 
 export interface User {
@@ -5,6 +6,9 @@ export interface User {
 	photoURL: string,
 	slug: string,
 	slackId: string,
+}
+
+export interface SlackUserInfo extends SlackUser {
 }
 
 export interface RankingEntry {
