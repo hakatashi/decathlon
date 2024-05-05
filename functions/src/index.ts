@@ -1,13 +1,57 @@
 import assert from 'assert';
+import {WebClient} from '@slack/web-api';
 import {DocumentReference} from 'firebase-admin/firestore';
 import type {CollectionReference, CollectionGroup} from 'firebase-admin/firestore';
-import {auth, firestore, https} from 'firebase-functions';
+import {auth, config as getConfig, firestore, https, logger} from 'firebase-functions';
+import type {AuthUserRecord} from 'firebase-functions/lib/common/providers/identity';
+import {HttpsError} from 'firebase-functions/v1/auth';
 import mdiff from 'mdiff';
-import type {Athlon, Game, PromptEngineeringVote, Score, TypingJapaneseSubmission} from '~/lib/schema';
+import type {Athlon, Game, PromptEngineeringVote, Score, TypingJapaneseSubmission, SlackUserInfo} from '~/lib/schema';
 import {db} from './firebase';
 import {calculateRanking, updatePromptEngineeringScores} from './scores';
 
 export * from './esolang';
+
+const config = getConfig();
+
+const slack = new WebClient(config.slack.token);
+
+const checkSlackTeamEligibility = async (user: AuthUserRecord) => {
+	logger.info('Checking Slack team eligibility');
+	logger.info(user, {structuredData: true});
+
+	const slackUserInfosRef = db.collection('slackUserInfo') as CollectionReference<SlackUserInfo>;
+
+	let isUserFound = false;
+
+	for (const providerData of user.providerData) {
+		if (providerData.providerId === 'oidc.slack') {
+			const slackId = providerData.uid;
+			try {
+				const response = await slack.users.info({user: slackId});
+				if (response.user) {
+					await slackUserInfosRef.doc(user.uid).set(response.user);
+					isUserFound = true;
+					break;
+				}
+			} catch (error) {
+				logger.error(error, {structuredData: true});
+			}
+		}
+	}
+
+	if (!isUserFound) {
+		throw new HttpsError('permission-denied', 'The user is not found in valid Slack team.');
+	}
+};
+
+export const beforeUserCreatedBlockingFunction = auth.user().beforeCreate(async (user) => {
+	await checkSlackTeamEligibility(user);
+});
+
+export const beforeUserSignInBlockingFunction = auth.user().beforeSignIn(async (user) => {
+	await checkSlackTeamEligibility(user);
+});
 
 // eslint-disable-next-line import/prefer-default-export
 export const onUserCreated = auth.user().onCreate(async (user) => {
