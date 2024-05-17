@@ -25,7 +25,7 @@
   "devDependencies": {
     "@hakatashi/eslint-config": "^1.20.0",
     "@types/common-tags": "^1.8.4",
-    "@types/lodash": "^4.17.3",
+    "@types/lodash": "^4.17.4",
     "common-tags": "^1.8.2",
     "eslint": "^8.57.0",
     "firebase-functions-test": "^3.2.0",
