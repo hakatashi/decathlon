@@ -43,7 +43,7 @@
     "solid-markdown": "^2.0.3",
     "solid-tippy": "^0.2.1",
     "tippy.js": "^6.3.7",
-    "undici": "^6.16.1",
+    "undici": "^6.17.0",
     "vinxi": "^0.3.11"
   },
   "engines": {
