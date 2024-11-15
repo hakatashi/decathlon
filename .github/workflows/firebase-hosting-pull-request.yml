@@ -1,8 +1,39 @@
 name: Deploy to Firebase Hosting on PR
-'on': pull_request_target
+on:
+  pull_request:
+  pull_request_target:
+
+permissions:
+  checks: write
+  contents: read
+  pull-requests: write
+
 jobs:
+  check_access:
+    runs-on: ubuntu-latest
+    if: >
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (
+        (github.event_name == 'pull_request' && github.actor != 'dependabot[bot]') ||
+        (github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]')
+      )
+    outputs:
+      status: ${{ steps.check.conclusion }}
+    steps:
+      - id: check
+        name: Check if the PR author has access to the Firebase project
+        env:
+          FIREBASE_SERVICE_ACCOUNT_TSG_DECATHLON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TSG_DECATHLON }}
+        continue-on-error: true
+        run: |
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT_TSG_DECATHLON" ]; then
+            echo "The FIREBASE_SERVICE_ACCOUNT_TSG_DECATHLON secret is not set."
+            exit 1
+          fi
+
   build_and_preview:
-    if: github.event.pull_request.head.repo.full_name == github.repository && github.repository == 'hakatashi/decathlon'
+    needs: check_access
+    if: needs.check_access.outputs.status == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
