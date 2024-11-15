@@ -225,9 +225,13 @@ export interface PromptEngineeringConfiguration {
 	promptTemplate: string,
 }
 
-// Todo: Type TypingJapaneseConfiguration
+export interface TypingJapaneseConfiguration {
+	enabled?: boolean,
+	duration?: number,
+	textUrl?: string,
+}
 
-type Configuration = DiffConfiguration | CodegolfConfiguration | QuantumComputingConfiguration | PromptEngineeringConfiguration;
+type Configuration = DiffConfiguration | CodegolfConfiguration | QuantumComputingConfiguration | PromptEngineeringConfiguration | TypingJapaneseConfiguration;
 
 export interface ReversingDiffRanking extends DocumentData {
 	athlon: DocumentReference<Athlon>,
