@@ -8,8 +8,7 @@ export interface User {
 	slackId: string,
 }
 
-export interface SlackUserInfo extends SlackUser {
-}
+export type SlackUserInfo = SlackUser
 
 export interface RankingEntry {
 	userId: string,
@@ -69,7 +68,7 @@ export interface Game extends DocumentData {
 	order: number,
 	description: string,
 	scoreConfiguration: ScoreConfiguration,
-	configuration: {[key: string]: any},
+	configuration: Configuration,
 	tiebreakOrder: 'asc' | 'desc',
 	isScoreUserEditable: boolean,
 	isUserResettable?: boolean,
@@ -226,6 +225,10 @@ export interface PromptEngineeringConfiguration {
 	promptTemplate: string,
 }
 
+// Todo: Type TypingJapaneseConfiguration
+
+type Configuration = DiffConfiguration | CodegolfConfiguration | QuantumComputingConfiguration | PromptEngineeringConfiguration;
+
 export interface ReversingDiffRanking extends DocumentData {
 	athlon: DocumentReference<Athlon>,
 	userId: string,
@@ -247,6 +250,7 @@ export interface CodegolfRanking extends DocumentData {
 }
 
 export interface PromptEngineeringResult extends DocumentData {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	openaiResponse: any,
 	output: string,
 	parsedOutput: {

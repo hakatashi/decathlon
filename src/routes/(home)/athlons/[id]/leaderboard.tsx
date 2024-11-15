@@ -1,4 +1,3 @@
-/* eslint-disable array-plural/array-plural */
 import {A, useParams} from '@solidjs/router';
 import {ElectricBolt, Star} from '@suid/icons-material';
 import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Stack, FormControlLabel, Switch as SwitchControl} from '@suid/material';

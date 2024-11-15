@@ -5,7 +5,6 @@ import {UseFireStoreReturn} from '~/lib/schema';
 
 interface Props<T extends DocumentData> {
 	data: UseFireStoreReturn<T[] | null | undefined> | null | undefined,
-	// eslint-disable-next-line no-unused-vars
 	children: (item: T, index: () => number) => JSX.Element,
 	empty?: JSX.Element,
 }

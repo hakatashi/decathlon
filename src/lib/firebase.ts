@@ -1,7 +1,6 @@
 import {getBytes, StorageReference} from 'firebase/storage';
 import {createStore, reconcile} from 'solid-js/store';
 
-// eslint-disable-next-line import/prefer-default-export
 export const useStorageBytes = (storageRef: StorageReference) => {
 	const [state, setState] = createStore<{
 		loading: boolean

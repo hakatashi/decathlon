@@ -1,5 +1,3 @@
-/* eslint-disable react/require-default-props */
-
 import {Skeleton} from '@suid/material';
 import type {DocumentData} from 'firebase/firestore';
 import {JSX, Match, Show, Switch} from 'solid-js';
@@ -8,7 +6,6 @@ import {UseFireStoreReturn} from '~/lib/schema';
 interface Props<T extends DocumentData> {
 	data: UseFireStoreReturn<T | null | undefined> | null | undefined,
 	fallback?: JSX.Element,
-	// eslint-disable-next-line no-unused-vars
 	children: (item: T) => JSX.Element,
 }
 

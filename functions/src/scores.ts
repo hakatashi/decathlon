@@ -1,4 +1,3 @@
-/* eslint-disable array-plural/array-plural */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 
@@ -8,7 +7,7 @@ import type {Game, PromptEngineeringResult, PromptEngineeringSubmission, PromptE
 import {db} from './firebase';
 import {RankedScore, calculateGameRanking} from './lib/scores';
 
-// eslint-disable-next-line import/prefer-default-export
+
 export const calculateRanking = (gameDocs: QuerySnapshot<Game>, scoreDocs: QuerySnapshot<Score>) => {
 	const usersSet = new Set<string>();
 	const scoresMap = new Map<string, Score[]>();

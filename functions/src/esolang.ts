@@ -1,4 +1,4 @@
-import assert, {AssertionError} from 'assert';
+import assert, {AssertionError} from 'node:assert';
 import axios from 'axios';
 import {CollectionReference, DocumentReference, Timestamp} from 'firebase-admin/firestore';
 import {getFunctions} from 'firebase-admin/functions';
@@ -73,7 +73,6 @@ export const executeDiffSubmission =
 
 			const {duration, stderr, stdout, error: errorMessage} = result.data;
 
-			// eslint-disable-next-line no-undef-init
 			let error = null;
 			if (typeof duration !== 'number') {
 				error = 'duration is not a number';
@@ -266,7 +265,7 @@ export const executeCodegolfSubmission =
 					error = JSON.stringify(result.data) || 'unknown error';
 				}
 
-				let status: TestcaseStatus | null = null;
+				let status: TestcaseStatus | null;
 				if (error) {
 					status = 'error';
 				} else if (isTestcaseCorrect(stdout, testcase.output, config.judgeType)) {
@@ -289,7 +288,7 @@ export const executeCodegolfSubmission =
 				}
 			}
 
-			let totalStatus: TestcaseStatus | null = null;
+			let totalStatus: TestcaseStatus | null;
 			if (testcaseResults.some(({status}) => status === 'error')) {
 				totalStatus = 'error';
 			} else if (testcaseResults.some(({status}) => status === 'failed')) {
@@ -497,7 +496,6 @@ export const executeQuantumComputingSubmission =
 
 			const {duration, stderr, stdout, error: errorMessage} = result.data;
 
-			// eslint-disable-next-line no-undef-init
 			let error = null;
 			if (typeof duration !== 'number') {
 				error = 'duration is not a number';

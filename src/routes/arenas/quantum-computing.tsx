@@ -1,5 +1,3 @@
-/* eslint-disable array-plural/array-plural */
-
 import {Link} from '@solidjs/meta';
 import {useSearchParams} from '@solidjs/router';
 import {Alert, Box, Button, ButtonGroup, CircularProgress, Container, Link as LinkUi, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from '@suid/material';
@@ -40,7 +38,6 @@ const MainTab = (props: MainTabProps) => {
 	const [lastSubmissionTime, setLastSubmissionTime] = createSignal<number | null>(null);
 	const [throttleTime, setThrottleTime] = createSignal<number>(0);
 
-	// eslint-disable-next-line init-declarations
 	let descriptionEl: HTMLElement;
 
 	createEffect(async () => {
@@ -134,7 +131,6 @@ const MainTab = (props: MainTabProps) => {
 						<Typography variant="body1" ref={descriptionEl}>
 							<SolidMarkdown
 								class="markdown"
-								// eslint-disable-next-line react/no-children-prop
 								children={config.description}
 								// remarkPlugins={[remarkGfm]}
 								linkTarget="_blank"
@@ -293,7 +289,7 @@ const SubmissionsTab = (props: SubmissionsTabProps) => {
 							</Show>
 						</div>
 					);
-				 }}
+				}}
 			</Match>
 			<Match when>
 				<TableContainer component={Paper}>
