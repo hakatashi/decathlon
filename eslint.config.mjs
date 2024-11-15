@@ -1,8 +1,8 @@
-import hakatashiEslintConfig from '../eslint-config/typescript.js';
+import hakatashiEslintConfig from '@hakatashi/eslint-config/typescript.js';
 
 export default [
 	{
-		ignores: ['.vinxi/', '.output/', 'dist/', '.solid/', 'test-results/', 'playwright-report/'],
+		ignores: ['.vinxi/', '.output/', 'dist/', '.solid/', 'test-results/', 'playwright-report/', 'functions/'],
 	},
 	...hakatashiEslintConfig,
 	{

@@ -1,4 +1,4 @@
-import hakatashiEslintConfig from '../../eslint-config/typescript.js';
+import hakatashiEslintConfig from '@hakatashi/eslint-config/typescript.js';
 
 export default [
 	{
@@ -17,7 +17,6 @@ export default [
 		},
 		rules: {
 			'import/no-unresolved': 'off',
-			'@typescript-eslint/no-non-null-assertion': 'warn',
 		},
 	},
 ];
