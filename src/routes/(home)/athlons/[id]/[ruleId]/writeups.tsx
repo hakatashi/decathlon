@@ -19,7 +19,7 @@ interface WriteupProps {
 }
 
 const AthlonWriteup = (props: WriteupProps) => {
-	let ref: HTMLDivElement | undefined;
+	let ref!: HTMLDivElement;
 
 	createEffect(async () => {
 		console.log(`Writeup content was updated: ${props.content}`);
