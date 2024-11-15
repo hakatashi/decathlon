@@ -50,7 +50,7 @@ const SubmissionTab = (props: SubmissionTabProps) => {
 
 		let promptData = prompt();
 		if (promptData === null) {
-			promptData = gameData.data.configuration.promptTemplate;
+			promptData = (gameData.data.configuration as PromptEngineeringConfiguration).promptTemplate;
 			if (promptData === null) {
 				return;
 			}
@@ -605,7 +605,7 @@ const PromptEngineering = () => {
 							<Match when={searchParams.tab === 'vote'}>
 								<VoteTab
 									results={resultDocs}
-									voteRegulation={gameData.data?.configuration?.voteRegulation ?? undefined}
+									voteRegulation={(gameData.data?.configuration as PromptEngineeringConfiguration)?.voteRegulation ?? undefined}
 									phase={phase()}
 									isVoted={isVoted()}
 								/>

@@ -64,7 +64,7 @@ const MainTab = (props: MainTabProps) => {
 
 		let codeData = code();
 		if (codeData === null) {
-			const language = gameData.data.configuration.language;
+			const language = (gameData.data.configuration as DiffConfiguration).language;
 			if (language === 'cpp') {
 				codeData = DEFAULT_CPP_CODE;
 			} else if (language === 'python') {
@@ -474,7 +474,7 @@ const ReversingDiff = () => {
 
 		setPhase('waiting');
 
-		if (gameData.data.configuration.enabled) {
+		if ((gameData.data.configuration as DiffConfiguration).enabled) {
 			setPhase('playing');
 
 			if (gameData.data.endAt && gameData.data.endAt.toDate() <= new Date()) {

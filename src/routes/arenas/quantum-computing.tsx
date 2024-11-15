@@ -60,7 +60,7 @@ const MainTab = (props: MainTabProps) => {
 
 		let codeData = code();
 		if (codeData === null) {
-			codeData = gameData.data.configuration.submissionTemplate;
+			codeData = (gameData.data.configuration as QuantumComputingConfiguration).submissionTemplate;
 			if (codeData === null) {
 				return;
 			}
@@ -408,7 +408,7 @@ const QuantumComputing = () => {
 
 		setPhase('waiting');
 
-		if (gameData.data.configuration.enabled) {
+		if ((gameData.data.configuration as QuantumComputingConfiguration).enabled) {
 			setPhase('playing');
 
 			if (gameData.data.endAt && gameData.data.endAt.toDate() <= new Date()) {
