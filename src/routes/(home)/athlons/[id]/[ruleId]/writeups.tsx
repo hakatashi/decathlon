@@ -19,8 +19,7 @@ interface WriteupProps {
 }
 
 const AthlonWriteup = (props: WriteupProps) => {
-	// eslint-disable-next-line init-declarations
-	let ref: HTMLDivElement;
+	let ref!: HTMLDivElement;
 
 	createEffect(async () => {
 		console.log(`Writeup content was updated: ${props.content}`);
@@ -44,7 +43,6 @@ const AthlonWriteup = (props: WriteupProps) => {
 			<div ref={ref}>
 				<SolidMarkdown
 					class="markdown"
-					// eslint-disable-next-line react/no-children-prop
 					children={props.content}
 					// remarkPlugins={[remarkGfm]}
 					linkTarget="_blank"
@@ -190,7 +188,7 @@ const AthlonWriteups = () => {
 							>
 								{(writeup) => (
 									<AthlonWriteup title={writeup.title} content={writeup.content} id={writeup.id}/>
-								 )}
+								)}
 							</Collection>
 							<Typography variant="h4" component="h2" sx={{mt: 6}}>
 								解説を投稿する

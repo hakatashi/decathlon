@@ -65,7 +65,7 @@ const Header = () => {
 						<p>Loading...</p>
 					</Match>
 					<Match when={authState.data} keyed>
-						{(user) => (
+						{(_user) => (
 							<>
 								<IconButton sx={{p: 0}} onClick={(event) => setAnchorEl(event.currentTarget)}>
 									<Doc data={userData()}>

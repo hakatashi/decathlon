@@ -1,5 +1,3 @@
-/* eslint-disable array-plural/array-plural */
-
 import {A, useSearchParams} from '@solidjs/router';
 import {Alert, Box, Button, ButtonGroup, CircularProgress, Container, Link as LinkUi, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from '@suid/material';
 import {blue} from '@suid/material/colors';
@@ -66,7 +64,7 @@ const MainTab = (props: MainTabProps) => {
 
 		let codeData = code();
 		if (codeData === null) {
-			const language = gameData.data.configuration.language;
+			const language = (gameData.data.configuration as DiffConfiguration).language;
 			if (language === 'cpp') {
 				codeData = DEFAULT_CPP_CODE;
 			} else if (language === 'python') {
@@ -161,7 +159,6 @@ const MainTab = (props: MainTabProps) => {
 						<Typography variant="body1">
 							<SolidMarkdown
 								class="markdown"
-								// eslint-disable-next-line react/no-children-prop
 								children={config.rule}
 								// remarkPlugins={[remarkGfm]}
 								linkTarget="_blank"
@@ -322,7 +319,7 @@ const SubmissionsTab = (props: SubmissionsTabProps) => {
 							</Show>
 						</div>
 					);
-				 }}
+				}}
 			</Match>
 			<Match when>
 				<TableContainer component={Paper}>
@@ -404,7 +401,7 @@ const RankingTab = () => {
 									</TableCell>
 								</TableRow>
 							);
-						 }}
+						}}
 					</Collection>
 				</TableBody>
 			</Table>
@@ -477,7 +474,7 @@ const ReversingDiff = () => {
 
 		setPhase('waiting');
 
-		if (gameData.data.configuration.enabled) {
+		if ((gameData.data.configuration as DiffConfiguration).enabled) {
 			setPhase('playing');
 
 			if (gameData.data.endAt && gameData.data.endAt.toDate() <= new Date()) {

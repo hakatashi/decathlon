@@ -1,4 +1,3 @@
-/* eslint-disable array-plural/array-plural */
 import {A, useParams} from '@solidjs/router';
 import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Stack, Chip} from '@suid/material';
 import {blue} from '@suid/material/colors';
@@ -148,7 +147,7 @@ const Leaderboard = () => {
 																		</TableCell>
 																	</TableRow>
 																);
-														 }}
+															}}
 														</For>
 													);
 												}}

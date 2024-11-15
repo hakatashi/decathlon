@@ -1,5 +1,3 @@
-/* eslint-disable array-plural/array-plural */
-
 import {useSearchParams} from '@solidjs/router';
 import {Check} from '@suid/icons-material';
 import {Switch as SwitchUi, Alert, Box, Button, ButtonGroup, Container, Stack, Link as LinkUi, TextField, Typography, CardContent, Card, Grid, Badge, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Paper} from '@suid/material';
@@ -52,7 +50,7 @@ const SubmissionTab = (props: SubmissionTabProps) => {
 
 		let promptData = prompt();
 		if (promptData === null) {
-			promptData = gameData.data.configuration.promptTemplate;
+			promptData = (gameData.data.configuration as PromptEngineeringConfiguration).promptTemplate;
 			if (promptData === null) {
 				return;
 			}
@@ -107,7 +105,6 @@ const SubmissionTab = (props: SubmissionTabProps) => {
 						<Typography variant="body1">
 							<SolidMarkdown
 								class="markdown"
-								// eslint-disable-next-line react/no-children-prop
 								children={config.briefRegulation}
 								// remarkPlugins={[remarkGfm]}
 								linkTarget="_blank"
@@ -123,7 +120,6 @@ const SubmissionTab = (props: SubmissionTabProps) => {
 							<Typography variant="body1">
 								<SolidMarkdown
 									class="markdown"
-									// eslint-disable-next-line react/no-children-prop
 									children={config.regulation}
 									// remarkPlugins={[remarkGfm]}
 									linkTarget="_blank"
@@ -258,7 +254,6 @@ const VoteTab = (props: VoteTabProps) => {
 						以下の俳句を、好きなものから順番に3つクリックして選び、投票してください。
 						<SolidMarkdown
 							class="markdown"
-							// eslint-disable-next-line react/no-children-prop
 							children={props.voteRegulation}
 							// remarkPlugins={[remarkGfm]}
 							linkTarget="_blank"
@@ -429,7 +424,7 @@ const ResultsTab = (props: ResultsTabProps) => {
 							<p>{submission()?.voteScore?.toFixed?.(2) ?? '-'} / 50.00</p>
 						</div>
 					);
-				 }}
+				}}
 			</Match>
 			<Match when>
 				<TableContainer component={Paper}>
@@ -610,7 +605,7 @@ const PromptEngineering = () => {
 							<Match when={searchParams.tab === 'vote'}>
 								<VoteTab
 									results={resultDocs}
-									voteRegulation={gameData.data?.configuration?.voteRegulation ?? undefined}
+									voteRegulation={(gameData.data?.configuration as PromptEngineeringConfiguration)?.voteRegulation ?? undefined}
 									phase={phase()}
 									isVoted={isVoted()}
 								/>

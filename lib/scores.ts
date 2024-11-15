@@ -53,7 +53,6 @@ export const calculateGameRanking = (game: Game, scores: Score[]) => {
 	let previousRawScore: number | null = null;
 	let previousTiebreakScore: number | null = null;
 	let previousRank = 0;
-	// eslint-disable-next-line array-plural/array-plural
 	const rankedScoresWithoutAdmin = sortedScores
 		.filter((score) => !game.authors.includes(score.user))
 		.map((score, index) => {

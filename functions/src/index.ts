@@ -1,4 +1,4 @@
-import assert from 'assert';
+import assert from 'node:assert';
 import {WebClient} from '@slack/web-api';
 import {DocumentReference} from 'firebase-admin/firestore';
 import type {CollectionReference, CollectionGroup} from 'firebase-admin/firestore';
@@ -53,7 +53,7 @@ export const beforeUserSignInBlockingFunction = auth.user().beforeSignIn(async (
 	await checkSlackTeamEligibility(user);
 });
 
-// eslint-disable-next-line import/prefer-default-export
+
 export const onUserCreated = auth.user().onCreate(async (user) => {
 	await db.runTransaction(async (transaction) => {
 		const userRef = db.collection('users').doc(user.uid);
@@ -158,7 +158,8 @@ export const submitTypingJapaneseScore = https.onCall(async (data, context) => {
 	assert(gameData.rule && gameData.rule.path === 'gameRules/typing-japanese');
 
 	const correctText = normalizeTypingJapaneseText(
-		gameData.configuration.correctText,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		(gameData.configuration as any).correctText,
 	);
 	assert(typeof correctText === 'string');
 

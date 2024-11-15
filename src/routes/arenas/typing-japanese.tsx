@@ -12,7 +12,7 @@ import {headerText, setArenaTitle, setHeaderText, useUser} from '../arenas';
 import styles from './typing-japanese.module.css';
 import Doc from '~/components/Doc';
 import PageNotFoundError from '~/lib/PageNotFoundError';
-import {Game, TypingJapaneseSubmission, UseFireStoreReturn} from '~/lib/schema';
+import {Game, TypingJapaneseConfiguration, TypingJapaneseSubmission, UseFireStoreReturn} from '~/lib/schema';
 
 interface onGameFinishedDialogProps {
 	text: string,
@@ -95,12 +95,6 @@ const OnGameFinishedDialog = (props: onGameFinishedDialogProps) => {
 	);
 };
 
-interface Config {
-	enabled?: boolean,
-	duration?: number,
-	textUrl?: string,
-}
-
 const TypingJapanese = () => {
 	const [searchParams] = useSearchParams();
 	if (typeof searchParams.gameId !== 'string') {
@@ -124,7 +118,7 @@ const TypingJapanese = () => {
 
 	const [text, setText] = createSignal<string>('');
 	const [phase, setPhase] = createSignal<'loading' | 'waiting' | 'playing' | 'finished'>('loading');
-	const [config, setConfig] = createSignal<Config>({});
+	const [config, setConfig] = createSignal<TypingJapaneseConfiguration>({});
 	const [textareaEl, setTextareaEl] = createSignal<HTMLTextAreaElement | null>(null);
 
 	setArenaTitle('タイピング (日本語)');
@@ -159,7 +153,7 @@ const TypingJapanese = () => {
 
 			const currentTime = Date.now();
 
-			const savedConfig: Config = gameData.data.configuration;
+			const savedConfig = gameData.data.configuration as TypingJapaneseConfiguration;
 			setConfig(savedConfig);
 
 			setPhase('waiting');

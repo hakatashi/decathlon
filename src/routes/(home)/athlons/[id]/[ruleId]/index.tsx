@@ -32,6 +32,7 @@ interface Props {
 }
 
 declare module 'solid-js' {
+	// eslint-disable-next-line @typescript-eslint/no-namespace
 	namespace JSX {
 		interface Directives {
 			tippy: {
@@ -216,6 +217,7 @@ const AthlonGame = () => {
 	});
 
 	// XXX: https://www.solidjs.com/guides/typescript#use___
+	// eslint-disable-next-line @typescript-eslint/no-unused-expressions, no-constant-binary-expression
 	false && tippy;
 
 	return (

@@ -6,18 +6,18 @@
     "start": "vinxi start",
     "serve": "npm run build && serve .output/public",
     "test": "playwright test",
-    "lint": "eslint --ignore-path .gitignore . --fix",
+    "lint": "eslint . --fix",
     "install": "cd functions && npm install"
   },
   "type": "module",
   "devDependencies": {
-    "@hakatashi/eslint-config": "^1.20.0",
-    "@playwright/test": "^1.44.1",
+    "@hakatashi/eslint-config": "^2.1.1",
+    "@playwright/test": "^1.47.2",
     "@suid/vite-plugin": "^0.2.0",
     "@types/common-tags": "^1.8.4",
     "@types/lodash": "^4.17.5",
     "@types/node": "^20.14.7",
-    "eslint": "^9.5.0",
+    "eslint": "^9.14.0",
     "postcss": "^8.4.38",
     "sass": "^1.77.6",
     "serve": "^14.2.3",
@@ -25,6 +25,7 @@
     "vite": "^5.3.1"
   },
   "dependencies": {
+    "@firebase/util": "^1.10.2",
     "@solid-primitives/resize-observer": "^2.0.25",
     "@solidjs/meta": "^0.29.4",
     "@solidjs/router": "^0.13.6",

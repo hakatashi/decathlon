@@ -1,5 +1,3 @@
-/* eslint-disable array-plural/array-plural */
-
 import {Link} from '@solidjs/meta';
 import {useSearchParams} from '@solidjs/router';
 import {Alert, Box, Button, ButtonGroup, Card, CardContent, CircularProgress, Container, FormControl, Grid, InputLabel, Link as LinkUi, MenuItem, Paper, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from '@suid/material';
@@ -34,7 +32,7 @@ const DEFAULT_CODES = {
 	python3: stripIndent`
 		print('Hello, World!')
 	`,
-} as {[language: string]: string};
+} as Record<string, string>;
 
 interface MainTabProps {
 	submissions: UseFireStoreReturn<CodegolfSubmission[] | null | undefined> | null,
@@ -63,7 +61,6 @@ const MainTab = (props: MainTabProps) => {
 	const [selectedAnyLanguage, setSelectedAnyLanguage] = createSignal<string | null>(null);
 	const [languageInfos, setLanguageInfos] = createSignal<{shortestSize: number | null}[]>([]);
 
-	// eslint-disable-next-line init-declarations
 	let descriptionEl: HTMLElement;
 
 	const executionLanguage = createMemo(() => {
@@ -183,7 +180,6 @@ const MainTab = (props: MainTabProps) => {
 						<Typography variant="body1" ref={descriptionEl}>
 							<SolidMarkdown
 								class="markdown"
-								// eslint-disable-next-line react/no-children-prop
 								children={config.description}
 								// remarkPlugins={[remarkGfm]}
 								linkTarget="_blank"
@@ -407,7 +403,7 @@ const SubmissionsTab = (props: SubmissionsTabProps) => {
 							</For>
 						</div>
 					);
-				 }}
+				}}
 			</Match>
 			<Match when>
 				<TableContainer component={Paper}>
@@ -506,7 +502,7 @@ const RankingTab = () => {
 									<TableCell align="right"><strong>{floor(ranking.score, 2).toFixed(2)}</strong></TableCell>
 								</TableRow>
 							);
-						 }}
+						}}
 					</Collection>
 				</TableBody>
 			</Table>
@@ -579,7 +575,7 @@ const Codegolf = () => {
 
 		setPhase('waiting');
 
-		if (gameData.data.configuration.enabled) {
+		if ((gameData.data.configuration as CodegolfConfiguration).enabled) {
 			setPhase('playing');
 
 			if (gameData.data.endAt && gameData.data.endAt.toDate() <= new Date()) {
