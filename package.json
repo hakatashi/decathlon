@@ -30,7 +30,7 @@
     "@solidjs/meta": "^0.29.4",
     "@solidjs/router": "^0.13.6",
     "@solidjs/start": "^1.0.2",
-    "@suid/base": "^0.9.0",
+    "@suid/base": "^0.10.1",
     "@suid/icons-material": "^0.7.0",
     "@suid/material": "^0.16.0",
     "common-tags": "^1.8.2",
