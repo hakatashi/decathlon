@@ -34,7 +34,7 @@
     "@suid/icons-material": "^0.7.0",
     "@suid/material": "^0.16.0",
     "common-tags": "^1.8.2",
-    "dayjs": "^1.11.11",
+    "dayjs": "^1.11.13",
     "firebase": "^11.0.2",
     "lodash": "^4.17.21",
     "nanoid": "^5.0.7",
