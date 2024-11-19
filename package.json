@@ -45,7 +45,7 @@
     "solid-tippy": "^0.2.1",
     "tippy.js": "^6.3.7",
     "undici": "^6.21.0",
-    "vinxi": "^0.3.12"
+    "vinxi": "^0.4.3"
   },
   "engines": {
     "node": ">=18"
