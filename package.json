@@ -29,7 +29,7 @@
     "@solid-primitives/resize-observer": "^2.0.26",
     "@solidjs/meta": "^0.29.4",
     "@solidjs/router": "^0.15.1",
-    "@solidjs/start": "^1.0.2",
+    "@solidjs/start": "^1.0.10",
     "@suid/base": "^0.10.1",
     "@suid/icons-material": "^0.7.0",
     "@suid/material": "^0.16.0",
