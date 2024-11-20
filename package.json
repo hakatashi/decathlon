@@ -32,7 +32,7 @@
     "@solidjs/start": "^1.0.10",
     "@suid/base": "^0.10.1",
     "@suid/icons-material": "^0.7.0",
-    "@suid/material": "^0.16.0",
+    "@suid/material": "^0.18.0",
     "common-tags": "^1.8.2",
     "dayjs": "^1.11.13",
     "firebase": "^11.0.2",
