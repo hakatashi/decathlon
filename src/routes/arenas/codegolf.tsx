@@ -61,7 +61,7 @@ const MainTab = (props: MainTabProps) => {
 	const [selectedAnyLanguage, setSelectedAnyLanguage] = createSignal<string | null>(null);
 	const [languageInfos, setLanguageInfos] = createSignal<{shortestSize: number | null}[]>([]);
 
-	let descriptionEl: HTMLElement | undefined;
+	let descriptionEl!: HTMLElement;
 
 	const executionLanguage = createMemo(() => {
 		if (selectedLanguage() !== 'anything') {
@@ -71,10 +71,6 @@ const MainTab = (props: MainTabProps) => {
 	});
 
 	createEffect(async () => {
-		if (!descriptionEl) {
-			return;
-		}
-
 		// @ts-expect-error: URL import
 		// eslint-disable-next-line import/no-unresolved
 		const {default: renderMathInElement} = await import('https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.mjs');
@@ -181,7 +177,7 @@ const MainTab = (props: MainTabProps) => {
 				return (
 					<>
 						<Link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css"/>
-						<Typography variant="body1" ref={descriptionEl!}>
+						<Typography variant="body1" ref={descriptionEl}>
 							<SolidMarkdown
 								class="markdown"
 								children={config.description}
