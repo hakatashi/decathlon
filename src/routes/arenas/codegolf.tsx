@@ -42,7 +42,7 @@ interface MainTabProps {
 const MainTab = (props: MainTabProps) => {
 	const [searchParams, setSearchParams] = useSearchParams();
 
-	const gameId = searchParams.gameId;
+	const gameId = Array.isArray(searchParams.gameId) ? searchParams.gameId[0] : searchParams.gameId;
 
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
@@ -61,7 +61,7 @@ const MainTab = (props: MainTabProps) => {
 	const [selectedAnyLanguage, setSelectedAnyLanguage] = createSignal<string | null>(null);
 	const [languageInfos, setLanguageInfos] = createSignal<{shortestSize: number | null}[]>([]);
 
-	let descriptionEl: HTMLElement;
+	let descriptionEl: HTMLElement | undefined;
 
 	const executionLanguage = createMemo(() => {
 		if (selectedLanguage() !== 'anything') {
@@ -71,6 +71,10 @@ const MainTab = (props: MainTabProps) => {
 	});
 
 	createEffect(async () => {
+		if (!descriptionEl) {
+			return;
+		}
+
 		// @ts-expect-error: URL import
 		// eslint-disable-next-line import/no-unresolved
 		const {default: renderMathInElement} = await import('https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.mjs');
@@ -177,7 +181,7 @@ const MainTab = (props: MainTabProps) => {
 				return (
 					<>
 						<Link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css"/>
-						<Typography variant="body1" ref={descriptionEl}>
+						<Typography variant="body1" ref={descriptionEl!}>
 							<SolidMarkdown
 								class="markdown"
 								children={config.description}
@@ -448,7 +452,7 @@ const SubmissionsTab = (props: SubmissionsTabProps) => {
 
 const RankingTab = () => {
 	const [searchParams] = useSearchParams();
-	const gameId = searchParams.gameId;
+	const gameId = Array.isArray(searchParams.gameId) ? searchParams.gameId[0] : searchParams.gameId;
 
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
@@ -555,7 +559,8 @@ const Codegolf = () => {
 	});
 
 	createEffect(() => {
-		if (!(['main', 'submissions', 'ranking'] as (string | undefined)[]).includes(searchParams.tab)) {
+		const tab = Array.isArray(searchParams.tab) ? searchParams.tab[0] : searchParams.tab;
+		if (!(['main', 'submissions', 'ranking'] as (string | undefined)[]).includes(tab)) {
 			setSearchParams({tab: 'main'});
 		}
 	});

@@ -36,7 +36,7 @@ interface MainTabProps {
 const MainTab = (props: MainTabProps) => {
 	const [searchParams, setSearchParams] = useSearchParams();
 
-	const gameId = searchParams.gameId;
+	const gameId = Array.isArray(searchParams.gameId) ? searchParams.gameId[0] : searchParams.gameId;
 
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
@@ -454,7 +454,8 @@ const ReversingDiff = () => {
 	});
 
 	createEffect(() => {
-		if (!(['main', 'submissions', 'ranking'] as (string | undefined)[]).includes(searchParams.tab)) {
+		const tab = Array.isArray(searchParams.tab) ? searchParams.tab[0] : searchParams.tab;
+		if (!(['main', 'submissions', 'ranking'] as (string | undefined)[]).includes(tab)) {
 			setSearchParams({tab: 'main'});
 		}
 	});
