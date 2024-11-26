@@ -27,7 +27,7 @@ interface SubmissionTabProps {
 const SubmissionTab = (props: SubmissionTabProps) => {
 	const [searchParams] = useSearchParams();
 
-	const gameId = searchParams.gameId;
+	const gameId = Array.isArray(searchParams.gameId) ? searchParams.gameId[0] : searchParams.gameId;
 
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
@@ -335,7 +335,7 @@ interface ResultsTabProps {
 
 const ResultsTab = (props: ResultsTabProps) => {
 	const [searchParams, setSearchParams] = useSearchParams();
-	const gameId = searchParams.gameId;
+	const gameId = Array.isArray(searchParams.gameId) ? searchParams.gameId[0] : searchParams.gameId;
 
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
@@ -359,7 +359,7 @@ const ResultsTab = (props: ResultsTabProps) => {
 					投票終了までしばらくお待ち下さい。
 				</Typography>
 			</Match>
-			<Match when={searchParams.submissionId} keyed>
+			<Match when={Array.isArray(searchParams.submissionId) ? searchParams.submissionId[0] : searchParams.submissionId} keyed>
 				{(submissionId) => {
 					const submission = createMemo(() => (
 						props.submissions?.data?.find(({id}) => submissionId === id)
@@ -530,7 +530,8 @@ const PromptEngineering = () => {
 	});
 
 	createEffect(() => {
-		if (!(['submission', 'vote', 'results'] as (string | undefined)[]).includes(searchParams.tab)) {
+		const tab = Array.isArray(searchParams.tab) ? searchParams.tab[0] : searchParams.tab;
+		if (!(['submission', 'vote', 'results'] as (string | undefined)[]).includes(tab)) {
 			setSearchParams({tab: 'submission'});
 		}
 	});
