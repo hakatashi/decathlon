@@ -30,7 +30,7 @@
     "eslint": "^9.14.0",
     "firebase-functions-test": "^3.3.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.6.3"
+    "typescript": "^5.7.2"
   },
   "private": true
 }
