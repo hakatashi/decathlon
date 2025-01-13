@@ -16,7 +16,7 @@
     "@suid/vite-plugin": "^0.3.1",
     "@types/common-tags": "^1.8.4",
     "@types/lodash": "^4.17.14",
-    "@types/node": "^22.10.5",
+    "@types/node": "^22.10.6",
     "eslint": "^9.18.0",
     "postcss": "^8.5.0",
     "sass": "^1.83.1",
