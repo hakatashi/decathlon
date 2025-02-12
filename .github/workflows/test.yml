@@ -38,10 +38,16 @@ jobs:
 
       - name: Upload playwright-report to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
-        if: always() && github.event_name == 'pull_request'
+        if: always()
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_TSG_DECATHLON }}'
+          channelId: >-
+            ${{
+              github.event_name == 'push'
+                && (github.ref == 'refs/heads/main' && 'live' || format('branch-{0}', github.ref_name))
+                || null
+            }}
           projectId: tsg-decathlon
           target: playwright
 
@@ -100,3 +106,4 @@ jobs:
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_TSG_DECATHLON }}'
           channelId: live
           projectId: tsg-decathlon
+          target: app
