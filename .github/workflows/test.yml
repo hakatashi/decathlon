@@ -30,10 +30,20 @@ jobs:
         run: npm test
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
+
+      - name: Upload playwright-report to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        if: always() && github.event_name == 'pull_request'
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_TSG_DECATHLON }}'
+          projectId: tsg-decathlon
+          target: playwright
 
       - name: Run Firebase Functions predeploy scripts
         run: npm --prefix functions run lint && npm --prefix functions run build
