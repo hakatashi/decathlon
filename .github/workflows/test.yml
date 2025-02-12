@@ -42,8 +42,12 @@ jobs:
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_TSG_DECATHLON }}'
-          # set channelId to "live" only if this is a push to main branch
-          channelId: ${{ (github.ref == 'refs/heads/main' && github.event_name == 'push') && 'live' || null }}
+          channelId: >-
+            ${{
+              github.event_name == 'push'
+                && (github.ref == 'refs/heads/main' && 'live' || format('branch-{0}', github.ref_name))
+                || null
+            }}
           projectId: tsg-decathlon
           target: playwright
 
