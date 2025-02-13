@@ -90,6 +90,8 @@ jobs:
         run: npm --prefix functions run lint && npm --prefix functions run build
 
   deploy_hosting_preview:
+    name: Deploy Firebase Hosting Preview Channel
+
     needs: [check_access, test]
 
     if: needs.check_access.outputs.status == 'success'
