@@ -39,6 +39,7 @@ jobs:
       - name: Upload playwright-report to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         if: always()
+        continue-on-error: true
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_TSG_DECATHLON }}'
