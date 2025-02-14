@@ -3,15 +3,56 @@ name: Test and Deploy
 on:
   - push
   - pull_request
+  - pull_request_target
 
 jobs:
+  check_access:
+    runs-on: ubuntu-latest
+
+    if: >
+      github.event_name == 'push' ||
+      (
+        github.event.pull_request.head.repo.full_name == github.repository &&
+        (
+          (github.event_name == 'pull_request' && github.actor != 'dependabot[bot]') ||
+          (github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]')
+        )
+      )
+
+    outputs:
+      status: ${{ steps.check.outcome }}
+
+    steps:
+      - id: check
+        name: Check if the PR author has access to the Firebase project
+        env:
+          FIREBASE_SERVICE_ACCOUNT_TSG_DECATHLON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TSG_DECATHLON }}
+        continue-on-error: true
+        run: |
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT_TSG_DECATHLON" ]; then
+            echo "The FIREBASE_SERVICE_ACCOUNT_TSG_DECATHLON secret is not set."
+            exit 1
+          fi
+
   test:
     name: Test
 
     runs-on: ubuntu-latest
 
+    if: >
+      github.event_name == 'push' ||
+      (
+        github.event.pull_request.head.repo.full_name == github.repository &&
+        (
+          (github.event_name == 'pull_request' && github.actor != 'dependabot[bot]') ||
+          (github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]')
+        )
+      )
+
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request_target' && format('refs/remotes/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
 
       - uses: actions/setup-node@v4
         with:
@@ -30,13 +71,72 @@ jobs:
         run: npm test
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
 
+      - name: Upload playwright-report to Firebase Hosting live channel
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_TSG_DECATHLON }}'
+          channelId: live
+          projectId: tsg-decathlon
+          target: playwright
+
       - name: Run Firebase Functions predeploy scripts
         run: npm --prefix functions run lint && npm --prefix functions run build
+
+  deploy_hosting_preview:
+    name: Deploy Firebase Hosting Preview Channel
+
+    needs: [check_access, test]
+
+    if: needs.check_access.outputs.status == 'success'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event_name == 'pull_request_target' && format('refs/remotes/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Node.js dependency
+        run: npm ci
+
+      - name: Check compilation errors on TypeScript files
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+
+      - name: Download playwright-report artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+
+      - name: Deploy to Firebase Hosting preview channel
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_TSG_DECATHLON }}'
+          projectId: tsg-decathlon
+          channelId: >-
+            ${{
+              github.event_name == 'push'
+                && format('branch-{0}', github.ref_name)
+                || null
+            }}
 
   deploy_firebase:
     name: Deploy Firebase Configurations
@@ -90,3 +190,4 @@ jobs:
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_TSG_DECATHLON }}'
           channelId: live
           projectId: tsg-decathlon
+          target: app

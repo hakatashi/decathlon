@@ -1,5 +1,19 @@
 {
   "projects": {
     "default": "tsg-decathlon"
-  }
+  },
+  "targets": {
+    "tsg-decathlon": {
+      "hosting": {
+        "app": [
+          "tsg-decathlon"
+        ],
+        "playwright": [
+          "decathlon-playwright-report"
+        ]
+      }
+    }
+  },
+  "etags": {},
+  "dataconnectEmulatorConfig": {}
 }
