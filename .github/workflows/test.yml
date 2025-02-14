@@ -20,7 +20,7 @@ jobs:
       )
 
     outputs:
-      status: ${{ steps.check.conclusion }}
+      status: ${{ steps.check.outcome }}
 
     steps:
       - id: check
@@ -52,7 +52,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.merge_commit_sha || github.ref }}
+          ref: ${{ github.event_name == 'pull_request_target' && format('refs/remotes/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
 
       - uses: actions/setup-node@v4
         with:
@@ -103,7 +103,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.merge_commit_sha || github.ref }}
+          ref: ${{ github.event_name == 'pull_request_target' && format('refs/remotes/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
