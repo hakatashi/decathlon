@@ -24,6 +24,14 @@ export default defineConfig({
 			name: 'webkit',
 			use: {...devices['Desktop Safari']},
 		},
+		{
+			name: 'iphone',
+			use: {...devices['iPhone 15']},
+		},
+		{
+			name: 'android',
+			use: {...devices['Pixel 7']},
+		},
 	],
 	webServer: {
 		command: 'npm run serve',
