@@ -89,8 +89,8 @@ jobs:
         if: ${{ !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         continue-on-error: true
         with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_TSG_DECATHLON }}'
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TSG_DECATHLON }}
           channelId: live
           projectId: tsg-decathlon
           target: playwright
@@ -126,11 +126,14 @@ jobs:
           name: playwright-report
           path: playwright-report/
 
+      - name: Make sure Hosting directories exist
+        run: mkdir -p .output/public playwright-report
+
       - name: Deploy to Firebase Hosting preview channel
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_TSG_DECATHLON }}'
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TSG_DECATHLON }}
           projectId: tsg-decathlon
           channelId: >-
             ${{
@@ -164,7 +167,7 @@ jobs:
         with:
           args: deploy --except hosting
         env:
-          FIREBASE_TOKEN: '${{ secrets.FIREBASE_TOKEN }}'
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
 
   deploy_hosting:
     name: Deploy Firebase Hosting
@@ -187,8 +190,8 @@ jobs:
 
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_TSG_DECATHLON }}'
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TSG_DECATHLON }}
           channelId: live
           projectId: tsg-decathlon
           target: app
