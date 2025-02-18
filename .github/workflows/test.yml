@@ -114,12 +114,14 @@ jobs:
 
       - name: Download vite-output artifact
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: vite-output
           path: .output/
 
       - name: Download playwright-report artifact
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: playwright-report
           path: playwright-report/
