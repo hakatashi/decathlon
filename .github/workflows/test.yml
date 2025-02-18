@@ -112,11 +112,19 @@ jobs:
         with:
           ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
 
-      - name: Download vite-output artifact
-        uses: actions/download-artifact@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          name: vite-output
-          path: .output/
+          node-version: '20'
+
+      - name: Install Node.js dependency
+        run: npm ci
+
+      - name: Check compilation errors on TypeScript files
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
 
       - name: Download playwright-report artifact
         uses: actions/download-artifact@v4
