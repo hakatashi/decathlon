@@ -28,7 +28,7 @@
     "@types/lodash": "^4.17.16",
     "common-tags": "^1.8.2",
     "eslint": "^9.22.0",
-    "firebase-functions-test": "^3.4.0",
+    "firebase-functions-test": "^3.4.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.2"
   },
