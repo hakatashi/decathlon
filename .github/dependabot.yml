@@ -4,6 +4,15 @@ updates:
   directory: "/"
   schedule:
     interval: daily
+  ignore:
+    # Vite cannot be updated to v6 because of suid framework.
+    # https://github.com/swordev/suid/issues/305
+    - dependency-name: vite
+      versions: ^6.0.0
+    # SolidStart v1.1 also requires vite v6 and cannot be updated.
+    # https://github.com/swordev/suid/issues/305
+    - dependency-name: '@solidjs/start'
+      versions: ~1.1.0
 - package-ecosystem: npm
   directory: "/functions"
   schedule:
