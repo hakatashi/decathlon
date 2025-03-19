@@ -7,7 +7,6 @@ import type {Game, PromptEngineeringResult, PromptEngineeringSubmission, PromptE
 import {db} from './firebase';
 import {RankedScore, calculateGameRanking} from './lib/scores';
 
-
 export const calculateRanking = (gameDocs: QuerySnapshot<Game>, scoreDocs: QuerySnapshot<Score>) => {
 	const usersSet = new Set<string>();
 	const scoresMap = new Map<string, Score[]>();
