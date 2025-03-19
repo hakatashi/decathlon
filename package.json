@@ -48,6 +48,11 @@
     "undici": "^7.4.0",
     "vinxi": "^0.5.3"
   },
+  "overrides": {
+    "firebase-tools": {
+      "sql-formatter": "15.4.11"
+    }
+  },
   "engines": {
     "node": ">=18"
   }
