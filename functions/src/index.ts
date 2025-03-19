@@ -7,7 +7,7 @@ import {HttpsError, beforeUserCreated, beforeUserSignedIn} from 'firebase-functi
 import type {AuthUserRecord} from 'firebase-functions/lib/common/providers/identity';
 import logger from 'firebase-functions/logger';
 import {defineString} from 'firebase-functions/params';
-import auth from 'firebase-functions/v1/auth';
+import {user as authUser} from 'firebase-functions/v1/auth';
 import mdiff from 'mdiff';
 import type {Athlon, Game, PromptEngineeringVote, Score, TypingJapaneseSubmission, SlackUserInfo} from '~/lib/schema';
 import {db} from './firebase';
@@ -65,7 +65,7 @@ export const beforeUserSignInBlockingFunction = beforeUserSignedIn(async (event)
 });
 
 // Firebase Functions v2 does not support onCreate for user creation events yet
-export const onUserCreated = auth.user().onCreate(async (user) => {
+export const onUserCreated = authUser().onCreate(async (user) => {
 	await db.runTransaction(async (transaction) => {
 		const userRef = db.collection('users').doc(user.uid);
 		const userData = await transaction.get(userRef);
