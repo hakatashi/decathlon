@@ -67,11 +67,20 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Debug
+        run: ls -la .output
+
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
+      - name: Debug
+        run: ls -la .output
+
       - name: Run Playwright tests
         run: npm test
+
+      - name: Debug
+        run: ls -la .output
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
