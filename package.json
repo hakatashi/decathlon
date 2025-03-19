@@ -36,6 +36,7 @@
     "common-tags": "^1.8.2",
     "dayjs": "^1.11.13",
     "firebase": "^11.4.0",
+    "firebase-tools": "^13.34.0",
     "lodash": "^4.17.21",
     "nanoid": "^5.1.2",
     "remark-gfm": "^4.0.1",
