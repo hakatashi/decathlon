@@ -165,6 +165,13 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@master
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm ci
+
       - name: Restore .env file from secrets
         run: echo "${{ secrets.FUNCTIONS_DOTENV }}" > functions/.env
 
