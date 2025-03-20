@@ -22,7 +22,7 @@
     "sass": "^1.86.0",
     "serve": "^14.2.4",
     "typescript": "^5.8.2",
-    "vite": "^5.4.11"
+    "vite": "^6.2.2"
   },
   "dependencies": {
     "@firebase/util": "^1.11.0",
