@@ -1,158 +1,167 @@
 import assert, {AssertionError} from 'node:assert';
 import axios from 'axios';
-import {CollectionReference, DocumentReference, Timestamp} from 'firebase-admin/firestore';
+import type {Timestamp, CollectionReference, DocumentReference} from 'firebase-admin/firestore';
 import {getFunctions} from 'firebase-admin/functions';
-import {firestore, logger, runWith} from 'firebase-functions';
+import {onDocumentCreated} from 'firebase-functions/firestore';
+import logger from 'firebase-functions/logger';
+import {onTaskDispatched} from 'firebase-functions/tasks';
 import {groupBy, last, max, minBy, reverse, sortBy, sum, zip} from 'lodash';
 import type {CodegolfConfiguration, CodegolfJudgeType, CodegolfRanking, CodegolfSubmission, DiffConfiguration, Game, QuantumComputingConfiguration, QuantumComputingResult, QuantumComputingSubmission, ReversingDiffRanking, ReversingDiffSubmission, Score} from '~/lib/schema';
 import {db, storage} from './firebase';
 
-export const executeDiffSubmission =
-	runWith({secrets: ['ESOLANG_BATTLE_API_TOKEN']})
-		.tasks.taskQueue({
-			retryConfig: {
-				maxAttempts: 5,
-				minBackoffSeconds: 60,
-			},
-			rateLimits: {
-				maxConcurrentDispatches: 1,
-			},
-		}).onDispatch(async (data) => {
-			assert(typeof data.gameId === 'string');
-			assert(typeof data.submissionId === 'string');
+interface ExecuteDiffSubmissionData {
+	gameId: string,
+	submissionId: string,
+}
 
-			const submissionRef = db.doc(`games/${data.gameId}/submissions/${data.submissionId}`) as DocumentReference<ReversingDiffSubmission>;
-			const gameDoc = await db.collection('games').doc(data.gameId).get();
-			const game = gameDoc.data() as Game;
-			const config = game.configuration as DiffConfiguration;
+export const executeDiffSubmission = onTaskDispatched<ExecuteDiffSubmissionData>(
+	{
+		secrets: ['ESOLANG_BATTLE_API_TOKEN'],
+		retryConfig: {
+			maxAttempts: 5,
+			minBackoffSeconds: 60,
+		},
+		rateLimits: {
+			maxConcurrentDispatches: 1,
+		},
+	},
+	async (request) => {
+		assert(typeof request.data.gameId === 'string');
+		assert(typeof request.data.submissionId === 'string');
 
-			logger.info('Getting lock...');
-			const isOk = await db.runTransaction(async (transaction) => {
-				const submissionDoc = await transaction.get(submissionRef);
-				const submission = submissionDoc.data();
-				if (submission?.status !== 'pending') {
-					return false;
-				}
+		const submissionRef = db.doc(`games/${request.data.gameId}/submissions/${request.data.submissionId}`) as DocumentReference<ReversingDiffSubmission>;
+		const gameDoc = await db.collection('games').doc(request.data.gameId).get();
+		const game = gameDoc.data() as Game;
+		const config = game.configuration as DiffConfiguration;
 
-				transaction.update(submissionDoc.ref, {status: 'executing'});
-				return true;
-			});
-
-			if (!isOk) {
-				logger.warn('Lock failed.');
-				return;
-			}
-
-			const submissionDoc = await submissionRef.get();
+		logger.info('Getting lock...');
+		const isOk = await db.runTransaction(async (transaction) => {
+			const submissionDoc = await transaction.get(submissionRef);
 			const submission = submissionDoc.data();
-
-			if (!submission || typeof submission.code !== 'string') {
-				throw new AssertionError();
+			if (submission?.status !== 'pending') {
+				return false;
 			}
 
-			const answerBlobs = await storage.bucket().file(`games/${data.gameId}/answer`).download();
-			const answer = answerBlobs.reduce((a, b) => Buffer.concat([a, b]), Buffer.alloc(0));
-
-			const input = `${answer.toString('base64')}\n${Buffer.from(submission.code, 'utf-8').toString('base64')}`;
-
-			const result = await axios({
-				method: 'POST',
-				url: 'https://esolang.hakatashi.com/api/execution',
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded',
-				},
-				data: new URLSearchParams({
-					token: process.env.ESOLANG_BATTLE_API_TOKEN!,
-					code: Buffer.from(input, 'utf-8').toString('base64'),
-					input: '',
-					language: 'clang-cpp',
-					imageId: 'hakatashi/diff-challenge-python',
-				}),
-				validateStatus: null,
-			});
-
-			const {duration, stderr, stdout, error: errorMessage} = result.data;
-
-			let error = null;
-			if (typeof duration !== 'number') {
-				error = 'duration is not a number';
-			}
-			if (typeof stderr !== 'string') {
-				error = 'stderr is not a string';
-			}
-			if (typeof stdout !== 'string') {
-				error = 'stdout is not a string';
-			}
-			if (!stdout.match(/^\d+$/)) {
-				error = 'stdout is not a valid format';
-			}
-			if (typeof errorMessage === 'string') {
-				error = errorMessage;
-			}
-			if (!error && result.status !== 200) {
-				error = JSON.stringify(result.data) || 'unknown error';
-			}
-
-			let score = error ? null : parseInt(stdout);
-			if (!Number.isFinite(score)) {
-				score = null;
-			}
-
-			await submissionRef.update({
-				status: error ? 'error' : 'success',
-				...(error ? {errorMessage: error} : {}),
-				score,
-				duration,
-				stderr,
-				stdout,
-				executedAt: new Date(),
-			});
-
-			{
-				const submissionDocs = await (db.collection(`games/${data.gameId}/submissions`) as CollectionReference<ReversingDiffSubmission>)
-					.where('status', '==', 'success').get();
-				const submissionsByUser = groupBy(submissionDocs.docs, (s) => s.data().userId);
-
-				const mainFile = config.files.find((file) => file.isMain);
-				if (!mainFile) {
-					throw new AssertionError({message: 'Main file is not found'});
-				}
-
-				const [fileMetadata] = await storage.bucket().file(`assets/reversing-diff/${mainFile.filename}`).getMetadata();
-				const fileSize = parseInt(String(fileMetadata.size));
-
-				logger.info(`correct file size: ${fileSize}`);
-
-				const batch = db.batch();
-				for (const [userId, submissions] of Object.entries(submissionsByUser)) {
-					const minScoreSubmission = minBy(submissions, (s) => s.data().score)!.data();
-					const rankingRef = db.doc(`games/${data.gameId}/ranking/${minScoreSubmission.userId}`) as DocumentReference<ReversingDiffRanking>;
-					batch.set(rankingRef, {
-						athlon: submission.athlon,
-						userId,
-						score: minScoreSubmission.score!,
-						createdAt: minScoreSubmission.createdAt,
-					});
-
-					const rawScore = Number.isNaN(fileSize) ? 0 : Math.max((fileSize - minScoreSubmission.score!) / fileSize, 0);
-
-					logger.info(`user id: ${minScoreSubmission.userId}`);
-					logger.info(`file size: ${fileSize}`);
-					logger.info(`min score: ${minScoreSubmission.score}`);
-					logger.info(`raw score: ${rawScore}`);
-
-					const scoreRef = db.doc(`games/${data.gameId}/scores/${minScoreSubmission.userId}`) as DocumentReference<Score>;
-					batch.set(scoreRef, {
-						athlon: submission.athlon,
-						user: userId,
-						rawScore,
-						tiebreakScore: minScoreSubmission.createdAt.toMillis(),
-					});
-				}
-
-				await batch.commit();
-			}
+			transaction.update(submissionDoc.ref, {status: 'executing'});
+			return true;
 		});
+
+		if (!isOk) {
+			logger.warn('Lock failed.');
+			return;
+		}
+
+		const submissionDoc = await submissionRef.get();
+		const submission = submissionDoc.data();
+
+		if (!submission || typeof submission.code !== 'string') {
+			throw new AssertionError();
+		}
+
+		const answerBlobs = await storage.bucket().file(`games/${request.data.gameId}/answer`).download();
+		const answer = answerBlobs.reduce((a, b) => Buffer.concat([a, b]), Buffer.alloc(0));
+
+		const input = `${answer.toString('base64')}\n${Buffer.from(submission.code, 'utf-8').toString('base64')}`;
+
+		const result = await axios({
+			method: 'POST',
+			url: 'https://esolang.hakatashi.com/api/execution',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+			},
+			data: new URLSearchParams({
+				token: process.env.ESOLANG_BATTLE_API_TOKEN!,
+				code: Buffer.from(input, 'utf-8').toString('base64'),
+				input: '',
+				language: 'clang-cpp',
+				imageId: 'hakatashi/diff-challenge-python',
+			}),
+			validateStatus: null,
+		});
+
+		const {duration, stderr, stdout, error: errorMessage} = result.data;
+
+		let error = null;
+		if (typeof duration !== 'number') {
+			error = 'duration is not a number';
+		}
+		if (typeof stderr !== 'string') {
+			error = 'stderr is not a string';
+		}
+		if (typeof stdout !== 'string') {
+			error = 'stdout is not a string';
+		}
+		if (!stdout.match(/^\d+$/)) {
+			error = 'stdout is not a valid format';
+		}
+		if (typeof errorMessage === 'string') {
+			error = errorMessage;
+		}
+		if (!error && result.status !== 200) {
+			error = JSON.stringify(result.data) || 'unknown error';
+		}
+
+		let score = error ? null : parseInt(stdout);
+		if (!Number.isFinite(score)) {
+			score = null;
+		}
+
+		await submissionRef.update({
+			status: error ? 'error' : 'success',
+			...(error ? {errorMessage: error} : {}),
+			score,
+			duration,
+			stderr,
+			stdout,
+			executedAt: new Date(),
+		});
+
+		{
+			const submissionDocs = await (db.collection(`games/${request.data.gameId}/submissions`) as CollectionReference<ReversingDiffSubmission>)
+				.where('status', '==', 'success').get();
+			const submissionsByUser = groupBy(submissionDocs.docs, (s) => s.data().userId);
+
+			const mainFile = config.files.find((file) => file.isMain);
+			if (!mainFile) {
+				throw new AssertionError({message: 'Main file is not found'});
+			}
+
+			const [fileMetadata] = await storage.bucket().file(`assets/reversing-diff/${mainFile.filename}`).getMetadata();
+			const fileSize = parseInt(String(fileMetadata.size));
+
+			logger.info(`correct file size: ${fileSize}`);
+
+			const batch = db.batch();
+			for (const [userId, submissions] of Object.entries(submissionsByUser)) {
+				const minScoreSubmission = minBy(submissions, (s) => s.data().score)!.data();
+				const rankingRef = db.doc(`games/${request.data.gameId}/ranking/${minScoreSubmission.userId}`) as DocumentReference<ReversingDiffRanking>;
+				batch.set(rankingRef, {
+					athlon: submission.athlon,
+					userId,
+					score: minScoreSubmission.score!,
+					createdAt: minScoreSubmission.createdAt,
+				});
+
+				const rawScore = Number.isNaN(fileSize) ? 0 : Math.max((fileSize - minScoreSubmission.score!) / fileSize, 0);
+
+				logger.info(`user id: ${minScoreSubmission.userId}`);
+				logger.info(`file size: ${fileSize}`);
+				logger.info(`min score: ${minScoreSubmission.score}`);
+				logger.info(`raw score: ${rawScore}`);
+
+				const scoreRef = db.doc(`games/${request.data.gameId}/scores/${minScoreSubmission.userId}`) as DocumentReference<Score>;
+				batch.set(scoreRef, {
+					athlon: submission.athlon,
+					user: userId,
+					rawScore,
+					tiebreakScore: minScoreSubmission.createdAt.toMillis(),
+				});
+			}
+
+			await batch.commit();
+		}
+	},
+);
 
 const normalizeCodegolfOutput = (text: string, judgeType: CodegolfJudgeType) => {
 	if (judgeType === 'ignore-newline-type') {
@@ -167,51 +176,57 @@ const isTestcaseCorrect = (result: string, expected: string, judgeType: Codegolf
 	return normalizedResult === normalizedExpected;
 };
 
-export const executeCodegolfSubmission =
-	runWith({secrets: ['ESOLANG_BATTLE_API_TOKEN']})
-		.tasks.taskQueue({
-			retryConfig: {
-				maxAttempts: 5,
-				minBackoffSeconds: 60,
-			},
-			rateLimits: {
-				maxConcurrentDispatches: 1,
-			},
-		}).onDispatch(async (data) => {
-			assert(typeof data.gameId === 'string');
-			assert(typeof data.submissionId === 'string');
+interface ExecuteCodegolfSubmissionData {
+	gameId: string,
+	submissionId: string,
+}
 
-			const submissionRef = db.doc(`games/${data.gameId}/submissions/${data.submissionId}`) as DocumentReference<CodegolfSubmission>;
+export const executeCodegolfSubmission = onTaskDispatched<ExecuteCodegolfSubmissionData>(
+	{
+		secrets: ['ESOLANG_BATTLE_API_TOKEN'],
+		retryConfig: {
+			maxAttempts: 5,
+			minBackoffSeconds: 60,
+		},
+		rateLimits: {
+			maxConcurrentDispatches: 1,
+		},
+	},
+	async (request) => {
+		assert(typeof request.data.gameId === 'string');
+		assert(typeof request.data.submissionId === 'string');
 
-			logger.info('Getting lock...');
-			const isOk = await db.runTransaction(async (transaction) => {
-				const submissionDoc = await transaction.get(submissionRef);
-				const submission = submissionDoc.data();
-				if (submission?.status !== 'pending') {
-					return false;
-				}
+		const submissionRef = db.doc(`games/${request.data.gameId}/submissions/${request.data.submissionId}`) as DocumentReference<CodegolfSubmission>;
 
-				transaction.update(submissionDoc.ref, {status: 'executing'});
-				return true;
-			});
-
-			if (!isOk) {
-				logger.warn('Lock failed.');
-				return;
-			}
-
-			const submissionDoc = await submissionRef.get();
+		logger.info('Getting lock...');
+		const isOk = await db.runTransaction(async (transaction) => {
+			const submissionDoc = await transaction.get(submissionRef);
 			const submission = submissionDoc.data();
-
-			const gameDoc = await db.collection('games').doc(data.gameId).get();
-			const game = gameDoc.data() as Game;
-			const config = game.configuration as CodegolfConfiguration;
-
-			if (!submission || typeof submission.code !== 'string') {
-				throw new AssertionError();
+			if (submission?.status !== 'pending') {
+				return false;
 			}
 
-			logger.info(`Starting execution of submission ${submissionDoc.id}`);
+			transaction.update(submissionDoc.ref, {status: 'executing'});
+			return true;
+		});
+
+		if (!isOk) {
+			logger.warn('Lock failed.');
+			return;
+		}
+
+		const submissionDoc = await submissionRef.get();
+		const submission = submissionDoc.data();
+
+		const gameDoc = await db.collection('games').doc(request.data.gameId).get();
+		const game = gameDoc.data() as Game;
+		const config = game.configuration as CodegolfConfiguration;
+
+		if (!submission || typeof submission.code !== 'string') {
+			throw new AssertionError();
+		}
+
+		logger.info(`Starting execution of submission ${submissionDoc.id}`);
 
 			type TestcaseStatus = 'error' | 'failed' | 'success';
 
@@ -305,8 +320,9 @@ export const executeCodegolfSubmission =
 			});
 
 			// eslint-disable-next-line @typescript-eslint/no-use-before-define
-			await updateCodegolfRanking(data.gameId, game);
-		});
+			await updateCodegolfRanking(request.data.gameId, game);
+	},
+);
 
 const updateCodegolfRanking = async (gameId: string, game: Game) => {
 	const submissionsRef = db.collection('games').doc(gameId).collection('submissions') as CollectionReference<CodegolfSubmission>;
@@ -430,131 +446,143 @@ const updateCodegolfRanking = async (gameId: string, game: Game) => {
 	await batch.commit();
 };
 
-export const executeQuantumComputingSubmission =
-	runWith({secrets: ['ESOLANG_BATTLE_API_TOKEN']})
-		.tasks.taskQueue({
-			retryConfig: {
-				maxAttempts: 5,
-				minBackoffSeconds: 60,
-			},
-			rateLimits: {
-				maxConcurrentDispatches: 1,
-			},
-		}).onDispatch(async (data) => {
-			assert(typeof data.gameId === 'string');
-			assert(typeof data.submissionId === 'string');
+interface ExecuteQuantumComputingSubmissionData {
+	gameId: string,
+	submissionId: string,
+}
 
-			const submissionRef = db.doc(`games/${data.gameId}/submissions/${data.submissionId}`) as DocumentReference<QuantumComputingSubmission>;
-			const gameDoc = await db.collection('games').doc(data.gameId).get();
-			const game = gameDoc.data() as Game;
-			const config = game.configuration as QuantumComputingConfiguration;
+export const executeQuantumComputingSubmission = onTaskDispatched<ExecuteQuantumComputingSubmissionData>(
+	{
+		secrets: ['ESOLANG_BATTLE_API_TOKEN'],
+		retryConfig: {
+			maxAttempts: 5,
+			minBackoffSeconds: 60,
+		},
+		rateLimits: {
+			maxConcurrentDispatches: 1,
+		},
+	},
+	async (request) => {
+		assert(typeof request.data.gameId === 'string');
+		assert(typeof request.data.submissionId === 'string');
 
-			logger.info('Getting lock...');
-			const isOk = await db.runTransaction(async (transaction) => {
-				const submissionDoc = await transaction.get(submissionRef);
-				const submission = submissionDoc.data();
-				if (submission?.status !== 'pending') {
-					return false;
-				}
+		const submissionRef = db.doc(`games/${request.data.gameId}/submissions/${request.data.submissionId}`) as DocumentReference<QuantumComputingSubmission>;
+		const gameDoc = await db.collection('games').doc(request.data.gameId).get();
+		const game = gameDoc.data() as Game;
+		const config = game.configuration as QuantumComputingConfiguration;
 
-				transaction.update(submissionDoc.ref, {status: 'executing'});
-				return true;
-			});
-
-			if (!isOk) {
-				logger.warn('Lock failed.');
-				return;
-			}
-
-			const submissionDoc = await submissionRef.get();
+		logger.info('Getting lock...');
+		const isOk = await db.runTransaction(async (transaction) => {
+			const submissionDoc = await transaction.get(submissionRef);
 			const submission = submissionDoc.data();
-
-			if (!submission || typeof submission.code !== 'string') {
-				throw new AssertionError();
+			if (submission?.status !== 'pending') {
+				return false;
 			}
 
-			const input = [
-				Buffer.from(config.judgeCode, 'utf-8').toString('base64'),
-				Buffer.from(submission.code, 'utf-8').toString('base64'),
-			].join('\n');
-
-			const result = await axios({
-				method: 'POST',
-				url: 'https://esolang.hakatashi.com/api/execution',
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded',
-				},
-				data: new URLSearchParams({
-					token: process.env.ESOLANG_BATTLE_API_TOKEN!,
-					code: Buffer.from(input, 'utf-8').toString('base64'),
-					input: '',
-					language: 'clang-cpp',
-					imageId: 'hakatashi/quantum-computing-challenge',
-				}),
-				validateStatus: null,
-			});
-
-			const {duration, stderr, stdout, error: errorMessage} = result.data;
-
-			let error = null;
-			if (typeof duration !== 'number') {
-				error = 'duration is not a number';
-			}
-			if (typeof stderr !== 'string') {
-				error = 'stderr is not a string';
-			}
-			if (typeof stdout !== 'string') {
-				error = 'stdout is not a string';
-			}
-			if (typeof errorMessage === 'string') {
-				error = errorMessage;
-			}
-			if (!error && result.status !== 200) {
-				error = JSON.stringify(result.data) || 'unknown error';
-			}
-
-			const isCorrect = stdout.trim() === 'CORRECT';
-
-			let status: QuantumComputingResult = 'failed';
-			if (error) {
-				status = 'error';
-			} else if (isCorrect) {
-				status = 'success';
-			}
-
-			await submissionRef.update({
-				status,
-				...(error ? {errorMessage: error} : {}),
-				duration,
-				stderr,
-				stdout,
-				executedAt: new Date(),
-			});
-
-			if (status === 'success') {
-				db.runTransaction(async (transaction) => {
-					const scoreRef = db.doc(`games/${data.gameId}/scores/${submission.userId}`) as DocumentReference<Score>;
-					const scoreDoc = await transaction.get(scoreRef);
-
-					if (scoreDoc.exists) {
-						return;
-					}
-
-					transaction.set(scoreRef, {
-						athlon: submission.athlon,
-						user: submission.userId,
-						rawScore: game.maxRawScore,
-						tiebreakScore: submission.createdAt.toMillis(),
-					});
-				});
-			}
+			transaction.update(submissionDoc.ref, {status: 'executing'});
+			return true;
 		});
 
-export const onSubmissionCreated = firestore
-	.document('games/{gameId}/submissions/{submissionId}')
-	.onCreate(async (snapshot, context) => {
-		const changedGameId = context.params.gameId;
-		const changedSubmissionId = context.params.submissionId;
+		if (!isOk) {
+			logger.warn('Lock failed.');
+			return;
+		}
+
+		const submissionDoc = await submissionRef.get();
+		const submission = submissionDoc.data();
+
+		if (!submission || typeof submission.code !== 'string') {
+			throw new AssertionError();
+		}
+
+		const input = [
+			Buffer.from(config.judgeCode, 'utf-8').toString('base64'),
+			Buffer.from(submission.code, 'utf-8').toString('base64'),
+		].join('\n');
+
+		const result = await axios({
+			method: 'POST',
+			url: 'https://esolang.hakatashi.com/api/execution',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+			},
+			data: new URLSearchParams({
+				token: process.env.ESOLANG_BATTLE_API_TOKEN!,
+				code: Buffer.from(input, 'utf-8').toString('base64'),
+				input: '',
+				language: 'clang-cpp',
+				imageId: 'hakatashi/quantum-computing-challenge',
+			}),
+			validateStatus: null,
+		});
+
+		const {duration, stderr, stdout, error: errorMessage} = result.data;
+
+		let error = null;
+		if (typeof duration !== 'number') {
+			error = 'duration is not a number';
+		}
+		if (typeof stderr !== 'string') {
+			error = 'stderr is not a string';
+		}
+		if (typeof stdout !== 'string') {
+			error = 'stdout is not a string';
+		}
+		if (typeof errorMessage === 'string') {
+			error = errorMessage;
+		}
+		if (!error && result.status !== 200) {
+			error = JSON.stringify(result.data) || 'unknown error';
+		}
+
+		const isCorrect = stdout.trim() === 'CORRECT';
+
+		let status: QuantumComputingResult = 'failed';
+		if (error) {
+			status = 'error';
+		} else if (isCorrect) {
+			status = 'success';
+		}
+
+		await submissionRef.update({
+			status,
+			...(error ? {errorMessage: error} : {}),
+			duration,
+			stderr,
+			stdout,
+			executedAt: new Date(),
+		});
+
+		if (status === 'success') {
+			db.runTransaction(async (transaction) => {
+				const scoreRef = db.doc(`games/${request.data.gameId}/scores/${submission.userId}`) as DocumentReference<Score>;
+				const scoreDoc = await transaction.get(scoreRef);
+
+				if (scoreDoc.exists) {
+					return;
+				}
+
+				transaction.set(scoreRef, {
+					athlon: submission.athlon,
+					user: submission.userId,
+					rawScore: game.maxRawScore,
+					tiebreakScore: submission.createdAt.toMillis(),
+				});
+			});
+		}
+	},
+);
+
+export const onSubmissionCreated = onDocumentCreated(
+	'games/{gameId}/submissions/{submissionId}',
+	async (event) => {
+		if (!event.data?.exists) {
+			return;
+		}
+
+		const snapshot = event.data;
+		const changedGameId = event.params.gameId;
+		const changedSubmissionId = event.params.submissionId;
 
 		const gameDoc = await db.collection('games').doc(changedGameId).get();
 		const game = gameDoc.data() as Game;
@@ -562,7 +590,7 @@ export const onSubmissionCreated = firestore
 		logger.info(`New submission: id = ${snapshot.id}, rule = ${game.rule.path}`);
 
 		if (game.rule.path === 'gameRules/reversing-diff') {
-			const queue = getFunctions().taskQueue('executeDiffSubmission');
+			const queue = getFunctions().taskQueue<ExecuteDiffSubmissionData>('executeDiffSubmission');
 			queue.enqueue(
 				{
 					gameId: changedGameId,
@@ -576,7 +604,7 @@ export const onSubmissionCreated = firestore
 		}
 
 		if (game.rule.path === 'gameRules/codegolf') {
-			const queue = getFunctions().taskQueue('executeCodegolfSubmission');
+			const queue = getFunctions().taskQueue<ExecuteCodegolfSubmissionData>('executeCodegolfSubmission');
 			queue.enqueue(
 				{
 					gameId: changedGameId,
@@ -590,7 +618,7 @@ export const onSubmissionCreated = firestore
 		}
 
 		if (game.rule.path === 'gameRules/quantum-computing') {
-			const queue = getFunctions().taskQueue('executeQuantumComputingSubmission');
+			const queue = getFunctions().taskQueue<ExecuteQuantumComputingSubmissionData>('executeQuantumComputingSubmission');
 			queue.enqueue(
 				{
 					gameId: changedGameId,
@@ -602,4 +630,5 @@ export const onSubmissionCreated = firestore
 				},
 			);
 		}
-	});
+	},
+);

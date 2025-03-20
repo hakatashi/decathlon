@@ -36,6 +36,7 @@
     "common-tags": "^1.8.2",
     "dayjs": "^1.11.13",
     "firebase": "^11.4.0",
+    "firebase-tools": "^13.34.0",
     "lodash": "^4.17.21",
     "nanoid": "^5.1.5",
     "remark-gfm": "^4.0.1",
@@ -46,6 +47,11 @@
     "tippy.js": "^6.3.7",
     "undici": "^7.5.0",
     "vinxi": "^0.5.3"
+  },
+  "overrides": {
+    "firebase-tools": {
+      "sql-formatter": "15.4.11"
+    }
   },
   "engines": {
     "node": ">=18"

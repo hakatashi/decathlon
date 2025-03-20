@@ -1,10 +1,13 @@
 import assert from 'node:assert';
 import {WebClient} from '@slack/web-api';
-import {DocumentReference} from 'firebase-admin/firestore';
-import type {CollectionReference, CollectionGroup} from 'firebase-admin/firestore';
-import {auth, config as getConfig, firestore, https, logger} from 'firebase-functions';
+import type {DocumentReference, CollectionReference, CollectionGroup} from 'firebase-admin/firestore';
+import {onDocumentWritten} from 'firebase-functions/firestore';
+import {onCall} from 'firebase-functions/https';
+import {HttpsError, beforeUserCreated, beforeUserSignedIn} from 'firebase-functions/identity';
 import type {AuthUserRecord} from 'firebase-functions/lib/common/providers/identity';
-import {HttpsError} from 'firebase-functions/v1/auth';
+import logger from 'firebase-functions/logger';
+import {defineString} from 'firebase-functions/params';
+import {user as authUser} from 'firebase-functions/v1/auth';
 import mdiff from 'mdiff';
 import type {Athlon, Game, PromptEngineeringVote, Score, TypingJapaneseSubmission, SlackUserInfo} from '~/lib/schema';
 import {db} from './firebase';
@@ -12,9 +15,9 @@ import {calculateRanking, updatePromptEngineeringScores} from './scores';
 
 export * from './esolang';
 
-const config = getConfig();
+const SLACK_TOKEN = defineString('SLACK_TOKEN');
 
-const slack = new WebClient(config.slack.token);
+const slack = new WebClient(SLACK_TOKEN.value());
 
 const checkSlackTeamEligibility = async (user: AuthUserRecord) => {
 	logger.info('Checking Slack team eligibility');
@@ -45,16 +48,24 @@ const checkSlackTeamEligibility = async (user: AuthUserRecord) => {
 	}
 };
 
-export const beforeUserCreatedBlockingFunction = auth.user().beforeCreate(async (user) => {
-	await checkSlackTeamEligibility(user);
+export const beforeUserCreatedBlockingFunction = beforeUserCreated(async (event) => {
+	if (!event.data) {
+		throw new HttpsError('invalid-argument', 'No data provided.');
+	}
+
+	await checkSlackTeamEligibility(event.data);
 });
 
-export const beforeUserSignInBlockingFunction = auth.user().beforeSignIn(async (user) => {
-	await checkSlackTeamEligibility(user);
+export const beforeUserSignInBlockingFunction = beforeUserSignedIn(async (event) => {
+	if (!event.data) {
+		throw new HttpsError('invalid-argument', 'No data provided.');
+	}
+
+	await checkSlackTeamEligibility(event.data);
 });
 
-
-export const onUserCreated = auth.user().onCreate(async (user) => {
+// Firebase Functions v2 does not support onCreate for user creation events yet
+export const onUserCreated = authUser().onCreate(async (user) => {
 	await db.runTransaction(async (transaction) => {
 		const userRef = db.collection('users').doc(user.uid);
 		const userData = await transaction.get(userRef);
@@ -75,10 +86,10 @@ export const onUserCreated = auth.user().onCreate(async (user) => {
 	});
 });
 
-export const onScoreChanged = firestore
-	.document('games/{gameId}/scores/{userId}')
-	.onWrite(async (_change, context) => {
-		const changedGameId = context.params.gameId;
+export const onScoreChanged = onDocumentWritten(
+	'games/{gameId}/scores/{userId}',
+	async (event) => {
+		const changedGameId = event.params.gameId;
 
 		const gamesRef = db.collection('games') as CollectionReference<Game>;
 
@@ -105,11 +116,12 @@ export const onScoreChanged = firestore
 				ranking,
 			});
 		});
-	});
+	},
+);
 
-export const resetGameSubmission = https.onCall(async (data, context) => {
-	const {gameId} = data;
-	const uid = context.auth?.uid;
+export const resetGameSubmission = onCall(async (request) => {
+	const {gameId} = request.data;
+	const uid = request.auth?.uid;
 
 	assert(typeof gameId === 'string');
 	assert(typeof uid === 'string');
@@ -141,9 +153,9 @@ const normalizeTypingJapaneseText = (input: string) => (
 		.replaceAll(/\s/g, '')
 );
 
-export const submitTypingJapaneseScore = https.onCall(async (data, context) => {
-	const {gameId, submissionText} = data;
-	const uid = context.auth?.uid;
+export const submitTypingJapaneseScore = onCall(async (request) => {
+	const {gameId, submissionText} = request.data;
+	const uid = request.auth?.uid;
 
 	assert(typeof gameId === 'string');
 	assert(typeof submissionText === 'string');
@@ -230,9 +242,9 @@ export const submitTypingJapaneseScore = https.onCall(async (data, context) => {
 	return score;
 });
 
-export const submitPromptEngineeringVote = https.onCall(async (data, context) => {
-	const {gameId, choices} = data;
-	const uid = context.auth?.uid;
+export const submitPromptEngineeringVote = onCall(async (request) => {
+	const {gameId, choices} = request.data;
+	const uid = request.auth?.uid;
 
 	assert(typeof gameId === 'string');
 	assert(Array.isArray(choices));
@@ -262,10 +274,10 @@ export const submitPromptEngineeringVote = https.onCall(async (data, context) =>
 	});
 });
 
-export const onVoteChanged = firestore
-	.document('games/{gameId}/votes/{userId}')
-	.onWrite(async (_change, context) => {
-		const changedGameId = context.params.gameId;
+export const onVoteChanged = onDocumentWritten(
+	'games/{gameId}/votes/{userId}',
+	async (event) => {
+		const changedGameId = event.params.gameId;
 
 		const gameDoc = await (db.collection('games') as CollectionReference<Game>).doc(changedGameId).get();
 		const gameData = gameDoc.data();
@@ -276,4 +288,5 @@ export const onVoteChanged = firestore
 		if (gameData.rule.path === 'gameRules/prompt-engineering') {
 			await updatePromptEngineeringScores(gameDoc);
 		}
-	});
+	},
+);
