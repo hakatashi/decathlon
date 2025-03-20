@@ -116,13 +116,6 @@ jobs:
         with:
           ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install Dependencies
-        run: npm ci
-
       - name: Download vite-output artifact
         uses: actions/download-artifact@v4
         continue-on-error: true
