@@ -5,7 +5,7 @@ import {onDocumentWritten} from 'firebase-functions/firestore';
 import {onCall} from 'firebase-functions/https';
 import {HttpsError, beforeUserCreated, beforeUserSignedIn} from 'firebase-functions/identity';
 import type {AuthUserRecord} from 'firebase-functions/lib/common/providers/identity';
-import logger from 'firebase-functions/logger';
+import {info as logInfo, error as logError} from 'firebase-functions/logger';
 import {defineString} from 'firebase-functions/params';
 import {user as authUser} from 'firebase-functions/v1/auth';
 import mdiff from 'mdiff';
@@ -20,8 +20,8 @@ const SLACK_TOKEN = defineString('SLACK_TOKEN');
 const slack = new WebClient(SLACK_TOKEN.value());
 
 const checkSlackTeamEligibility = async (user: AuthUserRecord) => {
-	logger.info('Checking Slack team eligibility');
-	logger.info(user, {structuredData: true});
+	logInfo('Checking Slack team eligibility');
+	logInfo(user, {structuredData: true});
 
 	const slackUserInfosRef = db.collection('slackUserInfo') as CollectionReference<SlackUserInfo>;
 
@@ -38,7 +38,7 @@ const checkSlackTeamEligibility = async (user: AuthUserRecord) => {
 					break;
 				}
 			} catch (error) {
-				logger.error(error, {structuredData: true});
+				logError(error, {structuredData: true});
 			}
 		}
 	}
