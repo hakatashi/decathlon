@@ -2,10 +2,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 
 import type {CollectionReference, DocumentReference, DocumentSnapshot, QuerySnapshot} from 'firebase-admin/firestore';
-import {sortBy, sum} from 'lodash';
-import type {Game, PromptEngineeringResult, PromptEngineeringSubmission, PromptEngineeringVote, Score} from '~/lib/schema';
-import {db} from './firebase';
-import {RankedScore, calculateGameRanking} from './lib/scores';
+import {prop, sortBy, sum} from 'remeda';
+import type {Game, PromptEngineeringResult, PromptEngineeringSubmission, PromptEngineeringVote, Score} from '~/lib/schema.js';
+import {db} from './firebase.js';
+import {RankedScore, calculateGameRanking} from './lib/scores.js';
 
 export const calculateRanking = (gameDocs: QuerySnapshot<Game>, scoreDocs: QuerySnapshot<Score>) => {
 	const usersSet = new Set<string>();
@@ -92,7 +92,7 @@ export const calculateRanking = (gameDocs: QuerySnapshot<Game>, scoreDocs: Query
 
 	let previousPoint: number | null = null;
 	let previousRank = 0;
-	const ranking = sortBy(userScoreEntries, 'point').reverse().map((userScoreEntry, index) => {
+	const ranking = sortBy(userScoreEntries, prop('point')).reverse().map((userScoreEntry, index) => {
 		let rank = index;
 		if (userScoreEntry.point === previousPoint) {
 			rank = previousRank;

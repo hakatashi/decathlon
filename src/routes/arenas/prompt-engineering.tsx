@@ -6,7 +6,7 @@ import dayjs from 'dayjs';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, serverTimestamp, setDoc, where} from 'firebase/firestore';
 // import remarkGfm from 'remark-gfm';
 import {getFunctions, httpsCallable} from 'firebase/functions';
-import {zip} from 'lodash';
+import {zip} from 'remeda';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, For, Match, Show, Switch} from 'solid-js';
 import {createStore, produce} from 'solid-js/store';

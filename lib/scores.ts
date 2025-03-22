@@ -1,5 +1,5 @@
-import {sum, orderBy} from 'lodash';
-import type {Game, Score, ScoreConfiguration} from '~/lib/schema';
+import {sum, sortBy, prop} from 'remeda';
+import type {Game, Score, ScoreConfiguration} from '~/lib/schema.js';
 
 export const calculateScore = (
 	rawScore: number,
@@ -42,10 +42,10 @@ export interface RankedScore extends Score {
 }
 
 export const calculateGameRanking = (game: Game, scores: Score[]) => {
-	const sortedScores = orderBy(
+	const sortedScores = sortBy(
 		scores,
-		['rawScore', 'tiebreakScore'],
-		['desc', game.tiebreakOrder],
+		[prop('rawScore'), 'desc'],
+		[prop('tiebreakScore'), game.tiebreakOrder],
 	);
 
 	const maxRawScore = Math.max(...sortedScores.map(({rawScore}) => rawScore));

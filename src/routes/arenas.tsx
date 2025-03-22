@@ -3,7 +3,7 @@ import {AppBar, Avatar, IconButton, Toolbar, Typography} from '@suid/material';
 import {getAuth} from 'firebase/auth';
 import type {User as AuthUser} from 'firebase/auth';
 import {doc, DocumentReference, getFirestore} from 'firebase/firestore';
-import last from 'lodash/last';
+import {last} from 'remeda';
 import {useFirebaseApp, useAuth, useFirestore} from 'solid-firebase';
 import {createContext, createEffect, createMemo, createSignal, Show} from 'solid-js';
 import styles from './arenas.module.css';

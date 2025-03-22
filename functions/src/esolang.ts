@@ -5,9 +5,9 @@ import {getFunctions} from 'firebase-admin/functions';
 import {onDocumentCreated} from 'firebase-functions/firestore';
 import logger from 'firebase-functions/logger';
 import {onTaskDispatched} from 'firebase-functions/tasks';
-import {groupBy, last, max, minBy, reverse, sortBy, sum, zip} from 'lodash';
-import type {CodegolfConfiguration, CodegolfJudgeType, CodegolfRanking, CodegolfSubmission, DiffConfiguration, Game, QuantumComputingConfiguration, QuantumComputingResult, QuantumComputingSubmission, ReversingDiffRanking, ReversingDiffSubmission, Score} from '~/lib/schema';
-import {db, storage} from './firebase';
+import {firstBy, groupBy, identity, last, reverse, sortBy, sum, zip} from 'remeda';
+import type {CodegolfConfiguration, CodegolfJudgeType, CodegolfRanking, CodegolfSubmission, DiffConfiguration, Game, QuantumComputingConfiguration, QuantumComputingResult, QuantumComputingSubmission, ReversingDiffRanking, ReversingDiffSubmission, Score} from '~/lib/schema.js';
+import {db, storage} from './firebase.js';
 
 interface ExecuteDiffSubmissionData {
 	gameId: string,
@@ -133,7 +133,10 @@ export const executeDiffSubmission = onTaskDispatched<ExecuteDiffSubmissionData>
 
 			const batch = db.batch();
 			for (const [userId, submissions] of Object.entries(submissionsByUser)) {
-				const minScoreSubmission = minBy(submissions, (s) => s.data().score)!.data();
+				const minScoreSubmission = firstBy(
+					submissions,
+					[(s) => s.data().score ?? Infinity, 'asc'],
+				).data();
 				const rankingRef = db.doc(`games/${request.data.gameId}/ranking/${minScoreSubmission.userId}`) as DocumentReference<ReversingDiffRanking>;
 				batch.set(rankingRef, {
 					athlon: submission.athlon,
@@ -356,8 +359,11 @@ const updateCodegolfRanking = async (gameId: string, game: Game) => {
 
 		const users = Object.entries(submissionsByUser).map(([userId, userSubmissions]) => {
 			usersSet.add(userId);
-			const shortestSubmission = minBy(userSubmissions, (submission) => submission.size);
-			return {id: userId, size: shortestSubmission!.size, createdAt: shortestSubmission!.createdAt};
+			const shortestSubmission = firstBy(
+				userSubmissions,
+				[(submission) => submission.size, 'asc'],
+			);
+			return {id: userId, size: shortestSubmission.size, createdAt: shortestSubmission.createdAt};
 		});
 		const sortedUsers = reverse(sortBy(users, (user) => user.size));
 
@@ -412,11 +418,12 @@ const updateCodegolfRanking = async (gameId: string, game: Game) => {
 		});
 
 		const scoreSum = sum(languages.map(({score}) => score));
-		const updatedAt = max(
+		const updatedAt = firstBy(
 			languages
 				.map(({createdAt}) => createdAt)
 				.filter((createdAt): createdAt is Timestamp => createdAt !== null)
 				.map((createdAt) => createdAt.toDate()),
+			[identity(), 'desc'],
 		);
 
 		const rankingRef = db.doc(`games/${gameId}/ranking/${userId}`) as DocumentReference<CodegolfRanking>;

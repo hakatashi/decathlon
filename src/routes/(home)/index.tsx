@@ -1,7 +1,7 @@
 import {Title} from '@solidjs/meta';
 import {A} from '@solidjs/router';
 import {Button} from '@suid/material';
-import range from 'lodash/range';
+import {range} from 'remeda';
 import {Index} from 'solid-js';
 import styles from './index.module.css';
 
@@ -11,7 +11,7 @@ const Home = () => (
 		<svg viewBox="-225 -225 450 450" class={styles.logo}>
 			<g class={styles.logoRotation}>
 				<circle cx={0} cy={0} r={100} stroke="white" fill="transparent"/>
-				<Index each={range(9)}>
+				<Index each={range(0, 9)}>
 					{(i) => (
 						<circle
 							cx={Math.sin(Math.PI * 2 / 9 * i()) * 151.98}

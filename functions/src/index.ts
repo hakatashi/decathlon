@@ -9,11 +9,11 @@ import {info as logInfo, error as logError} from 'firebase-functions/logger';
 import {defineString} from 'firebase-functions/params';
 import {user as authUser} from 'firebase-functions/v1/auth';
 import mdiff from 'mdiff';
-import type {Athlon, Game, PromptEngineeringVote, Score, TypingJapaneseSubmission, SlackUserInfo} from '~/lib/schema';
-import {db} from './firebase';
-import {calculateRanking, updatePromptEngineeringScores} from './scores';
+import type {Athlon, Game, PromptEngineeringVote, Score, TypingJapaneseSubmission, SlackUserInfo} from '~/lib/schema.js';
+import {db} from './firebase.js';
+import {calculateRanking, updatePromptEngineeringScores} from './scores.js';
 
-export * from './esolang';
+export * from './esolang.js';
 
 const SLACK_TOKEN = defineString('SLACK_TOKEN');
 

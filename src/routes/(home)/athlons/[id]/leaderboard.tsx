@@ -5,7 +5,7 @@ import {blue, orange, red, yellow} from '@suid/material/colors';
 import dayjs from 'dayjs';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, getFirestore, orderBy, query, where} from 'firebase/firestore';
-import {floor, unzip, filter} from 'lodash';
+import {floor, filter} from 'remeda';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createMemo, createSignal, For, Match, onCleanup, Show, Switch} from 'solid-js';
 import Collection from '~/components/Collection';
@@ -14,6 +14,10 @@ import PageTitle from '~/components/PageTitle';
 import Username from '~/components/Username';
 import type {Game, RankingEntry} from '~/lib/schema';
 import useAthlon from '~/lib/useAthlon';
+
+const transpose = <T, >(array: T[][]): T[][] => (
+	array[0].map((_, i) => array.map((row) => row[i]))
+);
 
 const RankingTable = (props: {ranking: RankingEntry[], athlonId: string, showRawScore: boolean}) => {
 	const param = useParams();
@@ -30,11 +34,11 @@ const RankingTable = (props: {ranking: RankingEntry[], athlonId: string, showRaw
 	);
 
 	const participants = createMemo(() => (
-		unzip(
+		transpose(
 			props.ranking.map((user) => (
 				user.games.map((game) => game.hasScore && game.point > 0 && !game.isAuthor)
 			)),
-		).map((users) => filter(users).length)
+		).map((users) => filter(users, (user) => user === true).length)
 	));
 
 	const authState = useAuth(auth);
