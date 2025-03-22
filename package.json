@@ -17,6 +17,7 @@
     "@types/common-tags": "^1.8.4",
     "@types/lodash": "^4.17.16",
     "@types/node": "^22.13.11",
+    "@typescript-eslint/parser": "^8.27.0",
     "eslint": "^9.23.0",
     "postcss": "^8.5.3",
     "sass": "^1.86.0",
