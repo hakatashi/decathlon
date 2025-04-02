@@ -5,7 +5,7 @@ import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, query, setDoc, where} from 'firebase/firestore';
 import {getFunctions, httpsCallable} from 'firebase/functions';
 import {getStorage, ref} from 'firebase/storage';
-// import remarkGfm from 'remark-gfm';
+import remarkGfm from 'remark-gfm';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, For, Match, Show, Switch} from 'solid-js';
 import {SolidMarkdown} from 'solid-markdown';
@@ -378,7 +378,7 @@ const AthlonGame = () => {
 						<SolidMarkdown
 							class="markdown"
 							children={game.description}
-							// remarkPlugins={[remarkGfm]}
+							remarkPlugins={[remarkGfm]}
 							linkTarget="_blank"
 						/>
 					)}

@@ -4,8 +4,8 @@ import {Switch as SwitchUi, Alert, Box, Button, ButtonGroup, Container, Stack, L
 import {blue} from '@suid/material/colors';
 import dayjs from 'dayjs';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, serverTimestamp, setDoc, where} from 'firebase/firestore';
-// import remarkGfm from 'remark-gfm';
 import {getFunctions, httpsCallable} from 'firebase/functions';
+import remarkGfm from 'remark-gfm';
 import {zip} from 'remeda';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, For, Match, Show, Switch} from 'solid-js';
@@ -106,7 +106,7 @@ const SubmissionTab = (props: SubmissionTabProps) => {
 							<SolidMarkdown
 								class="markdown"
 								children={config.briefRegulation}
-								// remarkPlugins={[remarkGfm]}
+								remarkPlugins={[remarkGfm]}
 								linkTarget="_blank"
 							/>
 						</Typography>
