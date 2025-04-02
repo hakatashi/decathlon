@@ -171,10 +171,9 @@ const Leaderboard = () => {
 	const athlonData = useAthlon(param.id);
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
-	const athlonRankingsRef = collection(db, 'athlons', param.id, 'rankings') as CollectionReference<RankingEntry>;
 	const athlonRankingsData = useFirestore(
 		query(
-			athlonRankingsRef,
+			collection(db, 'athlons', param.id, 'rankings') as CollectionReference<RankingEntry>,
 			orderBy('rank'),
 		),
 	);
