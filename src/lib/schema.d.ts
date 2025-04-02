@@ -34,6 +34,8 @@ export interface Athlon {
 	ranking: RankingEntry[],
 }
 
+export type AthlonRanking = DocumentData & RankingEntry;
+
 export interface ScoreConfigurationScore {
 	type: 'score',
 	scoreWeight: number,

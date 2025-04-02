@@ -9,7 +9,7 @@ import {info as logInfo, error as logError} from 'firebase-functions/logger';
 import {defineString} from 'firebase-functions/params';
 import {user as authUser} from 'firebase-functions/v1/auth';
 import mdiff from 'mdiff';
-import type {Athlon, Game, PromptEngineeringVote, Score, TypingJapaneseSubmission, SlackUserInfo} from '~/lib/schema.js';
+import type {Athlon, Game, PromptEngineeringVote, Score, TypingJapaneseSubmission, SlackUserInfo, AthlonRanking} from '~/lib/schema.js';
 import {db} from './firebase.js';
 import {calculateRanking, updatePromptEngineeringScores} from './scores.js';
 
@@ -98,6 +98,10 @@ export const onScoreChanged = onDocumentWritten(
 			const athlon = gameDoc.get('athlon') as DocumentReference<Athlon>;
 			const athlonData = (await athlon.get()).data();
 			if (athlonData && athlonData.endAt.toDate() < new Date()) {
+				logInfo('Athlon is ended, skipping ranking update', {
+					athlonId: athlon.id,
+					endAt: athlonData.endAt.toDate(),
+				});
 				return;
 			}
 			const gameDocs = await transaction.get(
@@ -115,6 +119,14 @@ export const onScoreChanged = onDocumentWritten(
 			transaction.update(athlon, {
 				ranking,
 			});
+
+			const athlonRankings = athlon.collection('rankings') as CollectionReference<AthlonRanking>;
+
+			for (const rankingEntry of ranking) {
+				const {userId} = rankingEntry;
+				const rankingEntryRef = athlonRankings.doc(userId);
+				transaction.set(rankingEntryRef, rankingEntry);
+			}
 		});
 	},
 );
