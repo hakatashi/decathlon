@@ -29,7 +29,7 @@ const isUserIdNewerThanOrEqualTo = (userId: string, thresholdUserId: string) => 
 interface RankingTableProps {
 	ranking: RankingEntry[],
 	athlonId: string,
-	rookieThresholdId?: string | null,
+	thresholdId?: string | null,
 	showRawScore: boolean,
 }
 
@@ -52,7 +52,7 @@ const RankingTable = (props: RankingTableProps) => {
 	);
 
 	const ranking = createMemo<(RankingEntry & {originalRank?: number})[]>(() => {
-		const rookieThresholdId = props.rookieThresholdId;
+		const rookieThresholdId = props.thresholdId;
 		if (!rookieThresholdId) {
 			return props.ranking;
 		}
@@ -329,27 +329,16 @@ const Leaderboard = () => {
 				/>
 				<Doc data={athlonRankingsData}>
 					{(athlonRankings) => (
-						<Switch>
-							<Match when={searchParams.mode !== 'rookie'}>
+						<Doc data={athlonData}>
+							{(athlon) => (
 								<RankingTable
 									ranking={athlonRankings}
 									athlonId={param.id}
+									thresholdId={searchParams.mode === 'rookie' ? athlon.rookieThresholdId : null}
 									showRawScore={showRawScore()}
 								/>
-							</Match>
-							<Match when>
-								<Doc data={athlonData}>
-									{(athlon) => (
-										<RankingTable
-											ranking={athlonRankings}
-											athlonId={param.id}
-											rookieThresholdId={athlon.rookieThresholdId}
-											showRawScore={showRawScore()}
-										/>
-									)}
-								</Doc>
-							</Match>
-						</Switch>
+							)}
+						</Doc>
 					)}
 				</Doc>
 			</Container>
