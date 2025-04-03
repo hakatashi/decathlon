@@ -12,7 +12,7 @@ import Doc from '~/components/Doc';
 import PageTitle from '~/components/PageTitle';
 import RankingSummary from '~/components/RankingSummary';
 import {athlonNames} from '~/lib/const';
-import type {Game} from '~/lib/schema';
+import type {Game, RankingEntry} from '~/lib/schema';
 import useAthlon from '~/lib/useAthlon';
 
 const Head = (props: {children: JSX.Element}) => (
@@ -39,6 +39,12 @@ const Home = () => {
 			collection(db, 'games') as CollectionReference<Game>,
 			where('athlon', '==', doc(db, 'athlons', param.id)),
 			orderBy('order'),
+		),
+	);
+	const athlonRankingsData = useFirestore(
+		query(
+			collection(db, 'athlons', param.id, 'rankings') as CollectionReference<RankingEntry>,
+			orderBy('rank'),
 		),
 	);
 
@@ -111,9 +117,9 @@ const Home = () => {
 				<Head>
 					成績上位者
 				</Head>
-				<Doc data={athlonData}>
-					{(athlon) => (
-						<RankingSummary users={athlon.ranking.map((rank) => rank.userId)}/>
+				<Doc data={athlonRankingsData}>
+					{(athlonRankings) => (
+						<RankingSummary users={athlonRankings.map((rank) => rank.userId)}/>
 					)}
 				</Doc>
 				<Box textAlign="center" my={3}>

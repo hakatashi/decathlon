@@ -12,6 +12,7 @@ export type SlackUserInfo = SlackUser
 
 export interface RankingEntry {
 	userId: string,
+	athlonId: string,
 	point: number,
 	rank: number,
 	games: {
@@ -31,7 +32,6 @@ export interface Athlon {
 	endAt: Timestamp,
 	description: string,
 	id: string,
-	ranking: RankingEntry[],
 }
 
 export type AthlonRanking = DocumentData & RankingEntry;

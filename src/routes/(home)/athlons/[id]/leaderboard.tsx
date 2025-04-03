@@ -16,7 +16,7 @@ import type {Game, RankingEntry} from '~/lib/schema';
 import useAthlon from '~/lib/useAthlon';
 
 const transpose = <T, >(array: T[][]): T[][] => (
-	array[0].map((_, i) => array.map((row) => row[i]))
+	array.length === 0 ? [] : array[0].map((_, i) => array.map((row) => row[i]))
 );
 
 const RankingTable = (props: {ranking: RankingEntry[], athlonId: string, showRawScore: boolean}) => {
@@ -169,6 +169,14 @@ const RankingTable = (props: {ranking: RankingEntry[], athlonId: string, showRaw
 const Leaderboard = () => {
 	const param = useParams();
 	const athlonData = useAthlon(param.id);
+	const app = useFirebaseApp();
+	const db = getFirestore(app);
+	const athlonRankingsData = useFirestore(
+		query(
+			collection(db, 'athlons', param.id, 'rankings') as CollectionReference<RankingEntry>,
+			orderBy('rank'),
+		),
+	);
 
 	const [showRawScore, setShowRawScore] = createSignal<boolean>(false);
 	const [now, setNow] = createSignal<number>(Date.now());
@@ -238,11 +246,11 @@ const Leaderboard = () => {
 					}
 					label="Show Raw Score"
 				/>
-				<Doc data={athlonData}>
-					{(athlon) => (
+				<Doc data={athlonRankingsData}>
+					{(athlonRankings) => (
 						<RankingTable
-							ranking={athlon.ranking}
-							athlonId={athlon.id}
+							ranking={athlonRankings}
+							athlonId={param.id}
 							showRawScore={showRawScore()}
 						/>
 					)}

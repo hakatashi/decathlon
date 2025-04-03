@@ -125,7 +125,7 @@ export const onScoreChanged = onDocumentWritten(
 			for (const rankingEntry of ranking) {
 				const {userId} = rankingEntry;
 				const rankingEntryRef = athlonRankings.doc(userId);
-				transaction.set(rankingEntryRef, rankingEntry);
+				transaction.set(rankingEntryRef, {...rankingEntry, athlonId: athlon.id});
 			}
 		});
 	},
