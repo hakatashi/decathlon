@@ -29,7 +29,7 @@ const isUserIdNewerThanOrEqualTo = (userId: string, thresholdUserId: string) => 
 interface RankingTableProps {
 	ranking: RankingEntry[],
 	athlonId: string,
-	rookieThresholdId?: string | null,
+	thresholdId?: string | null,
 	showRawScore: boolean,
 }
 
@@ -52,8 +52,8 @@ const RankingTable = (props: RankingTableProps) => {
 	);
 
 	const ranking = createMemo<(RankingEntry & {originalRank?: number})[]>(() => {
-		const rookieThresholdId = props.rookieThresholdId;
-		if (!rookieThresholdId) {
+		const thresholdId = props.thresholdId;
+		if (!thresholdId) {
 			return props.ranking;
 		}
 
@@ -65,11 +65,11 @@ const RankingTable = (props: RankingTableProps) => {
 		let rankCounter = 0;
 		return props.ranking
 			.filter((user) => {
-				const rookieUser = usersInfoData.find((u) => u.id === user.userId);
-				if (!rookieUser) {
+				const userInfo = usersInfoData.find((u) => u.id === user.userId);
+				if (!userInfo) {
 					return false;
 				}
-				return isUserIdNewerThanOrEqualTo(rookieUser.slackId, rookieThresholdId);
+				return isUserIdNewerThanOrEqualTo(userInfo.slackId, thresholdId);
 			})
 			.map((user) => {
 				const newRank = rankCounter;
@@ -329,27 +329,16 @@ const Leaderboard = () => {
 				/>
 				<Doc data={athlonRankingsData}>
 					{(athlonRankings) => (
-						<Switch>
-							<Match when={searchParams.mode !== 'rookie'}>
+						<Doc data={athlonData}>
+							{(athlon) => (
 								<RankingTable
 									ranking={athlonRankings}
 									athlonId={param.id}
+									thresholdId={searchParams.mode === 'rookie' ? athlon.rookieThresholdId : null}
 									showRawScore={showRawScore()}
 								/>
-							</Match>
-							<Match when>
-								<Doc data={athlonData}>
-									{(athlon) => (
-										<RankingTable
-											ranking={athlonRankings}
-											athlonId={param.id}
-											rookieThresholdId={athlon.rookieThresholdId}
-											showRawScore={showRawScore()}
-										/>
-									)}
-								</Doc>
-							</Match>
-						</Switch>
+							)}
+						</Doc>
 					)}
 				</Doc>
 			</Container>
