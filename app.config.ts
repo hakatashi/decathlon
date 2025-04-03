@@ -26,7 +26,7 @@ export default defineConfig({
 				'@firebase/functions',
 			],
 			include: [
-				// CJS modules depended by ES modules (solid-markdown) should be explicitly included
+				// CJS modules depended on by ES modules (solid-markdown) should be explicitly included
 				// https://vite.dev/config/dep-optimization-options#optimizedeps-exclude
 				'solid-markdown > debug',
 				'solid-markdown > extend',
