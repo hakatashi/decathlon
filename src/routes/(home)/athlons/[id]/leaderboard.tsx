@@ -29,7 +29,7 @@ const isUserIdNewerThanOrEqualTo = (userId: string, thresholdUserId: string) => 
 interface RankingTableProps {
 	ranking: RankingEntry[],
 	athlonId: string,
-	rookieThreshouldId?: string | null,
+	rookieThresholdId?: string | null,
 	showRawScore: boolean,
 }
 
