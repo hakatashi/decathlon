@@ -19,11 +19,11 @@ const transpose = <T, >(array: T[][]): T[][] => (
 	array.length === 0 ? [] : array[0].map((_, i) => array.map((row) => row[i]))
 );
 
-const isUserIdNewerThanOrEqualTo = (userId: string, threshouldUserId: string) => {
+const isUserIdNewerThanOrEqualTo = (userId: string, thresholdUserId: string) => {
 	const userIdNumber = parseInt(userId.slice(1), 36);
-	const threshouldUserIdNumber = parseInt(threshouldUserId.slice(1), 36);
+	const thresholdUserIdNumber = parseInt(thresholdUserId.slice(1), 36);
 
-	return userIdNumber >= threshouldUserIdNumber;
+	return userIdNumber >= thresholdUserIdNumber;
 };
 
 interface RankingTableProps {
