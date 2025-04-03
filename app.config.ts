@@ -25,9 +25,15 @@ export default defineConfig({
 				'firebase/functions',
 				'@firebase/functions',
 			],
+			include: [
+				// CJS modules depended on by ES modules (solid-markdown) should be explicitly included
+				// https://vite.dev/config/dep-optimization-options#optimizedeps-exclude
+				'solid-markdown > debug',
+				'solid-markdown > extend',
+			],
 		},
 		resolve: {
-		// https://github.com/wobsoriano/solid-firebase/issues/11#issuecomment-1467538235
+			// https://github.com/wobsoriano/solid-firebase/issues/11#issuecomment-1467538235
 			alias: {
 				'@firebase/auth': path.resolve(
 					__dirname,
