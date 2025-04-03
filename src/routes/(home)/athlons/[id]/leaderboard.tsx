@@ -298,7 +298,7 @@ const Leaderboard = () => {
 										variant={searchParams.mode === 'rookie' ? 'contained' : 'outlined'}
 										onClick={() => setSearchParams({mode: 'rookie'})}
 									>
-										新入生ランキング
+										新入部員ランキング
 									</Button>
 								</ButtonGroup>
 							</Box>
