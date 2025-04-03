@@ -1,6 +1,6 @@
-import {A, useParams} from '@solidjs/router';
+import {A, useParams, useSearchParams} from '@solidjs/router';
 import {ElectricBolt, Star} from '@suid/icons-material';
-import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Stack, FormControlLabel, Switch as SwitchControl} from '@suid/material';
+import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Stack, FormControlLabel, Switch as SwitchControl, Box, ButtonGroup, Button} from '@suid/material';
 import {blue, orange, red, yellow} from '@suid/material/colors';
 import dayjs from 'dayjs';
 import {getAuth} from 'firebase/auth';
@@ -12,14 +12,28 @@ import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import PageTitle from '~/components/PageTitle';
 import Username from '~/components/Username';
-import type {Game, RankingEntry} from '~/lib/schema';
+import type {Game, RankingEntry, User} from '~/lib/schema';
 import useAthlon from '~/lib/useAthlon';
 
 const transpose = <T, >(array: T[][]): T[][] => (
 	array.length === 0 ? [] : array[0].map((_, i) => array.map((row) => row[i]))
 );
 
-const RankingTable = (props: {ranking: RankingEntry[], athlonId: string, showRawScore: boolean}) => {
+const isUserIdNewerThanOrEqualTo = (userId: string, thresholdUserId: string) => {
+	const userIdNumber = parseInt(userId.slice(1), 36);
+	const thresholdUserIdNumber = parseInt(thresholdUserId.slice(1), 36);
+
+	return userIdNumber >= thresholdUserIdNumber;
+};
+
+interface RankingTableProps {
+	ranking: RankingEntry[],
+	athlonId: string,
+	rookieThresholdId?: string | null,
+	showRawScore: boolean,
+}
+
+const RankingTable = (props: RankingTableProps) => {
 	const param = useParams();
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
@@ -33,9 +47,44 @@ const RankingTable = (props: {ranking: RankingEntry[], athlonId: string, showRaw
 		),
 	);
 
+	const usersData = useFirestore(
+		collection(db, 'users') as CollectionReference<User>,
+	);
+
+	const ranking = createMemo<(RankingEntry & {originalRank?: number})[]>(() => {
+		const rookieThresholdId = props.rookieThresholdId;
+		if (!rookieThresholdId) {
+			return props.ranking;
+		}
+
+		const usersInfoData = usersData.data;
+		if (!usersInfoData) {
+			return props.ranking;
+		}
+
+		let rankCounter = 0;
+		return props.ranking
+			.filter((user) => {
+				const rookieUser = usersInfoData.find((u) => u.id === user.userId);
+				if (!rookieUser) {
+					return false;
+				}
+				return isUserIdNewerThanOrEqualTo(rookieUser.slackId, rookieThresholdId);
+			})
+			.map((user) => {
+				const newRank = rankCounter;
+				rankCounter++;
+				return {
+					...user,
+					rank: newRank,
+					originalRank: user.rank,
+				};
+			});
+	});
+
 	const participants = createMemo(() => (
 		transpose(
-			props.ranking.map((user) => (
+			ranking().map((user) => (
 				user.games.map((game) => game.hasScore && game.point > 0 && !game.isAuthor)
 			)),
 		).map((users) => filter(users, (user) => user === true).length)
@@ -74,14 +123,23 @@ const RankingTable = (props: {ranking: RankingEntry[], athlonId: string, showRaw
 					</TableRow>
 				</TableHead>
 				<TableBody>
-					<For each={props.ranking}>
+					<For each={ranking()}>
 						{(userEntry) => {
 							const isMe = authState?.data?.uid === userEntry.userId;
 
 							return (
 								<TableRow sx={isMe ? {backgroundColor: blue[50]} : {}}>
 									<TableCell>
-										{userEntry.rank + 1}
+										<strong>
+											{userEntry.rank + 1}
+										</strong>
+										<Show when={userEntry.originalRank}>
+											{(originalRank) => (
+												<small>
+													&nbsp;({originalRank() + 1})
+												</small>
+											)}
+										</Show>
 									</TableCell>
 									<TableCell>
 										<Username userId={userEntry.userId}/>
@@ -158,7 +216,7 @@ const RankingTable = (props: {ranking: RankingEntry[], athlonId: string, showRaw
 								<TableCell size="small" align="right"><strong>{participant}</strong></TableCell>
 							)}
 						</For>
-						<TableCell size="small" align="right"><strong>{props.ranking.length}</strong></TableCell>
+						<TableCell size="small" align="right"><strong>{ranking().length}</strong></TableCell>
 					</TableRow>
 				</TableBody>
 			</Table>
@@ -180,6 +238,7 @@ const Leaderboard = () => {
 
 	const [showRawScore, setShowRawScore] = createSignal<boolean>(false);
 	const [now, setNow] = createSignal<number>(Date.now());
+	const [searchParams, setSearchParams] = useSearchParams();
 
 	const intervalId = setInterval(() => {
 		setNow(Date.now());
@@ -224,6 +283,28 @@ const Leaderboard = () => {
 				>
 					Leaderboard
 				</Typography>
+				<Doc data={athlonData}>
+					{(athlon) => (
+						<Show when={athlon.rookieThresholdId !== null}>
+							<Box textAlign="center" my={1}>
+								<ButtonGroup variant="outlined" size="large">
+									<Button
+										variant={searchParams.mode !== 'rookie' ? 'contained' : 'outlined'}
+										onClick={() => setSearchParams({mode: 'general'})}
+									>
+										総合ランキング
+									</Button>
+									<Button
+										variant={searchParams.mode === 'rookie' ? 'contained' : 'outlined'}
+										onClick={() => setSearchParams({mode: 'rookie'})}
+									>
+										新入生ランキング
+									</Button>
+								</ButtonGroup>
+							</Box>
+						</Show>
+					)}
+				</Doc>
 				<Show when={isEnded() && endAt()} keyed>
 					{(day) => (
 						<Typography
@@ -248,11 +329,27 @@ const Leaderboard = () => {
 				/>
 				<Doc data={athlonRankingsData}>
 					{(athlonRankings) => (
-						<RankingTable
-							ranking={athlonRankings}
-							athlonId={param.id}
-							showRawScore={showRawScore()}
-						/>
+						<Switch>
+							<Match when={searchParams.mode !== 'rookie'}>
+								<RankingTable
+									ranking={athlonRankings}
+									athlonId={param.id}
+									showRawScore={showRawScore()}
+								/>
+							</Match>
+							<Match when>
+								<Doc data={athlonData}>
+									{(athlon) => (
+										<RankingTable
+											ranking={athlonRankings}
+											athlonId={param.id}
+											rookieThresholdId={athlon.rookieThresholdId}
+											showRawScore={showRawScore()}
+										/>
+									)}
+								</Doc>
+							</Match>
+						</Switch>
 					)}
 				</Doc>
 			</Container>
