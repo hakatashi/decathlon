@@ -52,8 +52,8 @@ const RankingTable = (props: RankingTableProps) => {
 	);
 
 	const ranking = createMemo<(RankingEntry & {originalRank?: number})[]>(() => {
-		const rookieThresholdId = props.thresholdId;
-		if (!rookieThresholdId) {
+		const thresholdId = props.thresholdId;
+		if (!thresholdId) {
 			return props.ranking;
 		}
 
@@ -65,11 +65,11 @@ const RankingTable = (props: RankingTableProps) => {
 		let rankCounter = 0;
 		return props.ranking
 			.filter((user) => {
-				const rookieUser = usersInfoData.find((u) => u.id === user.userId);
-				if (!rookieUser) {
+				const userInfo = usersInfoData.find((u) => u.id === user.userId);
+				if (!userInfo) {
 					return false;
 				}
-				return isUserIdNewerThanOrEqualTo(rookieUser.slackId, rookieThresholdId);
+				return isUserIdNewerThanOrEqualTo(userInfo.slackId, thresholdId);
 			})
 			.map((user) => {
 				const newRank = rankCounter;
