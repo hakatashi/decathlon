@@ -3,7 +3,7 @@ import {useSearchParams} from '@solidjs/router';
 import {Alert, Box, Button, ButtonGroup, CircularProgress, Container, Link as LinkUi, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from '@suid/material';
 import dayjs from 'dayjs';
 import {addDoc, collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, serverTimestamp, where} from 'firebase/firestore';
-// import remarkGfm from 'remark-gfm';
+import remarkGfm from 'remark-gfm';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, Match, onCleanup, Show, Switch} from 'solid-js';
 import {SolidMarkdown} from 'solid-markdown';
@@ -132,7 +132,7 @@ const MainTab = (props: MainTabProps) => {
 							<SolidMarkdown
 								class="markdown"
 								children={config.description}
-								// remarkPlugins={[remarkGfm]}
+								remarkPlugins={[remarkGfm]}
 								linkTarget="_blank"
 							/>
 						</Typography>
