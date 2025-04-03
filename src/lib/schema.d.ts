@@ -32,7 +32,7 @@ export interface Athlon {
 	endAt: Timestamp,
 	description: string,
 	id: string,
-	rookieThreshouldId: string | null,
+	rookieThresholdId: string | null,
 }
 
 export type AthlonRanking = DocumentData & RankingEntry;

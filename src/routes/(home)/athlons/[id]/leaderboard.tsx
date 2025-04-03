@@ -52,8 +52,8 @@ const RankingTable = (props: RankingTableProps) => {
 	);
 
 	const ranking = createMemo<(RankingEntry & {originalRank?: number})[]>(() => {
-		const rookieThreshouldId = props.rookieThreshouldId;
-		if (!rookieThreshouldId) {
+		const rookieThresholdId = props.rookieThresholdId;
+		if (!rookieThresholdId) {
 			return props.ranking;
 		}
 
@@ -69,7 +69,7 @@ const RankingTable = (props: RankingTableProps) => {
 				if (!rookieUser) {
 					return false;
 				}
-				return isUserIdNewerThanOrEqualTo(rookieUser.slackId, rookieThreshouldId);
+				return isUserIdNewerThanOrEqualTo(rookieUser.slackId, rookieThresholdId);
 			})
 			.map((user) => {
 				const newRank = rankCounter;
@@ -285,7 +285,7 @@ const Leaderboard = () => {
 				</Typography>
 				<Doc data={athlonData}>
 					{(athlon) => (
-						<Show when={athlon.rookieThreshouldId !== null}>
+						<Show when={athlon.rookieThresholdId !== null}>
 							<Box textAlign="center" my={1}>
 								<ButtonGroup variant="outlined" size="large">
 									<Button
@@ -343,7 +343,7 @@ const Leaderboard = () => {
 										<RankingTable
 											ranking={athlonRankings}
 											athlonId={param.id}
-											rookieThreshouldId={athlon.rookieThreshouldId}
+											rookieThresholdId={athlon.rookieThresholdId}
 											showRawScore={showRawScore()}
 										/>
 									)}
