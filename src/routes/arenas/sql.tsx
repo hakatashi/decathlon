@@ -1,13 +1,14 @@
 /* eslint-disable react/jsx-key */
 import {Link} from '@solidjs/meta';
 import {useSearchParams} from '@solidjs/router';
-import {Alert, Box, Button, ButtonGroup, CircularProgress, Container, Link as LinkUi, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from '@suid/material';
+import {Alert, Box, Button, ButtonGroup, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Link as LinkUi, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from '@suid/material';
 import dayjs from 'dayjs';
 import {addDoc, collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, serverTimestamp, where} from 'firebase/firestore';
 import remarkGfm from 'remark-gfm';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, Match, onCleanup, Show, Switch} from 'solid-js';
 import {SolidMarkdown} from 'solid-markdown';
+import {QueryExecResult} from 'sql.js';
 import {setArenaTitle, useUser} from '../arenas';
 import styles from './reversing-diff.module.css';
 import Collection from '~/components/Collection';
@@ -19,6 +20,37 @@ import {Game, SqlConfiguration, SqlSubmission, UseFireStoreReturn} from '~/lib/s
 interface MainTabProps {
 	phase: 'loading' | 'waiting' | 'playing' | 'finished',
 }
+
+interface LocalExecutionResult {
+	status: 'success' | 'failed' | 'error' | 'none',
+	results: QueryExecResult[],
+	errorMessage: string,
+}
+
+const isResultMatching = (results: QueryExecResult[], expected: SqlConfiguration['sampleOutput']) => {
+	if (results.length !== 1) {
+		return false;
+	}
+
+	const result = results[0];
+	if (result.columns.length !== expected.columnNames.length) {
+		return false;
+	}
+	if (result.values.length !== expected.rows.length) {
+		return false;
+	}
+	if (result.columns.some((column, index) => column !== expected.columnNames[index])) {
+		return false;
+	}
+	if (result.values.some((row, rowIndex) => (
+		row.some((value, columnIndex) => (
+			value !== expected.rows[rowIndex][expected.columnNames[columnIndex]]
+		))
+	))) {
+		return false;
+	}
+	return true;
+};
 
 const MainTab = (props: MainTabProps) => {
 	const [searchParams, setSearchParams] = useSearchParams();
@@ -38,6 +70,13 @@ const MainTab = (props: MainTabProps) => {
 	const [submission, setSubmission] = createSignal<UseFireStoreReturn<SqlSubmission | null | undefined> | null>(null);
 	const [lastSubmissionTime, setLastSubmissionTime] = createSignal<number | null>(null);
 	const [throttleTime, setThrottleTime] = createSignal<number>(0);
+	const [isExecutingLocally, setIsExecutingLocally] = createSignal(false);
+	const [localExecutionQuery, setLocalExecutionQuery] = createSignal<string | null>(null);
+	const [localExecutionResult, setLocalExecutionResult] = createSignal<LocalExecutionResult>({
+		status: 'none',
+		results: [],
+		errorMessage: '',
+	});
 
 	let descriptionEl!: HTMLElement;
 
@@ -120,9 +159,142 @@ const MainTab = (props: MainTabProps) => {
 			{(game) => {
 				const config = game.configuration as SqlConfiguration;
 
+				const handleClickExecute = async () => {
+					setIsExecutingLocally(true);
+					const currentCode = code();
+
+					if (!currentCode) {
+						return;
+					}
+
+					setLocalExecutionQuery(currentCode);
+					const {default: initSqlJs} = await import('sql.js');
+					const SQL = await initSqlJs({
+						locateFile: (file) => `https://sql.js.org/dist/${file}`,
+					});
+					const sql = new SQL.Database();
+
+					const tableCreationStatements = config.tableSchemas.map((schema) => `
+						CREATE TABLE ${schema.name} (
+							${schema.columns.map((column) => `${column.name} ${column.type}`).join(', ')}
+						);
+					`);
+
+					sql.run(tableCreationStatements.join('\n'));
+
+					const dataInsertionStatements = config.sampleInput.map((input) => {
+						const schema = config.tableSchemas.find((s) => s.name === input.name);
+						if (!schema) {
+							return '';
+						}
+						return `
+							INSERT INTO ${schema.name} (${schema.columns.map((column) => column.name).join(', ')})
+							VALUES ${input.rows.map((row) => `(${schema.columns.map((column) => `'${row[column.name]}'`).join(', ')})`).join(', ')};
+						`;
+					});
+
+					sql.run(dataInsertionStatements.join('\n'));
+
+					try {
+						const res = sql.exec(currentCode);
+						setLocalExecutionResult({
+							status: isResultMatching(res, config.sampleOutput) ? 'success' : 'failed',
+							results: res,
+							errorMessage: '',
+						});
+					} catch (error) {
+						setLocalExecutionResult({
+							status: 'error',
+							results: [],
+							errorMessage: (error as Error).message,
+						});
+					}
+
+					setIsExecutingLocally(false);
+				};
+
 				return (
 					<>
 						<Link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css"/>
+						<Dialog
+							open={localExecutionResult().status !== 'none'}
+							onClose={() => setLocalExecutionResult({
+								status: 'none',
+								results: [],
+								errorMessage: '',
+							})}
+						>
+							<DialogTitle>
+								実行結果
+							</DialogTitle>
+							<DialogContent>
+								<DialogContentText>
+									<pre style={{'min-width': '300px', margin: '1rem 0'}}>
+										{localExecutionQuery()}
+									</pre>
+									<p>
+										結果:
+										<Switch>
+											<Match when={localExecutionResult().status === 'success'}>
+												<span style={{color: 'green'}}>ACCEPTED</span>
+											</Match>
+											<Match when={localExecutionResult().status === 'failed'}>
+												<span style={{color: 'red'}}>WRONG ANSWER</span>
+											</Match>
+											<Match when={localExecutionResult().status === 'error'}>
+												<span style={{color: 'red'}}>ERROR</span>
+											</Match>
+										</Switch>
+									</p>
+									<Switch>
+										<Match
+											when={localExecutionResult().status === 'success' || localExecutionResult().status === 'failed'}
+										>
+											{localExecutionResult().results.map((result) => (
+												<TableContainer component={Paper}>
+													<Table size="small">
+														<TableHead>
+															<TableRow>
+																{result.columns.map((column) => (
+																	<TableCell>{column}</TableCell>
+																))}
+															</TableRow>
+														</TableHead>
+														<TableBody>
+															{
+																result.values.map((row) => (
+																	<TableRow>
+																		{row.map((value) => (
+																			<TableCell>{value?.toString()}</TableCell>
+																		))}
+																	</TableRow>
+																))
+															}
+														</TableBody>
+													</Table>
+												</TableContainer>
+											))}
+										</Match>
+										<Match when={localExecutionResult().status === 'error'}>
+											<Typography variant="body1" color="error.main">
+												{localExecutionResult().errorMessage}
+											</Typography>
+										</Match>
+									</Switch>
+								</DialogContentText>
+							</DialogContent>
+							<DialogActions sx={{color: 'primary.main'}}>
+								<Button
+									onClick={() => setLocalExecutionResult({
+										status: 'none',
+										results: [],
+										errorMessage: '',
+									})}
+								>
+									閉じる
+								</Button>
+							</DialogActions>
+						</Dialog>
 						<Typography variant="body1" ref={descriptionEl}>
 							<SolidMarkdown
 								class="markdown"
@@ -177,7 +349,6 @@ const MainTab = (props: MainTabProps) => {
 												</TableRow>
 											</TableHead>
 											<TableBody>
-												<TableRow/>
 												{input.rows.map((row) => (
 													<TableRow>
 														{schema.columns.map((column) => (
@@ -257,6 +428,15 @@ const MainTab = (props: MainTabProps) => {
 								)}
 							</Doc>
 						</Show>
+						<Button
+							disabled={isExecutingLocally()}
+							onClick={handleClickExecute}
+							variant="contained"
+							size="large"
+							sx={{mr: 2}}
+						>
+							サンプルケースを実行
+						</Button>
 						<Switch>
 							<Match when={props.phase === 'finished'}>
 								<Button variant="contained" disabled size="large">
