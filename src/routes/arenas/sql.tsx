@@ -1,14 +1,14 @@
 /* eslint-disable react/jsx-key */
 import {Link} from '@solidjs/meta';
 import {useSearchParams} from '@solidjs/router';
-import {Alert, Box, Button, ButtonGroup, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Link as LinkUi, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from '@suid/material';
+import {Alert, Box, Button, ButtonGroup, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControl, FormControlLabel, FormLabel, Link as LinkUi, Paper, Radio, RadioGroup, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from '@suid/material';
 import dayjs from 'dayjs';
 import {addDoc, collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, serverTimestamp, where} from 'firebase/firestore';
 import remarkGfm from 'remark-gfm';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, Match, onCleanup, Show, Switch} from 'solid-js';
 import {SolidMarkdown} from 'solid-markdown';
-import {QueryExecResult} from 'sql.js';
+import type {QueryExecResult} from 'sql.js';
 import {setArenaTitle, useUser} from '../arenas';
 import styles from './reversing-diff.module.css';
 import Collection from '~/components/Collection';
@@ -77,6 +77,7 @@ const MainTab = (props: MainTabProps) => {
 		results: [],
 		errorMessage: '',
 	});
+	const [sqlEngine, setSqlEngine] = createSignal<'mysql' | 'postgresql' | 'sqlite'>('sqlite');
 
 	let descriptionEl!: HTMLElement;
 
@@ -383,6 +384,21 @@ const MainTab = (props: MainTabProps) => {
 								</TableBody>
 							</Table>
 						</TableContainer>
+						<Box sx={{mt: 5}}>
+							<FormControl>
+								<FormLabel>SQLエンジン</FormLabel>
+								<RadioGroup
+									row
+									defaultValue="sqlite"
+									value={sqlEngine()}
+									onChange={(_event, value) => setSqlEngine(value as 'mysql' | 'postgresql' | 'sqlite')}
+								>
+									<FormControlLabel value="mysql" control={<Radio/>} label="MySQL"/>
+									<FormControlLabel value="postgresql" control={<Radio/>} label="PostgreSQL"/>
+									<FormControlLabel value="sqlite" control={<Radio/>} label="SQLite"/>
+								</RadioGroup>
+							</FormControl>
+						</Box>
 						<TextField
 							label="提出コード"
 							multiline
@@ -393,7 +409,6 @@ const MainTab = (props: MainTabProps) => {
 							disabled={props.phase === 'finished' || submitStatus() === 'executing'}
 							// @ts-expect-error: type error
 							sx={{
-								mt: 5,
 								mb: 2,
 								width: '100%',
 								'& textarea': {
@@ -429,7 +444,7 @@ const MainTab = (props: MainTabProps) => {
 							</Doc>
 						</Show>
 						<Button
-							disabled={isExecutingLocally()}
+							disabled={sqlEngine() !== 'sqlite' || isExecutingLocally()}
 							onClick={handleClickExecute}
 							variant="contained"
 							size="large"
@@ -444,7 +459,7 @@ const MainTab = (props: MainTabProps) => {
 								</Button>
 							</Match>
 							<Match when={submitStatus() === 'ready'}>
-								<Button onClick={handleClickSubmit} variant="contained" size="large">
+								<Button onClick={handleClickSubmit} variant="contained" size="large" disabled>
 									送信
 								</Button>
 							</Match>
