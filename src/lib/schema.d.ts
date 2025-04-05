@@ -182,6 +182,11 @@ export interface PromptEngineeringSubmission extends DocumentData {
 	updatedAt: Timestamp,
 }
 
+export interface SqlSubmission extends DocumentData {
+	athlon: DocumentReference<Athlon>,
+	userId: string,
+}
+
 export interface DiffConfiguration {
 	enabled: boolean,
 	language: string,
@@ -234,7 +239,27 @@ export interface TypingJapaneseConfiguration {
 	textUrl?: string,
 }
 
-type Configuration = DiffConfiguration | CodegolfConfiguration | QuantumComputingConfiguration | PromptEngineeringConfiguration | TypingJapaneseConfiguration;
+export interface SqlConfiguration {
+	enabled: boolean,
+	description: string,
+	tableSchemas: {
+		name: string,
+		columns: {
+			name: string,
+			type: string,
+		}[],
+	}[],
+	sampleInput: {
+		name: string,
+		rows: Record<string, string>[],
+	}[],
+	sampleOutput: {
+		columnNames: string[],
+		rows: Record<string, string>[],
+	},
+}
+
+type Configuration = DiffConfiguration | CodegolfConfiguration | QuantumComputingConfiguration | PromptEngineeringConfiguration | TypingJapaneseConfiguration | SqlConfiguration;
 
 export interface ReversingDiffRanking extends DocumentData {
 	athlon: DocumentReference<Athlon>,
