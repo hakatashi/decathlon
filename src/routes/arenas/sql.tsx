@@ -6,7 +6,7 @@ import dayjs from 'dayjs';
 import {addDoc, collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, serverTimestamp, where} from 'firebase/firestore';
 import remarkGfm from 'remark-gfm';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
-import {createEffect, createMemo, createSignal, Match, onCleanup, Show, Switch} from 'solid-js';
+import {createEffect, createMemo, createSignal, For, Match, onCleanup, Show, Switch} from 'solid-js';
 import {SolidMarkdown} from 'solid-markdown';
 import type {QueryExecResult} from 'sql.js';
 import {setArenaTitle, useUser} from '../arenas';
@@ -110,6 +110,8 @@ const MainTab = (props: MainTabProps) => {
 				athlon: gameData.data.athlon,
 				userId: userData.uid,
 				status: 'pending',
+				engine: 'mysql',
+				results: [],
 				code: codeData ?? '',
 				size: codeData?.length ?? 0,
 				stdout: null,
@@ -251,30 +253,36 @@ const MainTab = (props: MainTabProps) => {
 										<Match
 											when={localExecutionResult().status === 'success' || localExecutionResult().status === 'failed'}
 										>
-											{localExecutionResult().results.map((result) => (
-												<TableContainer component={Paper}>
-													<Table size="small">
-														<TableHead>
-															<TableRow>
-																{result.columns.map((column) => (
-																	<TableCell>{column}</TableCell>
-																))}
-															</TableRow>
-														</TableHead>
-														<TableBody>
-															{
-																result.values.map((row) => (
-																	<TableRow>
-																		{row.map((value) => (
-																			<TableCell>{value?.toString()}</TableCell>
-																		))}
-																	</TableRow>
-																))
-															}
-														</TableBody>
-													</Table>
-												</TableContainer>
-											))}
+											<For each={localExecutionResult().results}>
+												{(result) => (
+													<TableContainer component={Paper}>
+														<Table size="small">
+															<TableHead>
+																<TableRow>
+																	<For each={result.columns}>
+																		{(column) => (
+																			<TableCell>{column}</TableCell>
+																		)}
+																	</For>
+																</TableRow>
+															</TableHead>
+															<TableBody>
+																<For each={result.values}>
+																	{(row) => (
+																		<TableRow>
+																			<For each={row}>
+																				{(value) => (
+																					<TableCell>{value?.toString()}</TableCell>
+																				)}
+																			</For>
+																		</TableRow>
+																	)}
+																</For>
+															</TableBody>
+														</Table>
+													</TableContainer>
+												)}
+											</For>
 										</Match>
 										<Match when={localExecutionResult().status === 'error'}>
 											<Typography variant="body1" color="error.main">
@@ -459,7 +467,7 @@ const MainTab = (props: MainTabProps) => {
 								</Button>
 							</Match>
 							<Match when={submitStatus() === 'ready'}>
-								<Button onClick={handleClickSubmit} variant="contained" size="large" disabled>
+								<Button onClick={handleClickSubmit} variant="contained" size="large">
 									送信
 								</Button>
 							</Match>
@@ -485,6 +493,7 @@ const MainTab = (props: MainTabProps) => {
 
 interface SubmissionsTabProps {
 	submissions: UseFireStoreReturn<SqlSubmission[] | null | undefined> | null,
+	phase: 'loading' | 'waiting' | 'playing' | 'finished',
 }
 
 const SubmissionsTab = (props: SubmissionsTabProps) => {
@@ -541,21 +550,51 @@ const SubmissionsTab = (props: SubmissionsTabProps) => {
 											<Match when={status === 'success'}>
 												<span style={{color: 'green'}}>AC</span>
 											</Match>
+											<Match when={status === 'error'}>
+												<span style={{color: 'red'}}>Error</span>
+											</Match>
 										</Switch>
 									</div>
 								)}
 							</Show>
 							<Typography variant="h4" component="h2" my={1}>Execution Time</Typography>
 							<p>{submission()?.duration}ms</p>
+							<Typography variant="h4" component="h2" my={1}>Engine</Typography>
+							<p>{submission()?.engine}</p>
 							<Typography variant="h4" component="h2" my={1}>Code</Typography>
 							<pre>{submission()?.code}</pre>
-							<Show when={submission()?.errorMessage}>
-								<Typography variant="h4" component="h2" my={1}>Validation Message</Typography>
-								<pre>{submission()?.errorMessage}</pre>
-							</Show>
-							<Show when={submission()?.stderr}>
-								<Typography variant="h4" component="h2" my={1}>Error</Typography>
-								<pre>{submission()?.stderr}</pre>
+							<Show when={props.phase === 'finished'}>
+								<Typography variant="h4" component="h2" my={1}>Results</Typography>
+								<TableContainer component={Paper} sx={{display: 'inline-block', width: 'auto'}}>
+									<Table>
+										<TableHead>
+											<TableRow>
+												<TableCell>Testcase</TableCell>
+												<TableCell>Status</TableCell>
+												<TableCell>Message</TableCell>
+											</TableRow>
+										</TableHead>
+										<TableBody>
+											<For each={submission()?.results ?? []}>
+												{(result) => (
+													<TableRow>
+														<TableCell>{result.testcase}</TableCell>
+														<TableCell>{result.status}</TableCell>
+														<TableCell>{result.detailed_error}</TableCell>
+													</TableRow>
+												)}
+											</For>
+										</TableBody>
+									</Table>
+								</TableContainer>
+								<Show when={submission()?.errorMessage}>
+									<Typography variant="h4" component="h2" my={1}>Validation Message</Typography>
+									<pre>{submission()?.errorMessage}</pre>
+								</Show>
+								<Show when={submission()?.stderr}>
+									<Typography variant="h4" component="h2" my={1}>Execution Log</Typography>
+									<pre>{submission()?.stderr}</pre>
+								</Show>
 							</Show>
 						</div>
 					);
@@ -742,7 +781,7 @@ const SqlContest = () => {
 								<MainTab phase={phase()}/>
 							</Match>
 							<Match when={searchParams.tab === 'submissions'}>
-								<SubmissionsTab submissions={submissions()}/>
+								<SubmissionsTab submissions={submissions()} phase={phase()}/>
 							</Match>
 						</Switch>
 					</Container>

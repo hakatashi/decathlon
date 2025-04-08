@@ -4,10 +4,13 @@ import type {Timestamp, CollectionReference, DocumentReference} from 'firebase-a
 import {getFunctions} from 'firebase-admin/functions';
 import {onDocumentCreated} from 'firebase-functions/firestore';
 import logger from 'firebase-functions/logger';
+import {defineSecret} from 'firebase-functions/params';
 import {onTaskDispatched} from 'firebase-functions/tasks';
 import {firstBy, groupBy, identity, last, reverse, sortBy, sum, zip} from 'remeda';
-import type {CodegolfConfiguration, CodegolfJudgeType, CodegolfRanking, CodegolfSubmission, DiffConfiguration, Game, QuantumComputingConfiguration, QuantumComputingResult, QuantumComputingSubmission, ReversingDiffRanking, ReversingDiffSubmission, Score} from '~/lib/schema.js';
+import type {CodegolfConfiguration, CodegolfJudgeType, CodegolfRanking, CodegolfSubmission, DiffConfiguration, Game, QuantumComputingConfiguration, QuantumComputingResult, QuantumComputingSubmission, ReversingDiffRanking, ReversingDiffSubmission, Score, SqlResult, SqlSubmission, SqlTestcaseResult} from '~/lib/schema.js';
 import {db, storage} from './firebase.js';
+
+const ESOLANG_BATTLE_API_TOKEN = defineSecret('ESOLANG_BATTLE_API_TOKEN');
 
 interface ExecuteDiffSubmissionData {
 	gameId: string,
@@ -16,7 +19,7 @@ interface ExecuteDiffSubmissionData {
 
 export const executeDiffSubmission = onTaskDispatched<ExecuteDiffSubmissionData>(
 	{
-		secrets: ['ESOLANG_BATTLE_API_TOKEN'],
+		secrets: [ESOLANG_BATTLE_API_TOKEN],
 		retryConfig: {
 			maxAttempts: 5,
 			minBackoffSeconds: 60,
@@ -70,7 +73,7 @@ export const executeDiffSubmission = onTaskDispatched<ExecuteDiffSubmissionData>
 				'Content-Type': 'application/x-www-form-urlencoded',
 			},
 			data: new URLSearchParams({
-				token: process.env.ESOLANG_BATTLE_API_TOKEN!,
+				token: ESOLANG_BATTLE_API_TOKEN.value(),
 				code: Buffer.from(input, 'utf-8').toString('base64'),
 				input: '',
 				language: 'clang-cpp',
@@ -186,7 +189,7 @@ interface ExecuteCodegolfSubmissionData {
 
 export const executeCodegolfSubmission = onTaskDispatched<ExecuteCodegolfSubmissionData>(
 	{
-		secrets: ['ESOLANG_BATTLE_API_TOKEN'],
+		secrets: [ESOLANG_BATTLE_API_TOKEN],
 		retryConfig: {
 			maxAttempts: 5,
 			minBackoffSeconds: 60,
@@ -253,7 +256,7 @@ export const executeCodegolfSubmission = onTaskDispatched<ExecuteCodegolfSubmiss
 						'Content-Type': 'application/x-www-form-urlencoded',
 					},
 					data: new URLSearchParams({
-						token: process.env.ESOLANG_BATTLE_API_TOKEN!,
+						token: ESOLANG_BATTLE_API_TOKEN.value(),
 						code: Buffer.from(submission.code, 'utf-8').toString('base64'),
 						input: testcase.input,
 						language: submission.language,
@@ -460,7 +463,7 @@ interface ExecuteQuantumComputingSubmissionData {
 
 export const executeQuantumComputingSubmission = onTaskDispatched<ExecuteQuantumComputingSubmissionData>(
 	{
-		secrets: ['ESOLANG_BATTLE_API_TOKEN'],
+		secrets: [ESOLANG_BATTLE_API_TOKEN],
 		retryConfig: {
 			maxAttempts: 5,
 			minBackoffSeconds: 60,
@@ -514,7 +517,7 @@ export const executeQuantumComputingSubmission = onTaskDispatched<ExecuteQuantum
 				'Content-Type': 'application/x-www-form-urlencoded',
 			},
 			data: new URLSearchParams({
-				token: process.env.ESOLANG_BATTLE_API_TOKEN!,
+				token: ESOLANG_BATTLE_API_TOKEN.value(),
 				code: Buffer.from(input, 'utf-8').toString('base64'),
 				input: '',
 				language: 'clang-cpp',
@@ -558,6 +561,148 @@ export const executeQuantumComputingSubmission = onTaskDispatched<ExecuteQuantum
 			stderr,
 			stdout,
 			executedAt: new Date(),
+		});
+
+		if (status === 'success') {
+			db.runTransaction(async (transaction) => {
+				const scoreRef = db.doc(`games/${request.data.gameId}/scores/${submission.userId}`) as DocumentReference<Score>;
+				const scoreDoc = await transaction.get(scoreRef);
+
+				if (scoreDoc.exists) {
+					return;
+				}
+
+				transaction.set(scoreRef, {
+					athlon: submission.athlon,
+					user: submission.userId,
+					rawScore: game.maxRawScore,
+					tiebreakScore: submission.createdAt.toMillis(),
+				});
+			});
+		}
+	},
+);
+
+interface ExecuteSqlSubmissionData {
+	gameId: string,
+	submissionId: string,
+}
+
+export const executeSqlSubmission = onTaskDispatched<ExecuteSqlSubmissionData>(
+	{
+		secrets: [ESOLANG_BATTLE_API_TOKEN],
+		retryConfig: {
+			maxAttempts: 5,
+			minBackoffSeconds: 60,
+		},
+		rateLimits: {
+			maxConcurrentDispatches: 1,
+		},
+	},
+	async (request) => {
+		assert(typeof request.data.gameId === 'string');
+		assert(typeof request.data.submissionId === 'string');
+
+		const submissionRef = db.doc(`games/${request.data.gameId}/submissions/${request.data.submissionId}`) as DocumentReference<SqlSubmission>;
+		const gameDoc = await db.collection('games').doc(request.data.gameId).get();
+		const game = gameDoc.data() as Game;
+		const athlonId = game.athlon.id;
+
+		logger.info('Getting lock...');
+		const isOk = await db.runTransaction(async (transaction) => {
+			const submissionDoc = await transaction.get(submissionRef);
+			const submission = submissionDoc.data();
+			if (submission?.status !== 'pending') {
+				return false;
+			}
+
+			transaction.update(submissionDoc.ref, {status: 'executing'});
+			return true;
+		});
+
+		if (!isOk) {
+			logger.warn('Lock failed.');
+			return;
+		}
+
+		const submissionDoc = await submissionRef.get();
+		const submission = submissionDoc.data();
+
+		if (!submission || typeof submission.code !== 'string') {
+			throw new AssertionError();
+		}
+
+		const input = [
+			athlonId,
+			Buffer.from(submission.code, 'utf-8').toString('base64'),
+		].join('\n');
+
+		const result = await axios({
+			method: 'POST',
+			url: 'https://esolang.hakatashi.com/api/execution',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+			},
+			data: new URLSearchParams({
+				token: ESOLANG_BATTLE_API_TOKEN.value(),
+				code: Buffer.from(input, 'utf-8').toString('base64'),
+				input: '',
+				language: 'kotlin',
+				imageId: `hakatashi/sql-challenge-${submission.engine}`,
+			}),
+			validateStatus: null,
+		});
+
+		const {duration, stderr, stdout, error: errorMessage} = result.data;
+		logger.info(result.data);
+
+		let error = null;
+		if (typeof duration !== 'number') {
+			error = 'duration is not a number';
+		}
+		if (typeof stderr !== 'string') {
+			error = 'stderr is not a string';
+		}
+		if (typeof stdout !== 'string') {
+			error = 'stdout is not a string';
+		}
+		if (typeof errorMessage === 'string') {
+			error = errorMessage;
+		}
+		if (!error && result.status !== 200) {
+			error = JSON.stringify(result.data) || 'unknown error';
+		}
+
+		let testcaseResults: SqlTestcaseResult[] = [];
+		let isCorrect = false;
+		try {
+			const parsedStdout = JSON.parse(stdout);
+			// eslint-disable-next-line no-negated-condition
+			if (!Array.isArray(parsedStdout)) {
+				error = 'stdout is not a valid format';
+			} else {
+				testcaseResults = parsedStdout;
+				isCorrect = testcaseResults.every((testcaseResult) => testcaseResult.status === 'CORRECT');
+			}
+		} catch {
+			error = 'failed to parse stdout';
+		}
+
+		let status: SqlResult = 'failed';
+		if (error) {
+			status = 'error';
+		} else if (isCorrect) {
+			status = 'success';
+		}
+
+		await submissionRef.update({
+			status,
+			...(error ? {errorMessage: error} : {}),
+			duration: typeof duration === 'number' ? duration : null,
+			stderr: typeof stderr === 'string' ? stderr : null,
+			stdout: typeof stdout === 'string' ? stdout : null,
+			executedAt: new Date(),
+			results: testcaseResults,
 		});
 
 		if (status === 'success') {
@@ -626,6 +771,20 @@ export const onSubmissionCreated = onDocumentCreated(
 
 		if (game.rule.path === 'gameRules/quantum-computing') {
 			const queue = getFunctions().taskQueue<ExecuteQuantumComputingSubmissionData>('executeQuantumComputingSubmission');
+			queue.enqueue(
+				{
+					gameId: changedGameId,
+					submissionId: changedSubmissionId,
+				},
+				{
+					scheduleDelaySeconds: 0,
+					dispatchDeadlineSeconds: 60 * 5,
+				},
+			);
+		}
+
+		if (game.rule.path === 'gameRules/sql') {
+			const queue = getFunctions().taskQueue<ExecuteSqlSubmissionData>('executeSqlSubmission');
 			queue.enqueue(
 				{
 					gameId: changedGameId,
