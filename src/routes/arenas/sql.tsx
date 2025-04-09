@@ -110,7 +110,7 @@ const MainTab = (props: MainTabProps) => {
 				athlon: gameData.data.athlon,
 				userId: userData.uid,
 				status: 'pending',
-				engine: 'mysql',
+				engine: sqlEngine(),
 				results: [],
 				code: codeData ?? '',
 				size: codeData?.length ?? 0,
