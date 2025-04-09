@@ -149,6 +149,28 @@ service cloud.firestore {
           && submission.updatedAt == request.time;
       }
 
+      function isValidSqlSubmission(submission, game) {
+        return submission.keys().hasOnly([
+            'athlon', 'userId', 'status', 'engine', 'results', 'code', 'size',
+            'stdout', 'stderr', 'duration', 'createdAt', 'executedAt'])
+          && submission.athlon is path
+          && game.athlon == submission.athlon
+          && submission.userId is string
+          && submission.status == 'pending'
+          && submission.engine is string
+          && submission.engine in ['sqlite', 'mysql', 'postgresql']
+          && submission.results is list
+          && submission.results.size() == 0
+          && submission.code is string
+          && submission.code.size() > 0
+          && submission.size == submission.code.size()
+          && submission.stdout == null
+          && submission.stderr == null
+          && submission.duration == null
+          && submission.createdAt == request.time
+          && submission.executedAt == null;
+      }
+
       match /submissions/{submissionId} {
         allow read: if (
           (request.auth != null && resource.data.userId == request.auth.uid) ||
@@ -173,6 +195,10 @@ service cloud.firestore {
             (
               gameData().rule == /databases/$(database)/documents/gameRules/prompt-engineering &&
               isValidPromptEngineeringSubmission(request.resource.data, gameData())
+            ) ||
+            (
+              gameData().rule == /databases/$(database)/documents/gameRules/sql &&
+              isValidSqlSubmission(request.resource.data, gameData())
             )
           )
         );

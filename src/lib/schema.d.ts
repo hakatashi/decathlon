@@ -182,9 +182,29 @@ export interface PromptEngineeringSubmission extends DocumentData {
 	updatedAt: Timestamp,
 }
 
+export type SqlResult = 'failed' | 'success' | 'error';
+export type SqlStatus = 'pending' | 'executing' | SqlResult;
+export type SqlEngine = 'mysql' | 'postgresql' | 'sqlite';
+export interface SqlTestcaseResult {
+	testcase: string,
+	status: 'WRONG_ANSWER' | 'CORRECT',
+	detailed_error: string | null,
+}
+
 export interface SqlSubmission extends DocumentData {
 	athlon: DocumentReference<Athlon>,
 	userId: string,
+	status: SqlStatus,
+	engine: SqlEngine,
+	results: SqlTestcaseResult[],
+	code: string,
+	size: number,
+	stdout: string | null,
+	stderr: string | null,
+	duration: number | null,
+	errorMessage?: string,
+	createdAt: Timestamp,
+	executedAt: Timestamp | null,
 }
 
 export interface DiffConfiguration {
@@ -259,7 +279,13 @@ export interface SqlConfiguration {
 	},
 }
 
-type Configuration = DiffConfiguration | CodegolfConfiguration | QuantumComputingConfiguration | PromptEngineeringConfiguration | TypingJapaneseConfiguration | SqlConfiguration;
+type Configuration =
+	DiffConfiguration |
+	CodegolfConfiguration |
+	QuantumComputingConfiguration |
+	PromptEngineeringConfiguration |
+	TypingJapaneseConfiguration |
+	SqlConfiguration;
 
 export interface ReversingDiffRanking extends DocumentData {
 	athlon: DocumentReference<Athlon>,
