@@ -316,7 +316,7 @@ const MainTab = (props: MainTabProps) => {
 						{config.tableSchemas.map((schema) => (
 							<TableContainer component={Paper} sx={{display: 'inline-block', width: 'auto'}}>
 								<Typography variant="h6" component="h3" sx={{mt: 2}}>{schema.name} テーブル</Typography>
-								<Table>
+								<Table size="small">
 									<TableHead>
 										<TableRow>
 											<TableCell>カラム名</TableCell>
@@ -349,7 +349,7 @@ const MainTab = (props: MainTabProps) => {
 								<>
 									<Typography variant="h6" component="h3" sx={{mt: 2}}>{schema.name} テーブル</Typography>
 									<TableContainer component={Paper} sx={{display: 'inline-block', width: 'auto'}}>
-										<Table>
+										<Table size="small">
 											<TableHead>
 												<TableRow>
 													{schema.columns.map((column) => (
@@ -373,7 +373,7 @@ const MainTab = (props: MainTabProps) => {
 						})}
 						<Typography variant="h4" component="h2" sx={{mt: 5}}>サンプル出力</Typography>
 						<TableContainer component={Paper} sx={{display: 'inline-block', width: 'auto'}}>
-							<Table>
+							<Table size="small">
 								<TableHead>
 									<TableRow>
 										{config.sampleOutput.columnNames.map((column) => (
