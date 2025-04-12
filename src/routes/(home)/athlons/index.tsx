@@ -61,7 +61,9 @@ const Athlons = () => {
 									</Typography>
 									<Doc data={athlonRankingsData}>
 										{(athlonRankings) => {
-											const athlonRanking = athlonRankings.filter((ranking) => ranking.athlonId === athlon.id);
+											const athlonRanking = athlonRankings
+												.filter((ranking) => ranking.athlonId === athlon.id)
+												.sort((a, b) => a.rank - b.rank);
 
 											return (
 												<>
