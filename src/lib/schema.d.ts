@@ -156,6 +156,7 @@ export interface QuantumComputingSubmission extends DocumentData {
 	errorMessage?: string,
 	createdAt: Timestamp,
 	executedAt: Timestamp | null,
+	challengeId?: string,
 }
 
 export interface PromptEngineeringHaikuOutput {

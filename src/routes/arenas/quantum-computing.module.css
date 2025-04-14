@@ -1,0 +1,17 @@
+.submission {
+  font-size: 1rem;
+}
+
+ol.challenges {
+  list-style: none;
+  font-size: 1.5rem;
+  padding: 0;
+}
+
+ol.challenges li {
+  margin: 0.5rem 0;
+  padding: 0.5rem 1.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+}

@@ -5,23 +5,26 @@ import dayjs from 'dayjs';
 import {addDoc, collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, serverTimestamp, where} from 'firebase/firestore';
 import remarkGfm from 'remark-gfm';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
-import {createEffect, createMemo, createSignal, Match, onCleanup, Show, Switch} from 'solid-js';
+import {createEffect, createMemo, createSignal, For, Match, onCleanup, Show, Switch} from 'solid-js';
 import {SolidMarkdown} from 'solid-markdown';
 import {setArenaTitle, useUser} from '../arenas';
-import styles from './reversing-diff.module.css';
+import styles from './quantum-computing.module.css';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import Username from '~/components/Username';
 import PageNotFoundError from '~/lib/PageNotFoundError';
-import {Athlon, Game, QuantumComputingConfiguration, QuantumComputingConfigurationV1, QuantumComputingSubmission, UseFireStoreReturn} from '~/lib/schema';
+import {Athlon, Game, QuantumComputingConfiguration, QuantumComputingSubmission, UseFireStoreReturn} from '~/lib/schema';
 
-interface ChallengeV1Props {
-	configuration: QuantumComputingConfigurationV1,
+interface ChallengeProps {
+	challengeId: string | undefined,
+	description: string,
+	judgeCode: string | null,
+	submissionTemplate: string,
 	athlon: DocumentReference<Athlon>,
 	phase: 'loading' | 'waiting' | 'playing' | 'finished',
 }
 
-const ChallengeV1 = (props: ChallengeV1Props) => {
+const Challenge = (props: ChallengeProps) => {
 	const [searchParams, setSearchParams] = useSearchParams();
 
 	const gameId = Array.isArray(searchParams.gameId) ? searchParams.gameId[0] : searchParams.gameId;
@@ -61,7 +64,7 @@ const ChallengeV1 = (props: ChallengeV1Props) => {
 
 		let codeData = code();
 		if (codeData === null) {
-			codeData = props.configuration.submissionTemplate;
+			codeData = props.submissionTemplate;
 			if (codeData === null) {
 				return;
 			}
@@ -83,6 +86,7 @@ const ChallengeV1 = (props: ChallengeV1Props) => {
 				duration: null,
 				createdAt: serverTimestamp(),
 				executedAt: null,
+				...(props.challengeId ? {challengeId: props.challengeId} : {}),
 			},
 		);
 
@@ -127,18 +131,24 @@ const ChallengeV1 = (props: ChallengeV1Props) => {
 			<Typography variant="body1" ref={descriptionEl}>
 				<SolidMarkdown
 					class="markdown"
-					children={props.configuration.description}
+					children={props.description}
 					remarkPlugins={[remarkGfm]}
 					linkTarget="_blank"
 				/>
 			</Typography>
-			<Typography variant="h4" component="h2">判定プログラム</Typography>
-			<pre>{props.configuration.judgeCode}</pre>
+			<Show when={props.judgeCode}>
+				{(judgeCode) => (
+					<>
+						<Typography variant="h4" component="h2">判定プログラム</Typography>
+						<pre>{judgeCode()}</pre>
+					</>
+				)}
+			</Show>
 			<TextField
 				label="提出コード"
 				multiline
 				minRows={4}
-				value={code() === null ? props.configuration.submissionTemplate : code()}
+				value={code() === null ? props.submissionTemplate : code()}
 				onChange={(_event, value) => setCode(value)}
 				disabled={props.phase === 'finished' || submitStatus() === 'executing'}
 				// @ts-expect-error: type error
@@ -211,7 +221,7 @@ interface MainTabProps {
 }
 
 const MainTab = (props: MainTabProps) => {
-	const [searchParams] = useSearchParams();
+	const [searchParams, setSearchParams] = useSearchParams();
 
 	const gameId = Array.isArray(searchParams.gameId) ? searchParams.gameId[0] : searchParams.gameId;
 
@@ -230,11 +240,58 @@ const MainTab = (props: MainTabProps) => {
 					<Switch>
 						<Match when={config.version === 1 && config}>
 							{(configuration) => (
-								<ChallengeV1 configuration={configuration()} athlon={game.athlon} phase={props.phase}/>
+								<Challenge
+									challengeId={undefined}
+									description={configuration().description}
+									judgeCode={configuration().judgeCode}
+									submissionTemplate={configuration().submissionTemplate}
+									athlon={game.athlon}
+									phase={props.phase}
+								/>
 							)}
 						</Match>
 						<Match when={config.version === 2 && config}>
-							<p>Quantum Computing Challenge Version 2</p>
+							{(configuration) => (
+								<Switch>
+									<Match when={searchParams.challengeId === undefined}>
+										<ol class={styles.challenges}>
+											<For each={configuration().challenges}>
+												{(challenge, i) => (
+													<li
+														onClick={() => setSearchParams({challengeId: challenge.id})}
+													>
+														第{i() + 1}問 (配点: {challenge.score}点)
+													</li>
+												)}
+											</For>
+										</ol>
+									</Match>
+									<Match when={typeof searchParams.challenge === 'string' && searchParams.challenge}>
+										{(challengeId) => {
+											const challenge = configuration().challenges.find(({id}) => id === challengeId());
+											return (
+												<>
+													<LinkUi
+														href="#"
+														underline="hover"
+														onClick={() => setSearchParams({challengeId: undefined})}
+													>
+														問題一覧に戻る
+													</LinkUi>
+													<Challenge
+														challengeId={challengeId()}
+														description={challenge?.description ?? ''}
+														judgeCode={null}
+														submissionTemplate={challenge?.submissionTemplate ?? ''}
+														athlon={game.athlon}
+														phase={props.phase}
+													/>
+												</>
+											);
+										}}
+									</Match>
+								</Switch>
+							)}
 						</Match>
 					</Switch>
 				);
