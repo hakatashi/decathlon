@@ -497,6 +497,64 @@ const parseQuantumComputingResult = (result: string, version: 1 | 2) => {
 	throw new AssertionError({message: 'Invalid version'});
 };
 
+const updateQuantumComputingScore = async (gameId: string, userId: string, game: Game, submission: QuantumComputingSubmission) => {
+	const config = game.configuration as QuantumComputingConfiguration;
+	if (config.version === 1) {
+		await db.runTransaction(async (transaction) => {
+			const scoreRef = db.doc(`games/${gameId}/scores/${userId}`) as DocumentReference<Score>;
+			const scoreDoc = await transaction.get(scoreRef);
+
+			if (scoreDoc.exists) {
+				return;
+			}
+
+			transaction.set(scoreRef, {
+				athlon: submission.athlon,
+				user: submission.userId,
+				rawScore: game.maxRawScore,
+				tiebreakScore: submission.createdAt.toMillis(),
+			});
+		});
+	} else if (config.version === 2) {
+		await db.runTransaction(async (transaction) => {
+			const submissionsRef = db.collection(`games/${gameId}/submissions`) as CollectionReference<QuantumComputingSubmission>;
+			const submissionDocs = await transaction.get(
+				submissionsRef
+					.where('userId', '==', userId)
+					.where('status', '==', 'success'),
+			);
+			const solvedChallenges = new Map<string, number>();
+			for (const submissionDoc of submissionDocs.docs) {
+				const submissionData = submissionDoc.data();
+				if (submissionData.challengeId) {
+					const fastestSubmission = solvedChallenges.get(submissionData.challengeId) ?? Infinity;
+					solvedChallenges.set(
+						submissionData.challengeId,
+						Math.min(fastestSubmission, submissionData.createdAt.toMillis()),
+					);
+				}
+			}
+			let score = 0;
+			for (const challenge of solvedChallenges.keys()) {
+				const challengeData = config.challenges.find((c) => c.id === challenge);
+				if (challengeData) {
+					score += challengeData.score;
+				}
+			}
+			if (score > 0) {
+				const scoreRef = db.doc(`games/${gameId}/scores/${userId}`) as DocumentReference<Score>;
+				const tiebreakScore = Math.max(...solvedChallenges.values());
+				transaction.set(scoreRef, {
+					athlon: submission.athlon,
+					user: userId,
+					rawScore: score,
+					tiebreakScore,
+				});
+			}
+		});
+	}
+};
+
 export const executeQuantumComputingSubmission = onTaskDispatched<ExecuteQuantumComputingSubmissionData>(
 	{
 		secrets: [ESOLANG_BATTLE_API_TOKEN],
@@ -605,21 +663,12 @@ export const executeQuantumComputingSubmission = onTaskDispatched<ExecuteQuantum
 		});
 
 		if (status === 'success') {
-			db.runTransaction(async (transaction) => {
-				const scoreRef = db.doc(`games/${request.data.gameId}/scores/${submission.userId}`) as DocumentReference<Score>;
-				const scoreDoc = await transaction.get(scoreRef);
-
-				if (scoreDoc.exists) {
-					return;
-				}
-
-				transaction.set(scoreRef, {
-					athlon: submission.athlon,
-					user: submission.userId,
-					rawScore: game.maxRawScore,
-					tiebreakScore: submission.createdAt.toMillis(),
-				});
-			});
+			await updateQuantumComputingScore(
+				request.data.gameId,
+				submission.userId,
+				game,
+				submission,
+			);
 		}
 	},
 );
