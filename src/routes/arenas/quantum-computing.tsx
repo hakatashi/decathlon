@@ -172,7 +172,7 @@ const Challenge = (props: ChallengeProps) => {
 									提出成功
 								</Alert>
 							</Match>
-							<Match when={submissionData.status === 'failed'}>
+							<Match when={submissionData.status === 'failed' || submissionData.status === 'error'}>
 								<Alert severity="error" sx={{my: 2}}>
 									提出失敗
 									{' - '}
@@ -359,6 +359,9 @@ const SubmissionsTab = (props: SubmissionsTabProps) => {
 											</Match>
 											<Match when={status === 'success'}>
 												<span style={{color: 'green'}}>AC</span>
+											</Match>
+											<Match when={status === 'error'}>
+												<span style={{color: 'red'}}>Error</span>
 											</Match>
 										</Switch>
 									</div>
