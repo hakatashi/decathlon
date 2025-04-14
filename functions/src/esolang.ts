@@ -234,99 +234,99 @@ export const executeCodegolfSubmission = onTaskDispatched<ExecuteCodegolfSubmiss
 
 		logger.info(`Starting execution of submission ${submissionDoc.id}`);
 
-			type TestcaseStatus = 'error' | 'failed' | 'success';
+		type TestcaseStatus = 'error' | 'failed' | 'success';
 
-			let error = null;
-			const testcaseResults: {
-				stdin: string,
-				stdout: string | null,
-				stderr: string | null,
-				trace: string | null,
-				duration: number | null,
-				status: TestcaseStatus,
-			}[] = [];
+		let error = null;
+		const testcaseResults: {
+			stdin: string,
+			stdout: string | null,
+			stderr: string | null,
+			trace: string | null,
+			duration: number | null,
+			status: TestcaseStatus,
+		}[] = [];
 
-			for (const [i, testcase] of config.testcases.entries()) {
-				logger.info(`Executing test case ${i}...`);
+		for (const [i, testcase] of config.testcases.entries()) {
+			logger.info(`Executing test case ${i}...`);
 
-				const result = await axios({
-					method: 'POST',
-					url: 'https://esolang.hakatashi.com/api/execution',
-					headers: {
-						'Content-Type': 'application/x-www-form-urlencoded',
-					},
-					data: new URLSearchParams({
-						token: ESOLANG_BATTLE_API_TOKEN.value(),
-						code: Buffer.from(submission.code, 'utf-8').toString('base64'),
-						input: testcase.input,
-						language: submission.language,
-						imageId: `esolang/${submission.language}`,
-					}),
-					validateStatus: null,
-				});
-
-				const {duration, stderr, stdout, trace, error: errorMessage} = result.data;
-
-				if (typeof duration !== 'number') {
-					error = 'duration is not a number';
-				}
-				if (typeof stderr !== 'string') {
-					error = 'stderr is not a string';
-				}
-				if (typeof stdout !== 'string') {
-					error = 'stdout is not a string';
-				}
-				if (trace !== null && typeof trace !== 'string') {
-					error = 'trace is not a string';
-				}
-				if (typeof errorMessage === 'string') {
-					error = errorMessage;
-				}
-				if (!error && result.status !== 200) {
-					error = JSON.stringify(result.data) || 'unknown error';
-				}
-
-				let status: TestcaseStatus | null;
-				if (error) {
-					status = 'error';
-				} else if (isTestcaseCorrect(stdout, testcase.output, config.judgeType)) {
-					status = 'success';
-				} else {
-					status = 'failed';
-				}
-
-				testcaseResults.push({
-					stdin: testcase.input,
-					stdout: typeof stdout === 'string' ? stdout : null,
-					stderr: typeof stderr === 'string' ? stderr : null,
-					trace: typeof trace === 'string' ? trace : null,
-					duration: typeof duration === 'number' ? duration : null,
-					status,
-				});
-
-				if (error) {
-					break;
-				}
-			}
-
-			let totalStatus: TestcaseStatus | null;
-			if (testcaseResults.some(({status}) => status === 'error')) {
-				totalStatus = 'error';
-			} else if (testcaseResults.some(({status}) => status === 'failed')) {
-				totalStatus = 'failed';
-			} else {
-				totalStatus = 'success';
-			}
-
-			await submissionRef.update({
-				status: totalStatus,
-				...(error ? {errorMessage: error} : {}),
-				testcases: testcaseResults,
-				executedAt: new Date(),
+			const result = await axios({
+				method: 'POST',
+				url: 'https://esolang.hakatashi.com/api/execution',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded',
+				},
+				data: new URLSearchParams({
+					token: ESOLANG_BATTLE_API_TOKEN.value(),
+					code: Buffer.from(submission.code, 'utf-8').toString('base64'),
+					input: testcase.input,
+					language: submission.language,
+					imageId: `esolang/${submission.language}`,
+				}),
+				validateStatus: null,
 			});
 
-			// eslint-disable-next-line @typescript-eslint/no-use-before-define
-			await updateCodegolfRanking(request.data.gameId, game);
+			const {duration, stderr, stdout, trace, error: errorMessage} = result.data;
+
+			if (typeof duration !== 'number') {
+				error = 'duration is not a number';
+			}
+			if (typeof stderr !== 'string') {
+				error = 'stderr is not a string';
+			}
+			if (typeof stdout !== 'string') {
+				error = 'stdout is not a string';
+			}
+			if (trace !== null && typeof trace !== 'string') {
+				error = 'trace is not a string';
+			}
+			if (typeof errorMessage === 'string') {
+				error = errorMessage;
+			}
+			if (!error && result.status !== 200) {
+				error = JSON.stringify(result.data) || 'unknown error';
+			}
+
+			let status: TestcaseStatus | null;
+			if (error) {
+				status = 'error';
+			} else if (isTestcaseCorrect(stdout, testcase.output, config.judgeType)) {
+				status = 'success';
+			} else {
+				status = 'failed';
+			}
+
+			testcaseResults.push({
+				stdin: testcase.input,
+				stdout: typeof stdout === 'string' ? stdout : null,
+				stderr: typeof stderr === 'string' ? stderr : null,
+				trace: typeof trace === 'string' ? trace : null,
+				duration: typeof duration === 'number' ? duration : null,
+				status,
+			});
+
+			if (error) {
+				break;
+			}
+		}
+
+		let totalStatus: TestcaseStatus | null;
+		if (testcaseResults.some(({status}) => status === 'error')) {
+			totalStatus = 'error';
+		} else if (testcaseResults.some(({status}) => status === 'failed')) {
+			totalStatus = 'failed';
+		} else {
+			totalStatus = 'success';
+		}
+
+		await submissionRef.update({
+			status: totalStatus,
+			...(error ? {errorMessage: error} : {}),
+			testcases: testcaseResults,
+			executedAt: new Date(),
+		});
+
+		// eslint-disable-next-line @typescript-eslint/no-use-before-define
+		await updateCodegolfRanking(request.data.gameId, game);
 	},
 );
 
