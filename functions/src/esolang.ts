@@ -472,7 +472,7 @@ const getQuantumComputingJudgeCode = (config: QuantumComputingConfiguration, cha
 		assert(challenge, 'challenge is not found');
 		return challenge.judgeCode;
 	}
-	assert(false, 'invalid version');
+	throw new AssertionError({message: 'Invalid version'});
 };
 
 const parseQuantumComputingResult = (result: string, version: 1 | 2) => {
@@ -494,7 +494,7 @@ const parseQuantumComputingResult = (result: string, version: 1 | 2) => {
 		}
 		return results;
 	}
-	assert(false, 'invalid version');
+	throw new AssertionError({message: 'Invalid version'});
 };
 
 export const executeQuantumComputingSubmission = onTaskDispatched<ExecuteQuantumComputingSubmissionData>(
@@ -517,7 +517,7 @@ export const executeQuantumComputingSubmission = onTaskDispatched<ExecuteQuantum
 		const gameDoc = await db.collection('games').doc(request.data.gameId).get();
 		const game = gameDoc.data() as Game;
 		const config = game.configuration as QuantumComputingConfiguration;
-		const judgeCode = getJudgeCode(config, request.data.challengeId);
+		const judgeCode = getQuantumComputingJudgeCode(config, request.data.challengeId);
 
 		logger.info('Getting lock...');
 		const isOk = await db.runTransaction(async (transaction) => {
