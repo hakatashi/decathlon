@@ -7,7 +7,7 @@ import logger from 'firebase-functions/logger';
 import {defineSecret} from 'firebase-functions/params';
 import {onTaskDispatched} from 'firebase-functions/tasks';
 import {firstBy, groupBy, identity, last, reverse, sortBy, sum, zip} from 'remeda';
-import type {CodegolfConfiguration, CodegolfJudgeType, CodegolfRanking, CodegolfSubmission, DiffConfiguration, Game, QuantumComputingConfiguration, QuantumComputingResult, QuantumComputingSubmission, ReversingDiffRanking, ReversingDiffSubmission, Score, SqlResult, SqlSubmission, SqlTestcaseResult} from '~/lib/schema.js';
+import type {CodegolfConfiguration, CodegolfJudgeType, CodegolfRanking, CodegolfSubmission, DiffConfiguration, Game, QuantumComputingConfigurationV1, QuantumComputingResult, QuantumComputingSubmission, ReversingDiffRanking, ReversingDiffSubmission, Score, SqlResult, SqlSubmission, SqlTestcaseResult} from '~/lib/schema.js';
 import {db, storage} from './firebase.js';
 
 const ESOLANG_BATTLE_API_TOKEN = defineSecret('ESOLANG_BATTLE_API_TOKEN');
@@ -479,7 +479,7 @@ export const executeQuantumComputingSubmission = onTaskDispatched<ExecuteQuantum
 		const submissionRef = db.doc(`games/${request.data.gameId}/submissions/${request.data.submissionId}`) as DocumentReference<QuantumComputingSubmission>;
 		const gameDoc = await db.collection('games').doc(request.data.gameId).get();
 		const game = gameDoc.data() as Game;
-		const config = game.configuration as QuantumComputingConfiguration;
+		const config = game.configuration as QuantumComputingConfigurationV1;
 
 		logger.info('Getting lock...');
 		const isOk = await db.runTransaction(async (transaction) => {

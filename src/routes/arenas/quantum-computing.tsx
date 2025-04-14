@@ -13,13 +13,15 @@ import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import Username from '~/components/Username';
 import PageNotFoundError from '~/lib/PageNotFoundError';
-import {Game, QuantumComputingConfiguration, QuantumComputingSubmission, UseFireStoreReturn} from '~/lib/schema';
+import {Athlon, Game, QuantumComputingConfiguration, QuantumComputingConfigurationV1, QuantumComputingSubmission, UseFireStoreReturn} from '~/lib/schema';
 
-interface MainTabProps {
+interface ChallengeV1Props {
+	configuration: QuantumComputingConfigurationV1,
+	athlon: DocumentReference<Athlon>,
 	phase: 'loading' | 'waiting' | 'playing' | 'finished',
 }
 
-const MainTab = (props: MainTabProps) => {
+const ChallengeV1 = (props: ChallengeV1Props) => {
 	const [searchParams, setSearchParams] = useSearchParams();
 
 	const gameId = Array.isArray(searchParams.gameId) ? searchParams.gameId[0] : searchParams.gameId;
@@ -27,10 +29,9 @@ const MainTab = (props: MainTabProps) => {
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
 
-	const user = useUser();
-
 	const gameRef = doc(db, 'games', gameId ?? '') as DocumentReference<Game>;
-	const gameData = useFirestore(gameRef);
+
+	const user = useUser();
 
 	const [code, setCode] = createSignal<string | null>(null);
 	const [submitStatus, setSubmitStatus] = createSignal<'ready' | 'executing' | 'throttled'>('ready');
@@ -54,13 +55,13 @@ const MainTab = (props: MainTabProps) => {
 
 	const handleClickSubmit = async () => {
 		const userData = user();
-		if (!gameData.data || !userData?.uid) {
+		if (!userData?.uid) {
 			return;
 		}
 
 		let codeData = code();
 		if (codeData === null) {
-			codeData = (gameData.data.configuration as QuantumComputingConfiguration).submissionTemplate;
+			codeData = props.configuration.submissionTemplate;
 			if (codeData === null) {
 				return;
 			}
@@ -72,7 +73,7 @@ const MainTab = (props: MainTabProps) => {
 		const submissionRef = await addDoc(
 			collection(gameRef, 'submissions') as CollectionReference<QuantumComputingSubmission>,
 			{
-				athlon: gameData.data.athlon,
+				athlon: props.athlon,
 				userId: userData.uid,
 				status: 'pending',
 				code: codeData,
@@ -121,92 +122,121 @@ const MainTab = (props: MainTabProps) => {
 	});
 
 	return (
+		<>
+			<Link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css"/>
+			<Typography variant="body1" ref={descriptionEl}>
+				<SolidMarkdown
+					class="markdown"
+					children={props.configuration.description}
+					remarkPlugins={[remarkGfm]}
+					linkTarget="_blank"
+				/>
+			</Typography>
+			<Typography variant="h4" component="h2">判定プログラム</Typography>
+			<pre>{props.configuration.judgeCode}</pre>
+			<TextField
+				label="提出コード"
+				multiline
+				minRows={4}
+				value={code() === null ? props.configuration.submissionTemplate : code()}
+				onChange={(_event, value) => setCode(value)}
+				disabled={props.phase === 'finished' || submitStatus() === 'executing'}
+				// @ts-expect-error: type error
+				sx={{
+					mt: 5,
+					mb: 2,
+					width: '100%',
+					'& textarea': {
+						'font-family': 'monospace',
+						'line-height': '1em',
+					},
+				}}
+			/>
+			<Show when={submitStatus() !== 'executing' && submission() !== null}>
+				<Doc data={submission()}>
+					{(submissionData) => (
+						<Switch>
+							<Match when={submissionData.status === 'success'}>
+								<Alert severity="info" sx={{my: 2}}>
+									提出成功
+								</Alert>
+							</Match>
+							<Match when={submissionData.status === 'failed'}>
+								<Alert severity="error" sx={{my: 2}}>
+									提出失敗
+									{' - '}
+									<LinkUi
+										href="#"
+										underline="hover"
+										onClick={() => setSearchParams({tab: 'submissions', submissionId: submissionData.id})}
+									>
+										詳細を見る
+									</LinkUi>
+								</Alert>
+							</Match>
+						</Switch>
+					)}
+				</Doc>
+			</Show>
+			<Switch>
+				<Match when={props.phase === 'finished'}>
+					<Button variant="contained" disabled size="large">
+						競技は終了しました
+					</Button>
+				</Match>
+				<Match when={submitStatus() === 'ready'}>
+					<Button onClick={handleClickSubmit} variant="contained" size="large">
+						送信
+					</Button>
+				</Match>
+				<Match when={submitStatus() === 'executing'}>
+					<Button variant="contained" disabled size="large">
+						<CircularProgress color="secondary" sx={{color: 'inherit', width: '16px', height: '16px', mr: 1}}/>
+						実行中
+					</Button>
+				</Match>
+				<Match when={submitStatus() === 'throttled'}>
+					<Button variant="contained" disabled size="large">
+						<CircularProgress variant="determinate" value={(1 - throttleTime() / 30000) * 100} color="secondary" sx={{color: 'inherit', width: '16px', height: '16px', mr: 1}}/>
+						待機中⋯⋯
+					</Button>
+				</Match>
+			</Switch>
+		</>
+	);
+};
+
+interface MainTabProps {
+	phase: 'loading' | 'waiting' | 'playing' | 'finished',
+}
+
+const MainTab = (props: MainTabProps) => {
+	const [searchParams] = useSearchParams();
+
+	const gameId = Array.isArray(searchParams.gameId) ? searchParams.gameId[0] : searchParams.gameId;
+
+	const app = useFirebaseApp();
+	const db = getFirestore(app);
+
+	const gameRef = doc(db, 'games', gameId ?? '') as DocumentReference<Game>;
+	const gameData = useFirestore(gameRef);
+
+	return (
 		<Doc data={gameData}>
 			{(game) => {
 				const config = game.configuration as QuantumComputingConfiguration;
 
 				return (
-					<>
-						<Link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css"/>
-						<Typography variant="body1" ref={descriptionEl}>
-							<SolidMarkdown
-								class="markdown"
-								children={config.description}
-								remarkPlugins={[remarkGfm]}
-								linkTarget="_blank"
-							/>
-						</Typography>
-						<Typography variant="h4" component="h2">判定プログラム</Typography>
-						<pre>{config.judgeCode}</pre>
-						<TextField
-							label="提出コード"
-							multiline
-							minRows={4}
-							value={code() === null ? config.submissionTemplate : code()}
-							onChange={(_event, value) => setCode(value)}
-							disabled={props.phase === 'finished' || submitStatus() === 'executing'}
-							// @ts-expect-error: type error
-							sx={{
-								mt: 5,
-								mb: 2,
-								width: '100%',
-								'& textarea': {
-									'font-family': 'monospace',
-									'line-height': '1em',
-								},
-							}}
-						/>
-						<Show when={submitStatus() !== 'executing' && submission() !== null}>
-							<Doc data={submission()}>
-								{(submissionData) => (
-									<Switch>
-										<Match when={submissionData.status === 'success'}>
-											<Alert severity="info" sx={{my: 2}}>
-												提出成功
-											</Alert>
-										</Match>
-										<Match when={submissionData.status === 'failed'}>
-											<Alert severity="error" sx={{my: 2}}>
-												提出失敗
-												{' - '}
-												<LinkUi
-													href="#"
-													underline="hover"
-													onClick={() => setSearchParams({tab: 'submissions', submissionId: submissionData.id})}
-												>
-													詳細を見る
-												</LinkUi>
-											</Alert>
-										</Match>
-									</Switch>
-								)}
-							</Doc>
-						</Show>
-						<Switch>
-							<Match when={props.phase === 'finished'}>
-								<Button variant="contained" disabled size="large">
-									競技は終了しました
-								</Button>
-							</Match>
-							<Match when={submitStatus() === 'ready'}>
-								<Button onClick={handleClickSubmit} variant="contained" size="large">
-									送信
-								</Button>
-							</Match>
-							<Match when={submitStatus() === 'executing'}>
-								<Button variant="contained" disabled size="large">
-									<CircularProgress color="secondary" sx={{color: 'inherit', width: '16px', height: '16px', mr: 1}}/>
-									実行中
-								</Button>
-							</Match>
-							<Match when={submitStatus() === 'throttled'}>
-								<Button variant="contained" disabled size="large">
-									<CircularProgress variant="determinate" value={(1 - throttleTime() / 30000) * 100} color="secondary" sx={{color: 'inherit', width: '16px', height: '16px', mr: 1}}/>
-									待機中⋯⋯
-								</Button>
-							</Match>
-						</Switch>
-					</>
+					<Switch>
+						<Match when={config.version === 1 && config}>
+							{(configuration) => (
+								<ChallengeV1 configuration={configuration()} athlon={game.athlon} phase={props.phase}/>
+							)}
+						</Match>
+						<Match when={config.version === 2 && config}>
+							<p>Quantum Computing Challenge Version 2</p>
+						</Match>
+					</Switch>
 				);
 			}}
 		</Doc>

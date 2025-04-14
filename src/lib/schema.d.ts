@@ -234,12 +234,29 @@ export interface CodegolfConfiguration {
 	}[],
 }
 
-export interface QuantumComputingConfiguration {
+export interface QuantumComputingConfigurationV1 {
+	version: 1,
 	enabled: boolean,
 	description: string,
 	judgeCode: string,
 	submissionTemplate: string,
 }
+
+export interface QuantumComputingChallengeV2 {
+	id: string,
+	score: number,
+	description: string,
+	judgeCode: string,
+	submissionTemplate: string,
+}
+
+export interface QuantumComputingConfigurationV2 {
+	version: 2,
+	enabled: boolean,
+	challenges: QuantumComputingChallengeV2[],
+}
+
+export type QuantumComputingConfiguration = QuantumComputingConfigurationV1 | QuantumComputingConfigurationV2;
 
 export type PromptEngineeringPhase = 'submission' | 'vote' | 'finished';
 
@@ -282,7 +299,7 @@ export interface SqlConfiguration {
 type Configuration =
 	DiffConfiguration |
 	CodegolfConfiguration |
-	QuantumComputingConfiguration |
+	QuantumComputingConfigurationV1 |
 	PromptEngineeringConfiguration |
 	TypingJapaneseConfiguration |
 	SqlConfiguration;
