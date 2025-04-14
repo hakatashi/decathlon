@@ -151,6 +151,7 @@ const Challenge = (props: ChallengeProps) => {
 				value={code() === null ? props.submissionTemplate : code()}
 				onChange={(_event, value) => setCode(value)}
 				disabled={props.phase === 'finished' || submitStatus() === 'executing'}
+				inputProps={{spellcheck: false}}
 				// @ts-expect-error: type error
 				sx={{
 					mt: 5,
