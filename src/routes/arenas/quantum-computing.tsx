@@ -303,6 +303,7 @@ const MainTab = (props: MainTabProps) => {
 
 interface SubmissionsTabProps {
 	submissions: UseFireStoreReturn<QuantumComputingSubmission[] | null | undefined> | null,
+	config: QuantumComputingConfiguration | null,
 }
 
 const SubmissionsTab = (props: SubmissionsTabProps) => {
@@ -385,6 +386,9 @@ const SubmissionsTab = (props: SubmissionsTabProps) => {
 						<TableHead>
 							<TableRow>
 								<TableCell>User</TableCell>
+								<Show when={props.config?.version === 2}>
+									<TableCell>Challenge</TableCell>
+								</Show>
 								<TableCell align="right">Status</TableCell>
 								<TableCell align="right">Date</TableCell>
 							</TableRow>
@@ -394,6 +398,9 @@ const SubmissionsTab = (props: SubmissionsTabProps) => {
 								{(submission) => (
 									<TableRow>
 										<TableCell><Username userId={submission.userId}/></TableCell>
+										<Show when={props.config?.version === 2}>
+											<TableCell>{submission.challengeId}</TableCell>
+										</Show>
 										<TableCell align="right" sx={{fontWeight: 'bold'}}>
 											<Switch>
 												<Match when={submission.status === 'pending'}>
@@ -519,6 +526,13 @@ const QuantumComputing = () => {
 		clearInterval(intervalId);
 	});
 
+	const config = createMemo(() => {
+		if (!gameData.data) {
+			return null;
+		}
+		return gameData.data.configuration as QuantumComputingConfiguration;
+	});
+
 	return (
 		<Switch>
 			<Match when={phase() === 'waiting'}>
@@ -560,7 +574,7 @@ const QuantumComputing = () => {
 								<MainTab phase={phase()}/>
 							</Match>
 							<Match when={searchParams.tab === 'submissions'}>
-								<SubmissionsTab submissions={submissions()}/>
+								<SubmissionsTab submissions={submissions()} config={config()}/>
 							</Match>
 						</Switch>
 					</Container>
