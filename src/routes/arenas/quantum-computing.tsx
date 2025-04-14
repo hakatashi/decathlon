@@ -266,7 +266,7 @@ const MainTab = (props: MainTabProps) => {
 											</For>
 										</ol>
 									</Match>
-									<Match when={typeof searchParams.challenge === 'string' && searchParams.challenge}>
+									<Match when={typeof searchParams.challengeId === 'string' && searchParams.challengeId}>
 										{(challengeId) => {
 											const challenge = configuration().challenges.find(({id}) => id === challengeId());
 											return (
