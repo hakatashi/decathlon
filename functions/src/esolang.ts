@@ -7,7 +7,7 @@ import logger from 'firebase-functions/logger';
 import {defineSecret} from 'firebase-functions/params';
 import {onTaskDispatched} from 'firebase-functions/tasks';
 import {firstBy, groupBy, identity, last, reverse, sortBy, sum, zip} from 'remeda';
-import type {CodegolfConfiguration, CodegolfJudgeType, CodegolfRanking, CodegolfSubmission, DiffConfiguration, Game, QuantumComputingConfigurationV1, QuantumComputingResult, QuantumComputingSubmission, ReversingDiffRanking, ReversingDiffSubmission, Score, SqlResult, SqlSubmission, SqlTestcaseResult} from '~/lib/schema.js';
+import type {CodegolfConfiguration, CodegolfJudgeType, CodegolfRanking, CodegolfSubmission, DiffConfiguration, Game, QuantumComputingConfiguration, QuantumComputingResult, QuantumComputingSubmission, ReversingDiffRanking, ReversingDiffSubmission, Score, SqlResult, SqlSubmission, SqlTestcaseResult} from '~/lib/schema.js';
 import {db, storage} from './firebase.js';
 
 const ESOLANG_BATTLE_API_TOKEN = defineSecret('ESOLANG_BATTLE_API_TOKEN');
@@ -459,7 +459,43 @@ const updateCodegolfRanking = async (gameId: string, game: Game) => {
 interface ExecuteQuantumComputingSubmissionData {
 	gameId: string,
 	submissionId: string,
+	challengeId: string | null,
 }
+
+const getQuantumComputingJudgeCode = (config: QuantumComputingConfiguration, challengeId: string | null) => {
+	if (config.version === 1) {
+		return config.judgeCode;
+	}
+	if (config.version === 2) {
+		assert(typeof challengeId === 'string', 'challengeId is required for version 2');
+		const challenge = config.challenges.find((c) => c.id === challengeId);
+		assert(challenge, 'challenge is not found');
+		return challenge.judgeCode;
+	}
+	assert(false, 'invalid version');
+};
+
+const parseQuantumComputingResult = (result: string, version: 1 | 2) => {
+	const normalizedResult = result.trim();
+	if (version === 1) {
+		return [normalizedResult === 'CORRECT'];
+	}
+	if (version === 2) {
+		const lines = normalizedResult.split('\n').map((line) => line.trim());
+		const results: boolean[] = [];
+		for (const line of lines) {
+			if (line === 'CORRECT') {
+				results.push(true);
+			} else if (line === 'INCORRECT') {
+				results.push(false);
+			} else {
+				throw new Error(`Invalid result: ${line}`);
+			}
+		}
+		return results;
+	}
+	assert(false, 'invalid version');
+};
 
 export const executeQuantumComputingSubmission = onTaskDispatched<ExecuteQuantumComputingSubmissionData>(
 	{
@@ -475,11 +511,13 @@ export const executeQuantumComputingSubmission = onTaskDispatched<ExecuteQuantum
 	async (request) => {
 		assert(typeof request.data.gameId === 'string');
 		assert(typeof request.data.submissionId === 'string');
+		assert(typeof request.data.challengeId === 'string' || request.data.challengeId === null);
 
 		const submissionRef = db.doc(`games/${request.data.gameId}/submissions/${request.data.submissionId}`) as DocumentReference<QuantumComputingSubmission>;
 		const gameDoc = await db.collection('games').doc(request.data.gameId).get();
 		const game = gameDoc.data() as Game;
-		const config = game.configuration as QuantumComputingConfigurationV1;
+		const config = game.configuration as QuantumComputingConfiguration;
+		const judgeCode = getJudgeCode(config, request.data.challengeId);
 
 		logger.info('Getting lock...');
 		const isOk = await db.runTransaction(async (transaction) => {
@@ -506,7 +544,7 @@ export const executeQuantumComputingSubmission = onTaskDispatched<ExecuteQuantum
 		}
 
 		const input = [
-			Buffer.from(config.judgeCode, 'utf-8').toString('base64'),
+			Buffer.from(judgeCode, 'utf-8').toString('base64'),
 			Buffer.from(submission.code, 'utf-8').toString('base64'),
 		].join('\n');
 
@@ -521,7 +559,9 @@ export const executeQuantumComputingSubmission = onTaskDispatched<ExecuteQuantum
 				code: Buffer.from(input, 'utf-8').toString('base64'),
 				input: '',
 				language: 'clang-cpp',
-				imageId: 'hakatashi/quantum-computing-challenge',
+				imageId: config.version === 1
+					? 'hakatashi/quantum-computing-challenge'
+					: 'hakatashi/quantum-computing-challenge-v2',
 			}),
 			validateStatus: null,
 		});
@@ -545,7 +585,8 @@ export const executeQuantumComputingSubmission = onTaskDispatched<ExecuteQuantum
 			error = JSON.stringify(result.data) || 'unknown error';
 		}
 
-		const isCorrect = stdout.trim() === 'CORRECT';
+		const results = parseQuantumComputingResult(stdout, config.version);
+		const isCorrect = results.length > 0 && results.every((res) => res === true);
 
 		let status: QuantumComputingResult = 'failed';
 		if (error) {
@@ -771,10 +812,12 @@ export const onSubmissionCreated = onDocumentCreated(
 
 		if (game.rule.path === 'gameRules/quantum-computing') {
 			const queue = getFunctions().taskQueue<ExecuteQuantumComputingSubmissionData>('executeQuantumComputingSubmission');
+			const submission = snapshot.data() as QuantumComputingSubmission;
 			queue.enqueue(
 				{
 					gameId: changedGameId,
 					submissionId: changedSubmissionId,
+					challengeId: submission.challengeId ?? null,
 				},
 				{
 					scheduleDelaySeconds: 0,
