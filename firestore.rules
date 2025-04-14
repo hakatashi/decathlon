@@ -63,6 +63,10 @@ service cloud.firestore {
         return 'endAt' in gameData() && gameData().endAt != null && gameData().endAt <= request.time;
       }
 
+      function isAdmin() {
+        return request.auth != null && request.auth.uid in gameData().admins;
+      }
+
       match /scores/{userId} {
         allow read;
         allow write: if request.auth != null
@@ -229,10 +233,10 @@ service cloud.firestore {
       }
 
       match /writeups/{userId} {
-        allow read: if isGameEnded();
+        allow read: if isGameEnded() || isAdmin();
         allow create: if request.auth != null
                       && request.auth.uid == userId
-                      && isGameEnded()
+                      && (isGameEnded() || isAdmin())
                       && request.resource.data.keys()
                          .hasOnly(['content', 'title', 'createdAt', 'updatedAt'])
                       && request.resource.data.content is string
@@ -243,7 +247,7 @@ service cloud.firestore {
                       && request.resource.data.updatedAt == request.time;
         allow update: if request.auth != null
                       && request.auth.uid == userId
-                      && isGameEnded()
+                      && (isGameEnded() || isAdmin())
                       && request.resource.data.diff(resource.data)
                          .affectedKeys()
                          .hasOnly(['content', 'title', 'updatedAt'])
@@ -254,7 +258,7 @@ service cloud.firestore {
                       && request.resource.data.updatedAt == request.time;
         allow delete: if request.auth != null
                       && request.auth.uid == userId
-                      && isGameEnded();
+                      && (isGameEnded() || isAdmin());
       }
     }
 

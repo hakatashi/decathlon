@@ -1,10 +1,10 @@
 import {Link} from '@solidjs/meta';
 import {A, useParams} from '@solidjs/router';
-import {Breadcrumbs, Button, Container, Link as LinkUi, Dialog, TextField, Typography, DialogContent, DialogContentText, DialogActions} from '@suid/material';
+import {Breadcrumbs, Button, Container, Link as LinkUi, Dialog, TextField, Typography, DialogContent, DialogContentText, DialogActions, Alert} from '@suid/material';
 import {getAuth} from 'firebase/auth';
 import {CollectionReference, DocumentReference, collection, deleteDoc, doc, getFirestore, query, serverTimestamp, setDoc, updateDoc, where} from 'firebase/firestore';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
-import {createEffect, createMemo, createSignal} from 'solid-js';
+import {createEffect, createMemo, createSignal, Show} from 'solid-js';
 import {SolidMarkdown} from 'solid-markdown';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
@@ -176,8 +176,17 @@ const AthlonWriteups = () => {
 						});
 					});
 
+					const isGameEnded = createMemo(() => (
+						game.endAt && game.endAt.toMillis() <= Date.now()
+					));
+
 					return (
 						<>
+							<Show when={!isGameEnded()}>
+								<Alert severity="warning" sx={{mb: 2}}>
+									競技が終了していないため、解説は公開されていません。競技の管理者のみ解説を閲覧・投稿できます。
+								</Alert>
+							</Show>
 							<Collection
 								data={writeupsData}
 								empty={
