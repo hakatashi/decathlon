@@ -643,8 +643,13 @@ export const executeQuantumComputingSubmission = onTaskDispatched<ExecuteQuantum
 			error = JSON.stringify(result.data) || 'unknown error';
 		}
 
-		const results = parseQuantumComputingResult(stdout, config.version);
-		const isCorrect = results.length > 0 && results.every((res) => res === true);
+		let isCorrect = false;
+		try {
+			const results = parseQuantumComputingResult(stdout, config.version);
+			isCorrect = results.length > 0 && results.every((res) => res === true);
+		} catch (parseError) {
+			error = `failed to parse stdout: ${parseError}`;
+		}
 
 		let status: QuantumComputingResult = 'failed';
 		if (error) {
