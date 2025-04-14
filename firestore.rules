@@ -112,7 +112,8 @@ service cloud.firestore {
       function isValidQuantumComputingSubmission(submission, game) {
         return submission.keys().hasOnly([
             'athlon', 'userId', 'status', 'code', 'size',
-            'stdout', 'stderr', 'duration', 'createdAt', 'executedAt'])
+            'stdout', 'stderr', 'duration', 'createdAt', 'executedAt',
+            'challengeId'])
           && submission.athlon is path
           && game.athlon == submission.athlon
           && submission.userId is string
@@ -124,7 +125,8 @@ service cloud.firestore {
           && submission.stderr == null
           && submission.duration == null
           && submission.createdAt == request.time
-          && submission.executedAt == null;
+          && submission.executedAt == null
+          && (submission.challengeId is string || submission.challengeId == undefined);
       }
 
       function isValidPromptEngineeringSubmission(submission, game) {
