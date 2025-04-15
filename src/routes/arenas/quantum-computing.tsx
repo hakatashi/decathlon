@@ -270,6 +270,8 @@ const MainTab = (props: MainTabProps) => {
 									<Match when={typeof searchParams.challengeId === 'string' && searchParams.challengeId}>
 										{(challengeId) => {
 											const challenge = configuration().challenges.find(({id}) => id === challengeId());
+											const challengeIndex = configuration().challenges.findIndex(({id}) => id === challengeId());
+
 											return (
 												<>
 													<LinkUi
@@ -279,6 +281,9 @@ const MainTab = (props: MainTabProps) => {
 													>
 														問題一覧に戻る
 													</LinkUi>
+													<Typography variant="h4" component="h2" my={1}>
+														第{challengeIndex + 1}問 (配点: {challenge?.score}点)
+													</Typography>
 													<Challenge
 														challengeId={challengeId()}
 														description={challenge?.description ?? ''}
