@@ -29,7 +29,8 @@ const isUserIdNewerThanOrEqualTo = (userId: string, thresholdUserId: string) => 
 interface RankingTableProps {
 	ranking: RankingEntry[],
 	athlonId: string,
-	thresholdId?: string | null,
+	rookieThresholdId: string | null,
+	thresholdId: string | null,
 	showRawScore: boolean,
 }
 
@@ -127,6 +128,18 @@ const RankingTable = (props: RankingTableProps) => {
 						{(userEntry) => {
 							const isMe = authState?.data?.uid === userEntry.userId;
 
+							const isRookie = createMemo(() => {
+								if (!props.rookieThresholdId) {
+									return false;
+								}
+
+								const userInfo = usersData.data?.find((u) => u.id === userEntry.userId);
+								if (!userInfo) {
+									return false;
+								}
+								return isUserIdNewerThanOrEqualTo(userInfo.slackId, props.rookieThresholdId);
+							});
+
 							return (
 								<TableRow sx={isMe ? {backgroundColor: blue[50]} : {}}>
 									<TableCell>
@@ -142,7 +155,12 @@ const RankingTable = (props: RankingTableProps) => {
 										</Show>
 									</TableCell>
 									<TableCell>
-										<Username userId={userEntry.userId}/>
+										<Stack direction="row" alignItems="center">
+											<Username userId={userEntry.userId}/>
+											<Show when={isRookie()} >
+												🔰
+											</Show>
+										</Stack>
 									</TableCell>
 									<For each={userEntry.games}>
 										{(game) => {
@@ -334,6 +352,7 @@ const Leaderboard = () => {
 								<RankingTable
 									ranking={athlonRankings}
 									athlonId={param.id}
+									rookieThresholdId={athlon.rookieThresholdId}
 									thresholdId={searchParams.mode === 'rookie' ? athlon.rookieThresholdId : null}
 									showRawScore={showRawScore()}
 								/>
