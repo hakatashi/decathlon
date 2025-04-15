@@ -418,6 +418,9 @@ const SubmissionsTab = (props: SubmissionsTabProps) => {
 												<Match when={submission.status === 'success'}>
 													<span style={{color: 'green'}}>AC</span>
 												</Match>
+												<Match when={submission.status === 'error'}>
+													<span style={{color: 'red'}}>Error</span>
+												</Match>
 											</Switch>
 										</TableCell>
 										<TableCell align="right">
