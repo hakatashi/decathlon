@@ -8,7 +8,7 @@ import type {AuthUserRecord} from 'firebase-functions/lib/common/providers/ident
 import {info as logInfo, error as logError} from 'firebase-functions/logger';
 import {defineString} from 'firebase-functions/params';
 import {user as authUser} from 'firebase-functions/v1/auth';
-import mdiff from 'mdiff';
+import {Diff} from 'mdiff';
 import type {Athlon, Game, PromptEngineeringVote, Score, TypingJapaneseSubmission, SlackUserInfo, AthlonRanking} from '~/lib/schema.js';
 import {db} from './firebase.js';
 import {calculateRanking, updatePromptEngineeringScores} from './scores.js';
@@ -196,7 +196,7 @@ export const submitTypingJapaneseScore = onCall(async (request) => {
 	const trimmedSubmissionText = normalizeTypingJapaneseText(
 		submissionText.slice(0, correctText.length),
 	);
-	const diff = mdiff(correctText, trimmedSubmissionText);
+	const diff = new Diff(correctText, trimmedSubmissionText);
 	const lcs = diff.getLcs();
 
 	const diffTokens = [] as {
