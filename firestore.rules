@@ -179,7 +179,13 @@ service cloud.firestore {
 
       match /submissions/{submissionId} {
         allow read: if (
-          (request.auth != null && resource.data.userId == request.auth.uid) ||
+          (
+            request.auth != null &&
+            (
+              resource.data.userId == request.auth.uid ||
+              submissionId == request.auth.uid
+            )
+          ) ||
           isGameEnded()
         );
         allow create: if (
