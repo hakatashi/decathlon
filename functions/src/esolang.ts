@@ -171,7 +171,16 @@ export const executeDiffSubmission = onTaskDispatched<ExecuteDiffSubmissionData>
 
 const normalizeCodegolfOutput = (text: string, judgeType: CodegolfJudgeType) => {
 	if (judgeType === 'ignore-newline-type') {
-		return text.replaceAll(/\r\n/g, '\n').replace(/\n+$/, '');
+		return text
+			.replaceAll(/\r\n/g, '\n')
+			.replace(/\n+$/, '');
+	}
+	if (judgeType === 'number-sequence-ignore-whitespaces') {
+		return text
+			.trim()
+			.split(/\s+/)
+			.map((s) => parseFloat(s).toString())
+			.join(' ');
 	}
 	return text.replaceAll(/\s/g, '');
 };

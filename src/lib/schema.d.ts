@@ -219,7 +219,7 @@ export interface DiffConfiguration {
 	}[],
 }
 
-export type CodegolfJudgeType = 'ignore-whitespaces' | 'ignore-newline-type';
+export type CodegolfJudgeType = 'ignore-whitespaces' | 'ignore-newline-type' | 'number-sequence-ignore-whitespaces';
 
 export interface CodegolfConfiguration {
 	enabled: boolean,
