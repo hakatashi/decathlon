@@ -348,6 +348,29 @@ export interface PromptEngineeringVote extends DocumentData {
 	choices: string[],
 }
 
+export interface ItQuizShowcaseQuizAnswer extends DocumentData {
+	userId: string,
+	text: string,
+	status: 'correct' | 'wrong' | 'pending',
+	isShown: boolean,
+	isAnonymous: boolean,
+}
+
+export interface ItQuizShowcaseQuiz extends DocumentData {
+	id: string,
+	index: number,
+	question: string,
+	correctAnswers: string[],
+	imageUrl: string | null,
+	description: string | null,
+	answers: Record<string, ItQuizShowcaseQuizAnswer>,
+}
+
+export interface ItQuizShowcase extends DocumentData {
+	currentQuizIndex: number,
+	quizzes: Record<string, ItQuizShowcaseQuiz>,
+}
+
 export interface Writeup extends DocumentData {
 	content: string,
 	title: string,

@@ -266,6 +266,11 @@ service cloud.firestore {
                       && request.auth.uid == userId
                       && (isGameEnded() || isAdmin());
       }
+
+      match /showcases/{showcaseId} {
+        allow read;
+        allow write: if isAdmin();
+      }
     }
 
     match /gameRules/{document=**} {
