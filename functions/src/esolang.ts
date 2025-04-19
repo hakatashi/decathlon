@@ -625,7 +625,7 @@ export const executeQuantumComputingSubmission = onTaskDispatched<ExecuteQuantum
 				token: ESOLANG_BATTLE_API_TOKEN.value(),
 				code: Buffer.from(input, 'utf-8').toString('base64'),
 				input: '',
-				language: 'clang-cpp',
+				language: 'kotlin',
 				imageId: config.version === 1
 					? 'hakatashi/quantum-computing-challenge'
 					: 'hakatashi/quantum-computing-challenge-v2',
@@ -670,9 +670,9 @@ export const executeQuantumComputingSubmission = onTaskDispatched<ExecuteQuantum
 		await submissionRef.update({
 			status,
 			...(error ? {errorMessage: error} : {}),
-			duration,
-			stderr,
-			stdout,
+			duration: typeof duration === 'number' ? duration : null,
+			stderr: typeof stderr === 'string' ? stderr : null,
+			stdout: typeof stdout === 'string' ? stdout : null,
 			executedAt: new Date(),
 		});
 
