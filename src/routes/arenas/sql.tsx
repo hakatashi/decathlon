@@ -351,15 +351,15 @@ const MainTab = (props: MainTabProps) => {
 									<TableContainer component={Paper} sx={{display: 'inline-block', width: 'auto'}}>
 										<Table size="small">
 											<TableHead>
-												<TableRow>
+												<TableRow sx={{display: 'table', width: '100%', tableLayout: 'fixed'}}>
 													{schema.columns.map((column) => (
 														<TableCell>{column.name}</TableCell>
 													))}
 												</TableRow>
 											</TableHead>
-											<TableBody>
+											<TableBody sx={{maxHeight: '300px', overflowY: 'auto', display: 'block'}}>
 												{input.rows.map((row) => (
-													<TableRow>
+													<TableRow sx={{display: 'table', width: '100%', tableLayout: 'fixed'}}>
 														{schema.columns.map((column) => (
 															<TableCell>{row[column.name]}</TableCell>
 														))}
@@ -434,7 +434,7 @@ const MainTab = (props: MainTabProps) => {
 												提出成功
 											</Alert>
 										</Match>
-										<Match when={submissionData.status === 'failed'}>
+										<Match when={submissionData.status === 'failed' || submissionData.status === 'error'}>
 											<Alert severity="error" sx={{my: 2}}>
 												提出失敗
 												{' - '}
@@ -493,7 +493,6 @@ const MainTab = (props: MainTabProps) => {
 
 interface SubmissionsTabProps {
 	submissions: UseFireStoreReturn<SqlSubmission[] | null | undefined> | null,
-	phase: 'loading' | 'waiting' | 'playing' | 'finished',
 }
 
 const SubmissionsTab = (props: SubmissionsTabProps) => {
@@ -563,38 +562,36 @@ const SubmissionsTab = (props: SubmissionsTabProps) => {
 							<p>{submission()?.engine}</p>
 							<Typography variant="h4" component="h2" my={1}>Code</Typography>
 							<pre>{submission()?.code}</pre>
-							<Show when={props.phase === 'finished'}>
-								<Typography variant="h4" component="h2" my={1}>Results</Typography>
-								<TableContainer component={Paper} sx={{display: 'inline-block', width: 'auto'}}>
-									<Table>
-										<TableHead>
-											<TableRow>
-												<TableCell>Testcase</TableCell>
-												<TableCell>Status</TableCell>
-												<TableCell>Message</TableCell>
-											</TableRow>
-										</TableHead>
-										<TableBody>
-											<For each={submission()?.results ?? []}>
-												{(result) => (
-													<TableRow>
-														<TableCell>{result.testcase}</TableCell>
-														<TableCell>{result.status}</TableCell>
-														<TableCell>{result.detailed_error}</TableCell>
-													</TableRow>
-												)}
-											</For>
-										</TableBody>
-									</Table>
-								</TableContainer>
-								<Show when={submission()?.errorMessage}>
-									<Typography variant="h4" component="h2" my={1}>Validation Message</Typography>
-									<pre>{submission()?.errorMessage}</pre>
-								</Show>
-								<Show when={submission()?.stderr}>
-									<Typography variant="h4" component="h2" my={1}>Execution Log</Typography>
-									<pre>{submission()?.stderr}</pre>
-								</Show>
+							<Typography variant="h4" component="h2" my={1}>Results</Typography>
+							<TableContainer component={Paper} sx={{display: 'inline-block', width: 'auto'}}>
+								<Table>
+									<TableHead>
+										<TableRow>
+											<TableCell>Testcase</TableCell>
+											<TableCell>Status</TableCell>
+											<TableCell>Message</TableCell>
+										</TableRow>
+									</TableHead>
+									<TableBody>
+										<For each={submission()?.results ?? []}>
+											{(result) => (
+												<TableRow>
+													<TableCell>{result.testcase}</TableCell>
+													<TableCell>{result.status}</TableCell>
+													<TableCell>{result.detailed_error}</TableCell>
+												</TableRow>
+											)}
+										</For>
+									</TableBody>
+								</Table>
+							</TableContainer>
+							<Show when={submission()?.errorMessage}>
+								<Typography variant="h4" component="h2" my={1}>Validation Message</Typography>
+								<pre>{submission()?.errorMessage}</pre>
+							</Show>
+							<Show when={submission()?.stderr}>
+								<Typography variant="h4" component="h2" my={1}>Execution Log</Typography>
+								<pre>{submission()?.stderr}</pre>
 							</Show>
 						</div>
 					);
@@ -606,6 +603,7 @@ const SubmissionsTab = (props: SubmissionsTabProps) => {
 						<TableHead>
 							<TableRow>
 								<TableCell>User</TableCell>
+								<TableCell align="right">Engine</TableCell>
 								<TableCell align="right">Status</TableCell>
 								<TableCell align="right">Date</TableCell>
 							</TableRow>
@@ -615,6 +613,7 @@ const SubmissionsTab = (props: SubmissionsTabProps) => {
 								{(submission) => (
 									<TableRow>
 										<TableCell><Username userId={submission.userId}/></TableCell>
+										<TableCell align="right">{submission.engine}</TableCell>
 										<TableCell align="right" sx={{fontWeight: 'bold'}}>
 											<Switch>
 												<Match when={submission.status === 'pending'}>
@@ -628,6 +627,9 @@ const SubmissionsTab = (props: SubmissionsTabProps) => {
 												</Match>
 												<Match when={submission.status === 'success'}>
 													<span style={{color: 'green'}}>AC</span>
+												</Match>
+												<Match when={submission.status === 'error'}>
+													<span style={{color: 'red'}}>Error</span>
 												</Match>
 											</Switch>
 										</TableCell>
@@ -781,7 +783,7 @@ const SqlContest = () => {
 								<MainTab phase={phase()}/>
 							</Match>
 							<Match when={searchParams.tab === 'submissions'}>
-								<SubmissionsTab submissions={submissions()} phase={phase()}/>
+								<SubmissionsTab submissions={submissions()}/>
 							</Match>
 						</Switch>
 					</Container>
