@@ -94,6 +94,9 @@ const GameShowcase = (props: GameShowcaseProps) => {
 						return 0;
 					});
 				});
+				const correctAnswersCount = createMemo(() => (
+					answers().filter(([, answer]) => answer.status === 'correct').length
+				));
 
 				const incrementCurrentQuizIndex = async (delta: number) => {
 					await updateDoc(showcaseRef, {
@@ -134,24 +137,33 @@ const GameShowcase = (props: GameShowcaseProps) => {
 								<span class={styles.questionNumber}>第{showcase.currentQuizIndex + 1}問</span>
 								{quiz()?.question}
 							</h1>
-							<div class={styles.correctAnswerArea} style={{visibility: state() === 'question' ? 'hidden' : 'visible'}}>
-								<p class={styles.correctAnswer}>
-									<span class={styles.correctAnswerLabel}>正解.</span>
-									{correctAnswer()}
-								</p>
-							</div>
-							<Show when={alternativeAnswers().length > 0}>
-								<div class={styles.alternativeAnswersArea} style={{visibility: state() === 'question' ? 'hidden' : 'visible'}}>
-									<p class={styles.alternativeAnswers}>
-										<span class={styles.alternativeAnswersLabel}>別解:</span>
-										<For each={alternativeAnswers()}>
-											{(answer) => (
-												<span class={styles.alternativeAnswer}>{answer}</span>
-											)}
-										</For>
-									</p>
+							<div class={styles.informationArea}>
+								<div class={styles.answersArea}>
+									<div class={styles.correctAnswerArea} style={{visibility: state() === 'question' ? 'hidden' : 'visible'}}>
+										<p class={styles.correctAnswer}>
+											<span class={styles.correctAnswerLabel}>正解.</span>
+											{correctAnswer()}
+										</p>
+									</div>
+									<Show when={alternativeAnswers().length > 0}>
+										<div class={styles.alternativeAnswersArea} style={{visibility: state() === 'question' ? 'hidden' : 'visible'}}>
+											<p class={styles.alternativeAnswers}>
+												<span class={styles.alternativeAnswersLabel}>別解:</span>
+												<For each={alternativeAnswers()}>
+													{(answer) => (
+														<span class={styles.alternativeAnswer}>{answer}</span>
+													)}
+												</For>
+											</p>
+										</div>
+									</Show>
 								</div>
-							</Show>
+								<div class={styles.accuracyArea} style={{visibility: state() === 'users' ? 'visible' : 'hidden'}}>
+									<div class={styles.accuracy} style={{'--accuracy': `${Math.round(correctAnswersCount() / showcase.usersCount * 100)}%`}}>
+										{Math.round(correctAnswersCount() / showcase.usersCount * 100)}%<br/>
+									</div>
+								</div>
+							</div>
 							<div class={styles.controlArea}>
 								<div onClick={handleClickLeftControl}/>
 								<div onClick={handleClickRightControl}/>
@@ -163,11 +175,11 @@ const GameShowcase = (props: GameShowcaseProps) => {
 									const isCorrect = answer.status === 'correct';
 
 									return (
-										<div class={styles.user}>
-											<div
-												class={styles.userAnswer}
-												onClick={() => handleToggleIsShown(userId)}
-											>
+										<div
+											class={styles.user}
+											onClick={() => handleToggleIsShown(userId)}
+										>
+											<div class={styles.userAnswer}>
 												<span
 													class={styles.userResult}
 													onClick={(event) => {

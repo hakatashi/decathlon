@@ -31,6 +31,41 @@
 	}
 }
 
+.informationArea {
+	flex: 0 0 auto;
+	display: flex;
+	flex-direction: row;
+
+	.answersArea {
+		flex: 1 1 auto;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.accuracyArea {
+		flex: 0 0 20vmin;
+
+		.accuracy {
+			text-align: center;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			width: 20vmin;
+			height: 20vmin;
+			font-size: 4vmin;
+			line-height: 0.8em;
+			font-weight: bold;
+			background-image: radial-gradient(white 40%, transparent 41%), conic-gradient(#d5525f 0% var(--accuracy), #d9d9d9 var(--accuracy) 100%);
+			border-radius: 50%;
+
+			.accuracyRate {
+				font-size: 2vmin;
+			}
+		}
+	}
+}
+
 h1.question {
 	font-size: 5vmin;
 	font-weight: bold;
