@@ -368,6 +368,7 @@ export interface ItQuizShowcaseQuiz extends DocumentData {
 
 export interface ItQuizShowcase extends DocumentData {
 	currentQuizIndex: number,
+	usersCount: number,
 	quizzes: Record<string, ItQuizShowcaseQuiz>,
 }
 
@@ -382,6 +383,7 @@ export interface GameRule extends DocumentData {
 	name: string,
 	icon: string,
 	description: string,
+	shortName: string,
 	users: {
 		id: string,
 		point: number,
