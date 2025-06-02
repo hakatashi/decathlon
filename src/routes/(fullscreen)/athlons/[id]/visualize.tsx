@@ -8,7 +8,7 @@ import styles from './visualize.module.scss';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import Username from '~/components/Username';
-import type {Athlon, RankingEntry} from '~/lib/schema';
+import type {Athlon, Game, RankingEntry} from '~/lib/schema';
 import useAthlon from '~/lib/useAthlon';
 
 
