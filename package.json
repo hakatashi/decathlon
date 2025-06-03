@@ -36,7 +36,7 @@
     "@suid/material": "^0.18.0",
     "common-tags": "^1.8.2",
     "dayjs": "^1.11.13",
-    "firebase": "^11.6.0",
+    "firebase": "^11.8.1",
     "nanoid": "^5.1.5",
     "remark-gfm": "^4.0.1",
     "remeda": "^2.21.3",
