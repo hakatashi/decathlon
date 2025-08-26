@@ -41,7 +41,7 @@
     "remark-gfm": "^4.0.1",
     "remeda": "^2.27.0",
     "solid-firebase": "^0.3.0",
-    "solid-js": "^1.9.7",
+    "solid-js": "^1.9.9",
     "solid-markdown": "^2.0.14",
     "solid-tippy": "^0.2.1",
     "sql.js": "^1.13.0",
