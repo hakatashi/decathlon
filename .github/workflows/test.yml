@@ -170,7 +170,7 @@ jobs:
         run: echo "${{ secrets.FUNCTIONS_DOTENV }}" > functions/.env
 
       - name: Deploy to Firebase
-        uses: w9jds/firebase-action@v14.24.0
+        uses: w9jds/firebase-action@v14.24.1
         with:
           args: deploy --except hosting
         env:
