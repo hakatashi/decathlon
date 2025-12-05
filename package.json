@@ -46,7 +46,7 @@
     "solid-tippy": "^0.2.1",
     "sql.js": "^1.13.0",
     "tippy.js": "^6.3.7",
-    "undici": "^7.15.0",
+    "undici": "^7.16.0",
     "vinxi": "^0.5.8"
   },
   "engines": {
