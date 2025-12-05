@@ -17,12 +17,12 @@
     "@types/common-tags": "^1.8.4",
     "@types/node": "^24.3.1",
     "@types/sql.js": "^1.4.9",
-    "@typescript-eslint/parser": "^8.38.0",
+    "@typescript-eslint/parser": "^8.48.1",
     "eslint": "^9.32.0",
     "postcss": "^8.5.6",
     "sass": "^1.93.0",
     "serve": "^14.2.5",
-    "typescript": "^5.8.3",
+    "typescript": "^5.9.3",
     "vite": "^6.4.1"
   },
   "dependencies": {
