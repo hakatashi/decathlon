@@ -37,7 +37,7 @@
     "common-tags": "^1.8.2",
     "dayjs": "^1.11.19",
     "firebase": "^11.10.0",
-    "nanoid": "^5.1.5",
+    "nanoid": "^5.1.6",
     "remark-gfm": "^4.0.1",
     "remeda": "^2.27.0",
     "solid-firebase": "^0.3.0",
