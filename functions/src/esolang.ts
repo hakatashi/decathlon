@@ -3,7 +3,7 @@ import axios from 'axios';
 import type {Timestamp, CollectionReference, DocumentReference} from 'firebase-admin/firestore';
 import {getFunctions} from 'firebase-admin/functions';
 import {onDocumentCreated} from 'firebase-functions/firestore';
-import logger from 'firebase-functions/logger';
+import {info as logInfo, warn as logWarn} from 'firebase-functions/logger';
 import {defineSecret} from 'firebase-functions/params';
 import {onTaskDispatched} from 'firebase-functions/tasks';
 import {firstBy, groupBy, identity, last, reverse, sortBy, sum, zip} from 'remeda';
@@ -37,7 +37,7 @@ export const executeDiffSubmission = onTaskDispatched<ExecuteDiffSubmissionData>
 		const game = gameDoc.data() as Game;
 		const config = game.configuration as DiffConfiguration;
 
-		logger.info('Getting lock...');
+		logInfo('Getting lock...');
 		const isOk = await db.runTransaction(async (transaction) => {
 			const submissionDoc = await transaction.get(submissionRef);
 			const submission = submissionDoc.data();
@@ -50,7 +50,7 @@ export const executeDiffSubmission = onTaskDispatched<ExecuteDiffSubmissionData>
 		});
 
 		if (!isOk) {
-			logger.warn('Lock failed.');
+			logWarn('Lock failed.');
 			return;
 		}
 
@@ -132,7 +132,7 @@ export const executeDiffSubmission = onTaskDispatched<ExecuteDiffSubmissionData>
 			const [fileMetadata] = await storage.bucket().file(`assets/reversing-diff/${mainFile.filename}`).getMetadata();
 			const fileSize = parseInt(String(fileMetadata.size));
 
-			logger.info(`correct file size: ${fileSize}`);
+			logInfo(`correct file size: ${fileSize}`);
 
 			const batch = db.batch();
 			for (const [userId, submissions] of Object.entries(submissionsByUser)) {
@@ -150,10 +150,10 @@ export const executeDiffSubmission = onTaskDispatched<ExecuteDiffSubmissionData>
 
 				const rawScore = Number.isNaN(fileSize) ? 0 : Math.max((fileSize - minScoreSubmission.score!) / fileSize, 0);
 
-				logger.info(`user id: ${minScoreSubmission.userId}`);
-				logger.info(`file size: ${fileSize}`);
-				logger.info(`min score: ${minScoreSubmission.score}`);
-				logger.info(`raw score: ${rawScore}`);
+				logInfo(`user id: ${minScoreSubmission.userId}`);
+				logInfo(`file size: ${fileSize}`);
+				logInfo(`min score: ${minScoreSubmission.score}`);
+				logInfo(`raw score: ${rawScore}`);
 
 				const scoreRef = db.doc(`games/${request.data.gameId}/scores/${minScoreSubmission.userId}`) as DocumentReference<Score>;
 				batch.set(scoreRef, {
@@ -213,7 +213,7 @@ export const executeCodegolfSubmission = onTaskDispatched<ExecuteCodegolfSubmiss
 
 		const submissionRef = db.doc(`games/${request.data.gameId}/submissions/${request.data.submissionId}`) as DocumentReference<CodegolfSubmission>;
 
-		logger.info('Getting lock...');
+		logInfo('Getting lock...');
 		const isOk = await db.runTransaction(async (transaction) => {
 			const submissionDoc = await transaction.get(submissionRef);
 			const submission = submissionDoc.data();
@@ -226,7 +226,7 @@ export const executeCodegolfSubmission = onTaskDispatched<ExecuteCodegolfSubmiss
 		});
 
 		if (!isOk) {
-			logger.warn('Lock failed.');
+			logWarn('Lock failed.');
 			return;
 		}
 
@@ -241,7 +241,7 @@ export const executeCodegolfSubmission = onTaskDispatched<ExecuteCodegolfSubmiss
 			throw new AssertionError();
 		}
 
-		logger.info(`Starting execution of submission ${submissionDoc.id}`);
+		logInfo(`Starting execution of submission ${submissionDoc.id}`);
 
 		type TestcaseStatus = 'error' | 'failed' | 'success';
 
@@ -256,7 +256,7 @@ export const executeCodegolfSubmission = onTaskDispatched<ExecuteCodegolfSubmiss
 		}[] = [];
 
 		for (const [i, testcase] of config.testcases.entries()) {
-			logger.info(`Executing test case ${i}...`);
+			logInfo(`Executing test case ${i}...`);
 
 			const result = await axios({
 				method: 'POST',
@@ -586,7 +586,7 @@ export const executeQuantumComputingSubmission = onTaskDispatched<ExecuteQuantum
 		const config = game.configuration as QuantumComputingConfiguration;
 		const judgeCode = getQuantumComputingJudgeCode(config, request.data.challengeId);
 
-		logger.info('Getting lock...');
+		logInfo('Getting lock...');
 		const isOk = await db.runTransaction(async (transaction) => {
 			const submissionDoc = await transaction.get(submissionRef);
 			const submission = submissionDoc.data();
@@ -599,7 +599,7 @@ export const executeQuantumComputingSubmission = onTaskDispatched<ExecuteQuantum
 		});
 
 		if (!isOk) {
-			logger.warn('Lock failed.');
+			logWarn('Lock failed.');
 			return;
 		}
 
@@ -712,7 +712,7 @@ export const executeSqlSubmission = onTaskDispatched<ExecuteSqlSubmissionData>(
 		const game = gameDoc.data() as Game;
 		const athlonId = game.athlon.id;
 
-		logger.info('Getting lock...');
+		logInfo('Getting lock...');
 		const isOk = await db.runTransaction(async (transaction) => {
 			const submissionDoc = await transaction.get(submissionRef);
 			const submission = submissionDoc.data();
@@ -725,7 +725,7 @@ export const executeSqlSubmission = onTaskDispatched<ExecuteSqlSubmissionData>(
 		});
 
 		if (!isOk) {
-			logger.warn('Lock failed.');
+			logWarn('Lock failed.');
 			return;
 		}
 
@@ -758,7 +758,7 @@ export const executeSqlSubmission = onTaskDispatched<ExecuteSqlSubmissionData>(
 		});
 
 		const {duration, stderr, stdout, error: errorMessage} = result.data;
-		logger.info(result.data);
+		logInfo(result.data);
 
 		let error = null;
 		if (typeof duration !== 'number') {
@@ -843,7 +843,7 @@ export const onSubmissionCreated = onDocumentCreated(
 		const gameDoc = await db.collection('games').doc(changedGameId).get();
 		const game = gameDoc.data() as Game;
 
-		logger.info(`New submission: id = ${snapshot.id}, rule = ${game.rule.path}`);
+		logInfo(`New submission: id = ${snapshot.id}, rule = ${game.rule.path}`);
 
 		if (game.rule.path === 'gameRules/reversing-diff') {
 			const queue = getFunctions().taskQueue<ExecuteDiffSubmissionData>('executeDiffSubmission');
