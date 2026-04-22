@@ -92,6 +92,12 @@ npx tsc --noEmit   # must produce no output (no errors)
 npm run build      # must succeed
 ```
 
+If UI changes affect any element captured by Playwright screenshot tests (e.g. the header), update the snapshot assets too:
+```sh
+npx playwright test --update-snapshots
+```
+Snapshot files live in `tests/e2e.spec.ts-snapshots/` and must be committed alongside the code change.
+
 ### Linting
 Both the frontend and functions have separate ESLint configs based on `@hakatashi/eslint-config/typescript.js`.
 
