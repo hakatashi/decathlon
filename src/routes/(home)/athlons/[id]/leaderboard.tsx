@@ -34,10 +34,11 @@ interface RankingTableProps {
 	showRawScore: boolean,
 }
 
-interface Params {
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- Type compatibility with useParams
+type Params = {
 	id: string;
 	ruleId: string;
-}
+};
 
 const RankingTable = (props: RankingTableProps) => {
 	const param = useParams<Params>();

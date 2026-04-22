@@ -14,11 +14,12 @@ interface GameShowcaseProps {
 	game: Game,
 }
 
-interface Params {
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- Type compatibility with useParams
+type Params = {
 	id: string;
 	ruleId: string;
 	showcaseId: string;
-}
+};
 
 const toggleStatus = (status: 'correct' | 'wrong' | 'pending' | undefined) => {
 	switch (status) {
