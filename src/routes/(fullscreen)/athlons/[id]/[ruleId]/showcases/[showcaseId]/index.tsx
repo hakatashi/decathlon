@@ -14,11 +14,11 @@ interface GameShowcaseProps {
 	game: Game,
 }
 
-type Params = {
+interface Params {
 	id: string;
 	ruleId: string;
 	showcaseId: string;
-};
+}
 
 const toggleStatus = (status: 'correct' | 'wrong' | 'pending' | undefined) => {
 	switch (status) {

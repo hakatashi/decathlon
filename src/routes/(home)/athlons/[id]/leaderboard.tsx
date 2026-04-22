@@ -34,10 +34,10 @@ interface RankingTableProps {
 	showRawScore: boolean,
 }
 
-type Params = {
+interface Params {
 	id: string;
 	ruleId: string;
-};
+}
 
 const RankingTable = (props: RankingTableProps) => {
 	const param = useParams<Params>();
