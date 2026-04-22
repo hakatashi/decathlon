@@ -7,7 +7,7 @@
     "serve": "npm run build && serve .output/public",
     "test": "playwright test",
     "lint": "eslint . --fix",
-    "install": "cd functions && npm install"
+    "install": "cd functions && npm ci"
   },
   "type": "module",
   "devDependencies": {
