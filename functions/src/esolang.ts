@@ -58,7 +58,7 @@ export const executeDiffSubmission = onTaskDispatched<ExecuteDiffSubmissionData>
 		const submission = submissionDoc.data();
 
 		if (!submission || typeof submission.code !== 'string') {
-			throw new AssertionError();
+			throw new AssertionError({message: 'Invalid submission data'});
 		}
 
 		const answerBlobs = await storage.bucket().file(`games/${request.data.gameId}/answer`).download();
@@ -238,7 +238,7 @@ export const executeCodegolfSubmission = onTaskDispatched<ExecuteCodegolfSubmiss
 		const config = game.configuration as CodegolfConfiguration;
 
 		if (!submission || typeof submission.code !== 'string') {
-			throw new AssertionError();
+			throw new AssertionError({message: 'Invalid submission data'});
 		}
 
 		logger.info(`Starting execution of submission ${submissionDoc.id}`);
@@ -607,7 +607,7 @@ export const executeQuantumComputingSubmission = onTaskDispatched<ExecuteQuantum
 		const submission = submissionDoc.data();
 
 		if (!submission || typeof submission.code !== 'string') {
-			throw new AssertionError();
+			throw new AssertionError({message: 'Invalid submission data'});
 		}
 
 		const input = [
@@ -733,7 +733,7 @@ export const executeSqlSubmission = onTaskDispatched<ExecuteSqlSubmissionData>(
 		const submission = submissionDoc.data();
 
 		if (!submission || typeof submission.code !== 'string') {
-			throw new AssertionError();
+			throw new AssertionError({message: 'Invalid submission data'});
 		}
 
 		const input = [
