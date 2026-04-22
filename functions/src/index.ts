@@ -82,6 +82,7 @@ export const onUserCreated = authUser().onCreate(async (user) => {
 			photoURL: user.photoURL ?? '',
 			slug: user.uid,
 			slackId: slackId ?? '',
+			isAdmin: false,
 		});
 	});
 });
