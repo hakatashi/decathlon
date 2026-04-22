@@ -3,6 +3,7 @@ import {test, expect} from '@playwright/test';
 test.describe('Root page', () => {
 	test('has screenshot', async ({page}) => {
 		await page.goto('/');
+		await page.waitForSelector('main > h1');
 		await expect(page).toHaveScreenshot();
 	});
 
