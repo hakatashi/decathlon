@@ -8,7 +8,7 @@ import Collection from '~/components/Collection';
 import type {Game, GameRule, Score} from '~/lib/schema';
 
 const AthlonEdit = () => {
-	const param = useParams();
+	const param = useParams<{id: string, ruleId: string}>();
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
 	const auth = getAuth(app);

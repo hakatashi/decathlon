@@ -34,8 +34,13 @@ interface RankingTableProps {
 	showRawScore: boolean,
 }
 
+type Params = {
+	id: string;
+	ruleId: string;
+};
+
 const RankingTable = (props: RankingTableProps) => {
-	const param = useParams();
+	const param = useParams<Params>();
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
 	const auth = getAuth(app);
@@ -243,7 +248,7 @@ const RankingTable = (props: RankingTableProps) => {
 };
 
 const Leaderboard = () => {
-	const param = useParams();
+	const param = useParams<Params>();
 	const athlonData = useAthlon(param.id);
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
