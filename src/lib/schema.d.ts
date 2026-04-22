@@ -391,6 +391,12 @@ export interface GameRule extends DocumentData {
 	}[],
 }
 
+export interface Rule extends DocumentData {
+	name: string,
+	description: string,
+	updatedAt: Timestamp,
+}
+
 interface UseFireStoreReturn<T> {
 	data: T;
 	loading: boolean;
