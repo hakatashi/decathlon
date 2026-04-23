@@ -6,6 +6,7 @@ export interface User extends DocumentData {
 	photoURL: string,
 	slug: string,
 	slackId: string,
+	isAdmin: boolean,
 }
 
 export type SlackUserInfo = SlackUser

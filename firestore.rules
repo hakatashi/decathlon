@@ -8,11 +8,12 @@ service cloud.firestore {
     }
 
     function isValidUser(user) {
-      return user.size() == 4
+      return user.size() == 5
         && user.displayName is string
         && user.photoURL is string
         && user.slug is string
-        && user.slackId is string;
+        && user.slackId is string
+        && user.isAdmin is bool;
     }
 
     match /users/{userId} {
