@@ -31,3 +31,9 @@ db-dump
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# AI agents
+.claude/settings.local.json
+.aider*
+.windsurf/
+.qodo/

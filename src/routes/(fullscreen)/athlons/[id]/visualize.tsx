@@ -262,7 +262,7 @@ const AthlonVisualize = (props: GameVisualizeProps) => {
 };
 
 const GameVisualizeWrapper = () => {
-	const param = useParams();
+	const param = useParams<{id: string}>();
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
 	const athlonData = useAthlon(param.id);

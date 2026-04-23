@@ -14,6 +14,12 @@ interface GameShowcaseProps {
 	game: Game,
 }
 
+type Params = {
+	id: string;
+	ruleId: string;
+	showcaseId: string;
+};
+
 const toggleStatus = (status: 'correct' | 'wrong' | 'pending' | undefined) => {
 	switch (status) {
 		case 'correct':
@@ -28,7 +34,7 @@ const toggleStatus = (status: 'correct' | 'wrong' | 'pending' | undefined) => {
 };
 
 const GameShowcase = (props: GameShowcaseProps) => {
-	const param = useParams();
+	const param = useParams<Params>();
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
 
@@ -225,7 +231,7 @@ const GameShowcase = (props: GameShowcaseProps) => {
 };
 
 const GameShowcaseWrapper = () => {
-	const param = useParams();
+	const param = useParams<Params>();
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
 

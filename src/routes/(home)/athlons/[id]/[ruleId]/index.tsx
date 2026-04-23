@@ -163,7 +163,7 @@ const ResetDialog = (props: {open: boolean, onClose: () => void, onReset: () => 
 };
 
 const AthlonGame = () => {
-	const param = useParams();
+	const param = useParams<{id: string, ruleId: string}>();
 	const athlonData = useAthlon(param.id);
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
