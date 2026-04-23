@@ -16,7 +16,10 @@ export default [
 			sourceType: 'module',
 		},
 		rules: {
+			radix: 'off',
 			'import/no-unresolved': 'off',
+			'react/forward-ref-uses-ref': 'off',
+			'react/jsx-filename-extension': 'off',
 		},
 	},
 ];

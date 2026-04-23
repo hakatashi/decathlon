@@ -14,6 +14,7 @@ interface GameShowcaseProps {
 	game: Game,
 }
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- Type compatibility with useParams
 type Params = {
 	id: string;
 	ruleId: string;

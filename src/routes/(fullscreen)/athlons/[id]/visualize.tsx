@@ -16,19 +16,6 @@ interface GameVisualizeProps {
 	athlon: Athlon,
 }
 
-const toggleStatus = (status: 'correct' | 'wrong' | 'pending' | undefined) => {
-	switch (status) {
-		case 'correct':
-			return 'wrong';
-		case 'wrong':
-			return 'correct';
-		case 'pending':
-			return 'correct';
-		default:
-			return 'pending';
-	}
-};
-
 const AthlonVisualize = (props: GameVisualizeProps) => {
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
@@ -263,8 +250,6 @@ const AthlonVisualize = (props: GameVisualizeProps) => {
 
 const GameVisualizeWrapper = () => {
 	const param = useParams<{id: string}>();
-	const app = useFirebaseApp();
-	const db = getFirestore(app);
 	const athlonData = useAthlon(param.id);
 
 	return (
