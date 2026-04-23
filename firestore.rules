@@ -277,5 +277,27 @@ service cloud.firestore {
     match /gameRules/{document=**} {
       allow read;
     }
+
+    function isGlobalAdmin() {
+      return request.auth != null
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    match /rules/{ruleId} {
+      allow read;
+      allow create: if isGlobalAdmin()
+                    && request.resource.data.keys().hasOnly(['name', 'description', 'updatedAt'])
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() > 0
+                    && request.resource.data.description is string
+                    && request.resource.data.updatedAt == request.time;
+      allow update: if isGlobalAdmin()
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['name', 'description', 'updatedAt'])
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() > 0
+                    && request.resource.data.description is string
+                    && request.resource.data.updatedAt == request.time;
+    }
   }
 }

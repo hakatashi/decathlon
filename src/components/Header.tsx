@@ -59,6 +59,13 @@ const Header = () => {
 							Athlons
 						</A>
 					</Button>
+					<Button
+						sx={{my: 2, color: 'white', display: 'block'}}
+					>
+						<A href="/rules">
+							Rules
+						</A>
+					</Button>
 				</Box>
 				<Switch>
 					<Match when={authState.loading}>
