@@ -30,7 +30,7 @@ const Head = (props: {children: JSX.Element}) => (
 );
 
 const Home = () => {
-	const param = useParams();
+	const param = useParams<{id: string}>();
 	const athlonData = useAthlon(param.id);
 	const app = useFirebaseApp();
 	const db = getFirestore(app);

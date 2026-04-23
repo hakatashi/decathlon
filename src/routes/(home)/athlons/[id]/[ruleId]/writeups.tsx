@@ -53,7 +53,7 @@ const AthlonWriteup = (props: WriteupProps) => {
 };
 
 const AthlonWriteups = () => {
-	const param = useParams();
+	const param = useParams<{id: string, ruleId: string}>();
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
 	const auth = getAuth(app);

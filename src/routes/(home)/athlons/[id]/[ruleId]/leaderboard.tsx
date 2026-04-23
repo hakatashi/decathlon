@@ -15,7 +15,7 @@ import type {Game, GameRule, Score} from '~/lib/schema';
 import useAthlon from '~/lib/useAthlon';
 
 const Leaderboard = () => {
-	const param = useParams();
+	const param = useParams<{id: string, ruleId: string}>();
 	const athlonData = useAthlon(param.id);
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
