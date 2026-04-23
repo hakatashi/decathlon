@@ -117,10 +117,6 @@ export const onScoreChanged = onDocumentWritten(
 
 			const ranking = calculateRanking(gameDocs, scoreDocs);
 
-			transaction.update(athlon, {
-				ranking,
-			});
-
 			const athlonRankings = athlon.collection('rankings') as CollectionReference<AthlonRanking>;
 
 			for (const rankingEntry of ranking) {
