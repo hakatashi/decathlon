@@ -1,5 +1,5 @@
 import {A, useParams} from '@solidjs/router';
-import {Typography, Container, Breadcrumbs, Link, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Stack, TextField, Grid, Box, Checkbox, FormControlLabel} from '@suid/material';
+import {Typography, Container, Breadcrumbs, Link, Button, Chip, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Stack, TextField, Grid, Box, Checkbox, FormControlLabel} from '@suid/material';
 import dayjs from 'dayjs';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, query, setDoc, where} from 'firebase/firestore';
@@ -15,7 +15,7 @@ import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import PageTitle from '~/components/PageTitle';
 import {useStorageBytes} from '~/lib/firebase';
-import type {Game, GameRule, Score} from '~/lib/schema';
+import type {Game, GameRule, Rule, Score} from '~/lib/schema';
 import 'tippy.js/dist/tippy.css';
 import useAthlon from '~/lib/useAthlon';
 import {reset as resetTypingJapanese} from '~/routes/arenas/typing-japanese';
@@ -162,6 +162,25 @@ const ResetDialog = (props: {open: boolean, onClose: () => void, onReset: () => 
 	);
 };
 
+const RuleCategoryChip = (props: {ruleRef: DocumentReference<Rule>}) => {
+	const app = useFirebaseApp();
+	const db = getFirestore(app);
+	const ruleData = useFirestore(doc(db, 'rules', props.ruleRef.id) as DocumentReference<Rule>);
+
+	return (
+		<Doc data={ruleData}>
+			{(rule) => (
+				<Chip
+					label={rule.name}
+					component={A}
+					href={`/rules/${props.ruleRef.id}`}
+					clickable
+				/>
+			)}
+		</Doc>
+	);
+};
+
 const AthlonGame = () => {
 	const param = useParams<{id: string, ruleId: string}>();
 	const athlonData = useAthlon(param.id);
@@ -292,6 +311,19 @@ const AthlonGame = () => {
 										>
 											{rule.description}
 										</Typography>
+										<Collection data={gameData}>
+											{(game) => (
+												<Show when={game.ruleCategories?.length > 0}>
+													<Stack direction="row" flexWrap="wrap" gap={1} sx={{mt: 2, mb: 3}}>
+														<For each={game.ruleCategories}>
+															{(categoryRef) => (
+																<RuleCategoryChip ruleRef={categoryRef}/>
+															)}
+														</For>
+													</Stack>
+												</Show>
+											)}
+										</Collection>
 										<Stack direction="row" flexWrap="wrap" gap={1}>
 											<Collection data={gameData}>
 												{(game) => (
