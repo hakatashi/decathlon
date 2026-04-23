@@ -4,7 +4,7 @@ import type {DocumentReference, CollectionReference, CollectionGroup} from 'fire
 import {onDocumentWritten} from 'firebase-functions/firestore';
 import {onCall} from 'firebase-functions/https';
 import {HttpsError, beforeUserCreated, beforeUserSignedIn} from 'firebase-functions/identity';
-import type {AuthUserRecord} from 'firebase-functions/lib/common/providers/identity';
+import type {AuthUserRecord} from 'firebase-functions/identity';
 import {info as logInfo, error as logError} from 'firebase-functions/logger';
 import {defineString} from 'firebase-functions/params';
 import {user as authUser} from 'firebase-functions/v1/auth';
