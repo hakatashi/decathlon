@@ -1,3 +1,4 @@
+import {A} from '@solidjs/router';
 import {Avatar, Stack} from '@suid/material';
 import type {SxProps} from '@suid/system';
 import {doc, DocumentReference, getFirestore} from 'firebase/firestore';
@@ -47,12 +48,16 @@ const Username = (providedProps: Props) => {
 		<Doc data={userData}>
 			{(user) => (
 				<Stack
+					component={A}
+					href={`/users/${props.userId}`}
 					direction={props.direction}
 					alignItems="center"
 					sx={{
 						...props.sx,
 						display: props.display === 'inline' ? 'inline-flex' : 'flex',
 						...(props.display === 'inline' ? {verticalAlign: 'middle'} : {}),
+						textDecoration: 'none',
+						color: 'inherit',
 					}}
 				>
 					<div style={{position: 'relative', display: props.display}}>
