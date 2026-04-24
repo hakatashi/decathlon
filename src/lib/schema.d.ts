@@ -78,6 +78,7 @@ export interface Game extends DocumentData {
 	isUserResettable?: boolean,
 	admins: string[],
 	authors: string[],
+	ruleCategories: DocumentReference<Rule>[],
 	adminBonus: {
 		type: 'topPlayer',
 		count: number,
