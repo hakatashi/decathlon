@@ -102,6 +102,7 @@ export interface TypingJapaneseSubmission extends DocumentData {
 	userId: string,
 	submissionText: string,
 	score: number,
+	editDistance?: number,
 	diffTokens: {
 		type: 'deletion' | 'addition' | 'common',
 		token: string,
@@ -274,6 +275,7 @@ export interface PromptEngineeringConfiguration {
 }
 
 export interface TypingJapaneseConfiguration {
+	version: 1 | 2,
 	enabled?: boolean,
 	duration?: number,
 	textUrl?: string,

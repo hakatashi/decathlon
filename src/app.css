@@ -51,13 +51,14 @@ a {
 }
 
 .markdown code:not(pre code) {
-	background-color: #DDD;
+	background-color: #f4f6f6;
 	padding: 0.2em;
 	border-radius: 0.2em;
 }
 
 pre {
-	background: #DDD;
+	background: #f4f6f6;
+	font-size: 1.2em;
 	margin: 0;
 	padding: 0.5rem;
 	line-height: 1em;
