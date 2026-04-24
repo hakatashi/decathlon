@@ -67,6 +67,14 @@ const OnGameFinishedDialog = (props: onGameFinishedDialogProps) => {
 								<Typography variant="h5" component="p">
 									スコア: {submission.score}
 								</Typography>
+								<Typography variant="body1" component="p">
+									入力長: {submission.submissionText.length}
+								</Typography>
+								<Show when={submission.editDistance !== undefined}>
+									<Typography variant="body1" component="p">
+										最小編集距離: {submission.editDistance}
+									</Typography>
+								</Show>
 								<Box mt={1}>
 									<For each={submission.diffTokens}>
 										{(diff) => (
@@ -118,7 +126,7 @@ const TypingJapanese = () => {
 
 	const [text, setText] = createSignal<string>('');
 	const [phase, setPhase] = createSignal<'loading' | 'waiting' | 'playing' | 'finished'>('loading');
-	const [config, setConfig] = createSignal<TypingJapaneseConfiguration>({});
+	const [config, setConfig] = createSignal<TypingJapaneseConfiguration>({version: 1});
 	const [textareaEl, setTextareaEl] = createSignal<HTMLTextAreaElement | null>(null);
 
 	setArenaTitle('タイピング (日本語)');

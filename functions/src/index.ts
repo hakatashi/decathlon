@@ -162,6 +162,140 @@ const normalizeTypingJapaneseText = (input: string) => (
 		.replaceAll(/\s/g, '')
 );
 
+interface DiffToken {type: 'common' | 'deletion' | 'addition', token: string}
+
+const computeScoreV1 = (correct: string, input: string) => {
+	const trimmed = input.slice(0, correct.length);
+	const diff = new Diff(correct, trimmed);
+	const lcs = diff.getLcs();
+
+	const posTokens: {pos: number, type: 'common' | 'deletion' | 'addition', token: string}[] = [];
+
+	diff.scanCommon((_startA, _endA, startB, endB) => {
+		posTokens.push({pos: (startB + endB) / 2, type: 'common', token: trimmed.slice(startB, endB)});
+	});
+
+	let additionCount = 0;
+	diff.scanDiff((startA, endA, startB, endB) => {
+		if (startA !== endA) {
+			posTokens.push({pos: endB, type: 'deletion', token: correct.slice(startA, endA)});
+		}
+		if (startB !== endB) {
+			posTokens.push({pos: (startB + endB) / 2, type: 'addition', token: trimmed.slice(startB, endB)});
+			additionCount += endB - startB;
+		}
+	});
+	posTokens.sort((a, b) => a.pos - b.pos);
+
+	const score = lcs === null ? 0 : Math.max(0, lcs.length - additionCount);
+	return {score, diffTokens: posTokens.map(({type, token}) => ({type, token}))};
+};
+
+const buildDpRow = (ops: Uint8Array, prevRow: number[], currRow: number[], correct: string, trimmed: string, i: number, m: number) => {
+	const stride = m + 1;
+	currRow[0] = i;
+	ops[i * stride] = 1;
+	for (let j = 1; j <= m; j++) {
+		if (correct[i - 1] === trimmed[j - 1]) {
+			currRow[j] = prevRow[j - 1];
+			ops[i * stride + j] = 0;
+		} else {
+			const del = prevRow[j];
+			const ins = currRow[j - 1];
+			const sub = prevRow[j - 1];
+			const minCost = Math.min(del, ins, sub);
+			currRow[j] = 1 + minCost;
+			let opCode = 3;
+			if (del === minCost) {
+				opCode = 1;
+			} else if (ins === minCost) {
+				opCode = 2;
+			}
+			ops[i * stride + j] = opCode;
+		}
+	}
+};
+
+const backtraceV2 = (ops: Uint8Array, correct: string, trimmed: string, optN: number, m: number): DiffToken[] => {
+	const stride = m + 1;
+	const chars: {type: 'common' | 'deletion' | 'addition', ch: string}[] = [];
+	let bi = optN;
+	let bj = m;
+	while (bi > 0 || bj > 0) {
+		const op = ops[bi * stride + bj];
+		if (op === 0) {
+			chars.push({type: 'common', ch: correct[bi - 1]});
+			bi--;
+			bj--;
+		} else if (op === 1) {
+			chars.push({type: 'deletion', ch: correct[bi - 1]});
+			bi--;
+		} else if (op === 2) {
+			chars.push({type: 'addition', ch: trimmed[bj - 1]});
+			bj--;
+		} else {
+			// substitute: deletion of correct char then addition of typed char
+			chars.push({type: 'addition', ch: trimmed[bj - 1]}, {type: 'deletion', ch: correct[bi - 1]});
+			bi--;
+			bj--;
+		}
+	}
+	chars.reverse();
+
+	const diffTokens: DiffToken[] = [];
+	for (const {type, ch} of chars) {
+		const last = diffTokens.at(-1);
+		if (last?.type === type) {
+			last.token += ch;
+		} else {
+			diffTokens.push({type, token: ch});
+		}
+	}
+	return diffTokens;
+};
+
+// Computes min_n S(n) where S(n) = edit_distance(correct[:n], input) via a single O(n*m) DP pass.
+// rawScore = argmin_n S(n) - min_n S(n); higher means more characters effectively matched.
+const computeScoreV2 = (correct: string, input: string) => {
+	const trimmed = input.slice(0, correct.length);
+	const n = correct.length;
+	const m = trimmed.length;
+
+	// ops[i*(m+1)+j]: 0=match, 1=delete(i-1,j), 2=insert(i,j-1), 3=substitute(i-1,j-1)
+	const ops = new Uint8Array((n + 1) * (m + 1));
+	for (let j = 1; j <= m; j++) {
+		ops[j] = 2;
+	}
+
+	const editDistances = new Int32Array(n + 1);
+	editDistances[0] = m;
+
+	let prevRow: number[] = Array.from({length: m + 1}, (_, j) => j);
+	let currRow: number[] = new Array(m + 1) as number[];
+
+	for (let i = 1; i <= n; i++) {
+		buildDpRow(ops, prevRow, currRow, correct, trimmed, i, m);
+		editDistances[i] = currRow[m];
+		[prevRow, currRow] = [currRow, prevRow];
+	}
+
+	// Find n* = argmin S(n); prefer larger n on ties (higher rawScore)
+	let minDist = editDistances[0];
+	let optN = 0;
+	for (let i = 1; i <= n; i++) {
+		if (editDistances[i] <= minDist) {
+			minDist = editDistances[i];
+			optN = i;
+		}
+	}
+
+	return {
+		score: Math.max(0, m - minDist),
+		editDistance: minDist,
+		diffTokens: backtraceV2(ops, correct, trimmed, optN, m),
+	};
+};
+
 export const submitTypingJapaneseScore = onCall(async (request) => {
 	const {gameId, submissionText} = request.data;
 	const uid = request.auth?.uid;
@@ -176,68 +310,44 @@ export const submitTypingJapaneseScore = onCall(async (request) => {
 	const gameData = gameDoc.data();
 	assert(gameData);
 
-	assert(gameData.rule && gameData.rule.path === 'gameRules/typing-japanese');
+	assert(gameData.rule?.path === 'gameRules/typing-japanese');
 
-	const correctText = normalizeTypingJapaneseText(
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		(gameData.configuration as any).correctText,
-	);
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const config = gameData.configuration as any;
+	const version: number = config.version ?? 1;
+
+	const correctText = normalizeTypingJapaneseText(config.correctText);
 	assert(typeof correctText === 'string');
 
 	const submissionRef = db.doc(`games/${gameId}/submissions/${uid}`) as DocumentReference<TypingJapaneseSubmission>;
 	const scoreRef = db.doc(`games/${gameId}/scores/${uid}`) as DocumentReference<Score>;
 
 	const submissionData = await submissionRef.get();
-	assert(!submissionData.exists, 'You already submitted score for this game.');
+	assert(submissionData.exists === false, 'You already submitted score for this game.');
 
-	const trimmedSubmissionText = normalizeTypingJapaneseText(
-		submissionText.slice(0, correctText.length),
-	);
-	const diff = new Diff(correctText, trimmedSubmissionText);
-	const lcs = diff.getLcs();
+	const normalizedInput = normalizeTypingJapaneseText(submissionText);
 
-	const diffTokens = [] as {
-		pos: number,
-		type: 'common' | 'deletion' | 'addition',
-		token: string,
-	}[];
+	let score: number;
+	let editDistance: number | undefined;
+	let diffTokens: DiffToken[];
 
-	diff.scanCommon((_startA, _endA, startB, endB) => {
-		diffTokens.push({
-			pos: (startB + endB) / 2,
-			type: 'common',
-			token: trimmedSubmissionText.slice(startB, endB),
-		});
-	});
-
-	let additionCount = 0;
-	diff.scanDiff((startA, endA, startB, endB) => {
-		if (startA !== endA) {
-			diffTokens.push({
-				pos: endB,
-				type: 'deletion',
-				token: correctText.slice(startA, endA),
-			});
-		}
-		if (startB !== endB) {
-			diffTokens.push({
-				pos: (startB + endB) / 2,
-				type: 'addition',
-				token: trimmedSubmissionText.slice(startB, endB),
-			});
-			additionCount += endB - startB;
-		}
-	});
-
-	diffTokens.sort((a, b) => a.pos - b.pos);
-
-	const score = lcs === null ? 0 : Math.max(0, lcs.length - additionCount);
+	if (version === 2) {
+		const result = computeScoreV2(correctText, normalizedInput);
+		score = result.score;
+		editDistance = result.editDistance;
+		diffTokens = result.diffTokens;
+	} else {
+		const result = computeScoreV1(correctText, normalizedInput);
+		score = result.score;
+		diffTokens = result.diffTokens;
+	}
 
 	await submissionRef.set({
 		athlon: gameData.athlon,
 		score,
 		submissionText,
-		diffTokens: diffTokens.map(({type, token}) => ({type, token})),
+		...(editDistance !== undefined ? {editDistance} : {}),
+		diffTokens,
 		userId: uid,
 	});
 
