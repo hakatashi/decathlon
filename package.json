@@ -16,7 +16,7 @@
     "@suid/vite-plugin": "^0.4.1",
     "@types/common-tags": "^1.8.4",
     "@types/node": "^25.6.0",
-    "@types/sql.js": "^1.4.9",
+    "@types/sql.js": "^1.4.11",
     "@typescript-eslint/parser": "^8.49.0",
     "eslint": "^9.39.1",
     "postcss": "^8.5.10",
@@ -43,7 +43,7 @@
     "solid-js": "^1.9.12",
     "solid-markdown": "^2.1.1",
     "solid-tippy": "^0.2.1",
-    "sql.js": "^1.13.0",
+    "sql.js": "^1.14.1",
     "tippy.js": "^6.3.7",
     "undici": "^8.1.0",
     "vinxi": "^0.5.11"
