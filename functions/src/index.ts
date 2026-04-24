@@ -98,8 +98,11 @@ export const onRankingWritten = onDocumentWritten(
 		const exists = event.data?.after?.exists ?? false;
 
 		let delta = 0;
-		if (!existed && exists) delta = 1;
-		else if (existed && !exists) delta = -1;
+		if (!existed && exists) {
+			delta = 1;
+		} else if (existed && !exists) {
+			delta = -1;
+		}
 		if (delta === 0) {
 			return;
 		}
