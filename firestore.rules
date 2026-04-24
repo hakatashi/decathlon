@@ -8,12 +8,13 @@ service cloud.firestore {
     }
 
     function isValidUser(user) {
-      return user.size() == 5
-        && user.displayName is string
+      return user.displayName is string
         && user.photoURL is string
         && user.slug is string
         && user.slackId is string
-        && user.isAdmin is bool;
+        && user.isAdmin is bool
+        && user.description is string
+        && user.participationCount is int;
     }
 
     match /users/{userId} {
@@ -22,7 +23,7 @@ service cloud.firestore {
                     && request.auth.uid == userId
                     && request.resource.data.diff(resource.data)
                          .affectedKeys()
-                         .hasOnly(["displayName", "photoURL", "slug"])
+                         .hasOnly(["displayName", "photoURL", "slug", "description"])
                     && isValidUser(request.resource.data);
     }
 

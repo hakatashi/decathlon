@@ -1,5 +1,6 @@
 import assert from 'node:assert';
 import {WebClient} from '@slack/web-api';
+import {FieldValue} from 'firebase-admin/firestore';
 import type {DocumentReference, CollectionReference, CollectionGroup} from 'firebase-admin/firestore';
 import {onDocumentWritten} from 'firebase-functions/firestore';
 import {onCall} from 'firebase-functions/https';
@@ -83,9 +84,32 @@ export const onUserCreated = authUser().onCreate(async (user) => {
 			slug: user.uid,
 			slackId: slackId ?? '',
 			isAdmin: false,
+			description: '',
+			participationCount: 0,
 		});
 	});
 });
+
+export const onRankingWritten = onDocumentWritten(
+	'athlons/{athlonId}/rankings/{userId}',
+	async (event) => {
+		const {userId} = event.params;
+		const existed = event.data?.before?.exists ?? false;
+		const exists = event.data?.after?.exists ?? false;
+
+		let delta = 0;
+		if (!existed && exists) delta = 1;
+		else if (existed && !exists) delta = -1;
+		if (delta === 0) {
+			return;
+		}
+
+		await db.collection('users').doc(userId).set(
+			{participationCount: FieldValue.increment(delta)},
+			{merge: true},
+		);
+	},
+);
 
 export const onScoreChanged = onDocumentWritten(
 	'games/{gameId}/scores/{userId}',

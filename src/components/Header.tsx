@@ -66,6 +66,13 @@ const Header = () => {
 							Rules
 						</A>
 					</Button>
+					<Button
+						sx={{my: 2, color: 'white', display: 'block'}}
+					>
+						<A href="/users">
+							Users
+						</A>
+					</Button>
 				</Box>
 				<Switch>
 					<Match when={authState.loading}>

@@ -21,6 +21,7 @@ const Settings = () => {
 	const [imageFile, setImageFile] = createSignal<File | undefined>(undefined);
 	const [photoURL, setPhotoURL] = createSignal<string | undefined>(undefined);
 	const [displayName, setDisplayName] = createSignal<string | undefined>(undefined);
+	const [description, setDescription] = createSignal('');
 	const [isLoading, setIsLoading] = createSignal<boolean>(false);
 
 	createEffect(() => {
@@ -41,6 +42,13 @@ const Settings = () => {
 		const loadedDisplayName = userData()?.data?.displayName;
 		if (loadedDisplayName) {
 			setDisplayName(loadedDisplayName);
+		}
+	});
+
+	createEffect(() => {
+		const data = userData()?.data;
+		if (data) {
+			setDescription(data.description);
 		}
 	});
 
@@ -68,6 +76,7 @@ const Settings = () => {
 		await updateDoc(userRef, {
 			displayName: displayName(),
 			photoURL: photoURL(),
+			description: description(),
 		});
 		setIsLoading(false);
 	};
@@ -104,6 +113,16 @@ const Settings = () => {
 									}}
 								/>
 							</Show>
+							<TextField
+								label="自己紹介"
+								multiline
+								minRows={3}
+								value={description()}
+								onChange={(_event, value) => {
+									setDescription(value);
+								}}
+								helperText="ユーザープロフィールページに表示されます"
+							/>
 							<Stack spacing={1} alignItems="flex-start">
 								<Typography variant="caption">
 									Icon
