@@ -162,7 +162,7 @@ const normalizeTypingJapaneseText = (input: string) => (
 		.replaceAll(/\s/g, '')
 );
 
-type DiffToken = {type: 'common' | 'deletion' | 'addition', token: string};
+interface DiffToken {type: 'common' | 'deletion' | 'addition', token: string}
 
 const computeScoreV1 = (correct: string, input: string) => {
 	const trimmed = input.slice(0, correct.length);
@@ -206,8 +206,11 @@ const buildDpRow = (ops: Uint8Array, prevRow: number[], currRow: number[], corre
 			const minCost = Math.min(del, ins, sub);
 			currRow[j] = 1 + minCost;
 			let opCode = 3;
-			if (del === minCost) opCode = 1;
-			else if (ins === minCost) opCode = 2;
+			if (del === minCost) {
+				opCode = 1;
+			} else if (ins === minCost) {
+				opCode = 2;
+			}
 			ops[i * stride + j] = opCode;
 		}
 	}
@@ -222,7 +225,8 @@ const backtraceV2 = (ops: Uint8Array, correct: string, trimmed: string, optN: nu
 		const op = ops[bi * stride + bj];
 		if (op === 0) {
 			chars.push({type: 'common', ch: correct[bi - 1]});
-			bi--; bj--;
+			bi--;
+			bj--;
 		} else if (op === 1) {
 			chars.push({type: 'deletion', ch: correct[bi - 1]});
 			bi--;
@@ -232,7 +236,8 @@ const backtraceV2 = (ops: Uint8Array, correct: string, trimmed: string, optN: nu
 		} else {
 			// substitute: deletion of correct char then addition of typed char
 			chars.push({type: 'addition', ch: trimmed[bj - 1]}, {type: 'deletion', ch: correct[bi - 1]});
-			bi--; bj--;
+			bi--;
+			bj--;
 		}
 	}
 	chars.reverse();
@@ -258,7 +263,9 @@ const computeScoreV2 = (correct: string, input: string) => {
 
 	// ops[i*(m+1)+j]: 0=match, 1=delete(i-1,j), 2=insert(i,j-1), 3=substitute(i-1,j-1)
 	const ops = new Uint8Array((n + 1) * (m + 1));
-	for (let j = 1; j <= m; j++) ops[j] = 2;
+	for (let j = 1; j <= m; j++) {
+		ops[j] = 2;
+	}
 
 	const editDistances = new Int32Array(n + 1);
 	editDistances[0] = m;
