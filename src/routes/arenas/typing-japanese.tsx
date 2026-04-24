@@ -67,9 +67,12 @@ const OnGameFinishedDialog = (props: onGameFinishedDialogProps) => {
 								<Typography variant="h5" component="p">
 									スコア: {submission.score}
 								</Typography>
+								<Typography variant="body1" component="p">
+									入力長: {submission.submissionText.length}
+								</Typography>
 								<Show when={submission.editDistance !== undefined}>
 									<Typography variant="body1" component="p">
-										素点 (最小編集距離): {submission.editDistance}
+										最小編集距離: {submission.editDistance}
 									</Typography>
 								</Show>
 								<Box mt={1}>
