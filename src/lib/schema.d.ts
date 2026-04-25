@@ -311,6 +311,21 @@ type Configuration =
 	TypingJapaneseConfiguration |
 	SqlConfiguration;
 
+export interface ExecutionResultItem {
+	stdout: string,
+	stderr: string,
+	durationMs: number,
+	exitCode: number,
+}
+
+export interface Execution extends DocumentData {
+	gameId: string,
+	submissionId: string,
+	results: ExecutionResultItem[],
+	error: string | null,
+	completedAt: Timestamp,
+}
+
 export interface ReversingDiffRanking extends DocumentData {
 	athlon: DocumentReference<Athlon>,
 	userId: string,
