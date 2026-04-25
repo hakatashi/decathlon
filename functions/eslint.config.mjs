@@ -18,6 +18,7 @@ export default [
 		rules: {
 			radix: 'off',
 			'import/no-unresolved': 'off',
+			'import/order': 'off',
 			'react/forward-ref-uses-ref': 'off',
 			'react/jsx-filename-extension': 'off',
 		},

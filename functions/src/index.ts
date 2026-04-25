@@ -14,7 +14,8 @@ import type {Athlon, Game, PromptEngineeringVote, Score, TypingJapaneseSubmissio
 import {db} from './firebase.js';
 import {calculateRanking, updatePromptEngineeringScores} from './scores.js';
 
-export * from './esolang.js';
+export * from './submissions.js';
+export * from './executions.js';
 
 const SLACK_TOKEN = defineString('SLACK_TOKEN');
 
