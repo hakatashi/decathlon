@@ -1,0 +1,84 @@
+.grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+    margin: 16px 0;
+}
+
+.cell {
+    aspect-ratio: 1;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    text-align: center;
+    overflow: hidden;
+    word-break: break-all;
+    font-size: 0.65rem;
+    line-height: 1.3;
+    user-select: none;
+}
+
+.cellBase {
+    background-color: #607d8b;
+    color: white;
+}
+
+.cellAcquired {
+    background-color: #43a047;
+    color: white;
+}
+
+.cellAvailable {
+    background-color: #1976d2;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.cellAvailable:hover {
+    background-color: #115293;
+}
+
+.cellUnavailable {
+    background-color: #eeeeee;
+    color: #9e9e9e;
+}
+
+.cellName {
+    overflow: hidden;
+    width: 100%;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.cellWeight {
+    font-weight: bold;
+    opacity: 0.9;
+    margin-top: 2px;
+}
+
+.legend {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+    align-items: center;
+}
+
+.legendDot {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    display: inline-block;
+    margin-right: 4px;
+    vertical-align: middle;
+}
+
+.submission {
+    font-size: 1rem;
+}

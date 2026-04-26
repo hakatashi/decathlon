@@ -303,13 +303,78 @@ export interface SqlConfiguration {
 	},
 }
 
+export interface EsolangConfigurationLanguageBase {
+	type: 'base',
+}
+
+export interface EsolangConfigurationLanguageLanguage {
+	type: 'language',
+	id: string,
+}
+
+export type EsolangConfigurationLanguage =
+	EsolangConfigurationLanguageBase |
+	EsolangConfigurationLanguageLanguage;
+
+export interface EsolangConfiguration {
+	enabled: boolean,
+	description: string,
+	judgeType: CodegolfJudgeType,
+	languages: EsolangConfigurationLanguage[],
+	testcases: {
+		input: string,
+		output: string,
+	}[],
+}
+
+export interface EsolangSubmission extends DocumentData {
+	athlon: DocumentReference<Athlon>,
+	userId: string,
+	status: 'pending' | 'executing' | 'failed' | 'success' | 'error' | 'invalid',
+	languageIndex: number,
+	languageId: string,
+	code: string,
+	testcases: {
+		stdin: string,
+		stdout: string | null,
+		stderr: string | null,
+		duration: number | null,
+		status: 'failed' | 'success' | 'error',
+	}[],
+	errorMessage?: string,
+	createdAt: Timestamp,
+	executedAt: Timestamp | null,
+}
+
+export interface EsolangRanking extends DocumentData {
+	athlon: DocumentReference<Athlon>,
+	userId: string,
+	score: number,
+	acquiredCells: number[],
+	updatedAt: Timestamp,
+}
+
+export interface EsolangTestSubmission extends DocumentData {
+	userId: string,
+	languageId: string,
+	code: string,
+	stdin: string,
+	status: 'pending' | 'executing' | 'success' | 'error',
+	stdout: string | null,
+	stderr: string | null,
+	duration: number | null,
+	errorMessage?: string,
+	createdAt: Timestamp,
+}
+
 type Configuration =
 	DiffConfiguration |
 	CodegolfConfiguration |
 	QuantumComputingConfigurationV1 |
 	PromptEngineeringConfiguration |
 	TypingJapaneseConfiguration |
-	SqlConfiguration;
+	SqlConfiguration |
+	EsolangConfiguration;
 
 export interface ExecutionResultItem {
 	stdout: string,
@@ -415,6 +480,20 @@ export interface Rule extends DocumentData {
 	name: string,
 	description: string,
 	updatedAt: Timestamp,
+}
+
+export interface EsolangBoxLanguage {
+	name: string;
+	id: string;
+	link: string;
+	weight: number;
+	examples: {
+		filename: string;
+		code: Buffer;
+		stdin: string;
+		stdout: string;
+		isPrintable: boolean;
+	}[];
 }
 
 interface UseFireStoreReturn<T> {
