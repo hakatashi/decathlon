@@ -43,6 +43,18 @@
     color: #9e9e9e;
 }
 
+.cellLanguage {
+    cursor: pointer;
+}
+
+.cellAcquired.cellLanguage:hover {
+    opacity: 0.85;
+}
+
+.cellUnavailable.cellLanguage:hover {
+    background-color: #d5d5d5;
+}
+
 .cellName {
     overflow: hidden;
     width: 100%;

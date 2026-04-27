@@ -16,7 +16,25 @@ interface DecathlonJobData {
 	imageId: string;
 	code: string;
 	testcases: {stdin: string}[];
+	codeEncoding?: 'utf-8' | 'base64';
 }
+
+// Converts Firestore binary data (admin SDK returns Buffer/Uint8Array/Blob) to Buffer
+const toBuffer = (code: unknown): Buffer => {
+	if (Buffer.isBuffer(code)) {
+		return code;
+	}
+	if (code instanceof Uint8Array) {
+		return Buffer.from(code);
+	}
+	if (code && typeof (code as {toUint8Array?: unknown}).toUint8Array === 'function') {
+		return Buffer.from((code as {toUint8Array: () => Uint8Array}).toUint8Array());
+	}
+	if (typeof code === 'string') {
+		return Buffer.from(code, 'utf-8');
+	}
+	return Buffer.alloc(0);
+};
 
 let globalQueue: Queue | null = null;
 const getQueue = () => {
@@ -193,7 +211,8 @@ export const onSubmissionCreated = onDocumentCreated(
 				gameId: changedGameId,
 				submissionId: changedSubmissionId,
 				imageId: `esolang/${submission.languageId}`,
-				code: submission.code,
+				code: toBuffer(submission.code).toString('base64'),
+				codeEncoding: 'base64',
 				testcases: config.testcases.map((tc) => ({stdin: tc.input})),
 			};
 		}
@@ -234,7 +253,8 @@ export const onEsolangTestSubmissionCreated = onDocumentCreated(
 			gameId: 'esolang-test',
 			submissionId,
 			imageId: `esolang/${submission.languageId}`,
-			code: submission.code,
+			code: toBuffer(submission.code).toString('base64'),
+			codeEncoding: 'base64',
 			testcases: [{stdin: submission.stdin}],
 		};
 
