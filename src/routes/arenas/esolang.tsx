@@ -303,20 +303,6 @@ const MainTab = (props: MainTabProps) => {
 							/>
 						</Typography>
 						<Box sx={{mt: 2}}>
-							<Typography variant="body2" component="div" class={styles.legend}>
-								<span>
-									<span class={styles.legendDot} style={{'background-color': '#607d8b'}}/>BASE（常に獲得済み）
-								</span>
-								<span>
-									<span class={styles.legendDot} style={{'background-color': '#43a047'}}/>獲得済み
-								</span>
-								<span>
-									<span class={styles.legendDot} style={{'background-color': '#1976d2'}}/>提出可能（クリック）
-								</span>
-								<span>
-									<span class={styles.legendDot} style={{'background-color': '#eeeeee'}}/>未解放
-								</span>
-							</Typography>
 							<div class={styles.grid}>
 								<For each={Array.from({length: 64}, (_, i) => i)}>
 									{(i) => {
@@ -354,9 +340,6 @@ const MainTab = (props: MainTabProps) => {
 													}
 												}}
 											>
-												<Show when={isBase}>
-													<span>BASE</span>
-												</Show>
 												<Show when={cellConfig?.type === 'language'}>
 													<span class={styles.cellName}>
 														{lang()?.name ?? (cellConfig as EsolangConfigurationLanguageLanguage).id}
@@ -440,11 +423,11 @@ const MainTab = (props: MainTabProps) => {
 															</Show>
 															<Show when={example.stdin}>
 																<Typography variant="body2" color="text.secondary">
-																	stdin: {example.stdin}
+																	stdin: <code>{example.stdin}</code>
 																</Typography>
 															</Show>
 															<Typography variant="body2" color="text.secondary">
-																stdout: {example.stdout}
+																stdout: <code>{example.stdout}</code>
 															</Typography>
 														</Box>
 													)}
@@ -713,12 +696,35 @@ const TestTab = () => {
 	const languagesRef = collection(db, 'esolangBoxLanguages') as CollectionReference<EsolangBoxLanguage>;
 	const languagesData = useFirestore(languagesRef);
 
+	const [searchParams] = useSearchParams();
+	const gameId = Array.isArray(searchParams.gameId) ? searchParams.gameId[0] : searchParams.gameId;
+	const gameRef = doc(db, 'games', gameId ?? '') as DocumentReference<Game>;
+	const gameData = useFirestore(gameRef);
+
 	const sortedLanguages = createMemo(() => {
 		const langs = languagesData.data;
 		if (!Array.isArray(langs)) {
 			return [];
 		}
 		return [...langs].sort((a, b) => a.name.localeCompare(b.name));
+	});
+
+	const languagesList = createMemo(() => {
+		const languagesMap = new Map(
+			sortedLanguages().map((language) => (
+				[language.id, language]
+			))
+		);
+
+		const gameConfiguration = gameData?.data?.configuration as EsolangConfiguration | undefined;
+		if (!gameConfiguration?.languages) {
+			return [];
+		}
+
+		return gameConfiguration.languages
+			.filter((language) => language.type === 'language')
+			.sort((a, b) => a.id.localeCompare(b.id))
+			.map((language) => languagesMap.get(language.id));
 	});
 
 	const [selectedLanguageId, setSelectedLanguageId] = createSignal('');
@@ -736,7 +742,7 @@ const TestTab = () => {
 			setThrottleTime(0);
 			return;
 		}
-		const remaining = Math.max(0, 30000 - (Date.now() - lastTime));
+		const remaining = Math.max(0, 10000 - (Date.now() - lastTime));
 		setThrottleTime(remaining);
 		if (remaining === 0 && testStatus() === 'throttled') {
 			setTestStatus('ready');
@@ -788,15 +794,12 @@ const TestTab = () => {
 
 	return (
 		<Stack spacing={2} sx={{mt: 2}}>
-			<Typography variant="body2" color="text.secondary">
-				盤面の制限なく、任意のプログラミング言語でコードを実行できます。
-			</Typography>
 			<FormControl fullWidth>
 				<InputLabel>言語</InputLabel>
 				<Select value={selectedLanguageId()} onChange={handleChangeLanguage} label="言語">
-					<For each={sortedLanguages()}>
+					<For each={languagesList()}>
 						{(lang) => (
-							<MenuItem value={lang.id}>{lang.name}</MenuItem>
+							<MenuItem value={lang?.id}>{lang?.name}</MenuItem>
 						)}
 					</For>
 				</Select>
