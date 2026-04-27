@@ -18,16 +18,28 @@ import PageTitle from '~/components/PageTitle';
 import type {Athlon, AthlonRanking, Game, GameRule, User} from '~/lib/schema';
 
 const getRankColor = (rank: number) => {
-	if (rank === 0) return yellow[700];
-	if (rank === 1) return grey[500];
-	if (rank === 2) return orange[700];
+	if (rank === 0) {
+		return yellow[700];
+	}
+	if (rank === 1) {
+		return grey[500];
+	}
+	if (rank === 2) {
+		return orange[700];
+	}
 	return undefined;
 };
 
 const getRankLabel = (rank: number) => {
-	if (rank === 0) return '🥇 1位';
-	if (rank === 1) return '🥈 2位';
-	if (rank === 2) return '🥉 3位';
+	if (rank === 0) {
+		return '🥇 1位';
+	}
+	if (rank === 1) {
+		return '🥈 2位';
+	}
+	if (rank === 2) {
+		return '🥉 3位';
+	}
 	return `${rank + 1}位`;
 };
 
@@ -52,7 +64,9 @@ const AthlonResultCard = (props: AthlonResultCardProps) => {
 	);
 
 	const matchedGames = createMemo(() => {
-		if (!gamesData.data) return [];
+		if (!gamesData.data) {
+			return [];
+		}
 		return gamesData.data.map((game) => ({
 			game,
 			rankGame: props.ranking.games.find((g) => g.gameId === game.id),
@@ -215,7 +229,9 @@ const UserDetail = () => {
 	const sortedRankings = createMemo(() => {
 		const rankings = rankingsData.data;
 		const athlons = athlonsData.data;
-		if (!rankings || !athlons) return [];
+		if (!rankings || !athlons) {
+			return [];
+		}
 		return [...rankings].sort((a, b) => {
 			const athlonA = athlons.find((ath) => ath.id === a.athlonId);
 			const athlonB = athlons.find((ath) => ath.id === b.athlonId);
@@ -227,7 +243,9 @@ const UserDetail = () => {
 
 	const stats = createMemo(() => {
 		const rankings = rankingsData.data;
-		if (!rankings || rankings.length === 0) return null;
+		if (!rankings || rankings.length === 0) {
+			return null;
+		}
 		const bestRank = Math.min(...rankings.map((r) => r.rank)) + 1;
 		const avgRank = rankings.reduce((sum, r) => sum + r.rank, 0) / rankings.length + 1;
 		const rank1Count = rankings.filter((r) => r.rank === 0).length;

@@ -16,7 +16,9 @@ const Users = () => {
 	);
 
 	const sortedUsers = createMemo(() => {
-		if (!usersData.data) return [];
+		if (!usersData.data) {
+			return [];
+		}
 		return [...usersData.data].sort(
 			(a, b) => b.participationCount - a.participationCount,
 		);

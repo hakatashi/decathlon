@@ -179,6 +179,27 @@ service cloud.firestore {
           && submission.executedAt == null;
       }
 
+      function isValidEsolangSubmission(submission, game) {
+        return submission.keys().hasOnly([
+            'athlon', 'userId', 'status', 'languageIndex', 'languageId', 'code',
+            'testcases', 'createdAt', 'executedAt'])
+          && submission.athlon is path
+          && game.athlon == submission.athlon
+          && submission.userId is string
+          && submission.status == 'pending'
+          && submission.languageIndex is int
+          && submission.languageIndex >= 0
+          && submission.languageIndex <= 63
+          && submission.languageId is string
+          && submission.languageId.size() > 0
+          && submission.code is string
+          && submission.code.size() > 0
+          && submission.testcases is list
+          && submission.testcases.size() == 0
+          && submission.createdAt == request.time
+          && submission.executedAt == null;
+      }
+
       match /submissions/{submissionId} {
         allow read: if (
           (
@@ -213,6 +234,10 @@ service cloud.firestore {
             (
               gameData().rule == /databases/$(database)/documents/gameRules/sql &&
               isValidSqlSubmission(request.resource.data, gameData())
+            ) ||
+            (
+              gameData().rule == /databases/$(database)/documents/gameRules/esolang &&
+              isValidEsolangSubmission(request.resource.data, gameData())
             )
           )
         );
@@ -277,6 +302,28 @@ service cloud.firestore {
 
     match /gameRules/{document=**} {
       allow read;
+    }
+
+    match /esolangBoxLanguages/{languageId} {
+      allow read;
+    }
+
+    match /esolangTestSubmissions/{submissionId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null
+                    && request.resource.data.keys().hasOnly([
+                        'userId', 'languageId', 'code', 'stdin', 'status',
+                        'stdout', 'stderr', 'duration', 'createdAt'])
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.languageId is string
+                    && request.resource.data.languageId.size() > 0
+                    && request.resource.data.code is string
+                    && request.resource.data.stdin is string
+                    && request.resource.data.status == 'pending'
+                    && request.resource.data.stdout == null
+                    && request.resource.data.stderr == null
+                    && request.resource.data.duration == null
+                    && request.resource.data.createdAt == request.time;
     }
 
     function isGlobalAdmin() {

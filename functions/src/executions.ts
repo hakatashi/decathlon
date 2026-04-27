@@ -3,7 +3,7 @@ import type {Timestamp, CollectionReference, DocumentReference} from 'firebase-a
 import {onDocumentCreated} from 'firebase-functions/firestore';
 import {info as logInfo} from 'firebase-functions/logger';
 import {firstBy, groupBy, identity, last, reverse, sortBy, sum, zip} from 'remeda';
-import type {CodegolfConfiguration, CodegolfJudgeType, CodegolfRanking, CodegolfSubmission, DiffConfiguration, Execution, Game, QuantumComputingConfiguration, QuantumComputingResult, QuantumComputingSubmission, ReversingDiffRanking, ReversingDiffSubmission, Score, SqlResult, SqlSubmission, SqlTestcaseResult} from '~/lib/schema.js';
+import type {CodegolfConfiguration, CodegolfJudgeType, CodegolfRanking, CodegolfSubmission, DiffConfiguration, EsolangBoxLanguage, EsolangConfiguration, EsolangRanking, EsolangSubmission, EsolangTestSubmission, Execution, Game, QuantumComputingConfiguration, QuantumComputingResult, QuantumComputingSubmission, ReversingDiffRanking, ReversingDiffSubmission, Score, SqlResult, SqlSubmission, SqlTestcaseResult} from '~/lib/schema.js';
 import {db, storage} from './firebase.js';
 
 const normalizeCodegolfOutput = (text: string, judgeType: CodegolfJudgeType) => {
@@ -518,6 +518,125 @@ const processSqlExecution = async (
 	}
 };
 
+const processEsolangTestExecution = async (execution: Execution) => {
+	const submissionRef = db.doc(
+		`esolangTestSubmissions/${execution.submissionId}`,
+	) as DocumentReference<EsolangTestSubmission>;
+
+	const result = execution.results[0] ?? null;
+
+	await submissionRef.update({
+		status: execution.error ? 'error' : 'success',
+		stdout: result?.stdout ?? null,
+		stderr: result?.stderr ?? null,
+		duration: result?.durationMs ?? null,
+		...(execution.error ? {errorMessage: execution.error} : {}),
+	});
+};
+
+const updateEsolangScore = async (gameId: string, game: Game, submission: EsolangSubmission) => {
+	await db.runTransaction(async (transaction) => {
+		const rankingRef = db.doc(`games/${gameId}/ranking/${submission.userId}`) as DocumentReference<EsolangRanking>;
+		const rankingDoc = await transaction.get(rankingRef);
+		const rankingData = rankingDoc.data();
+
+		if (rankingData?.acquiredCells?.includes(submission.languageIndex)) {
+			return;
+		}
+
+		const languageRef = db.collection('esolangBoxLanguages').doc(submission.languageId) as DocumentReference<EsolangBoxLanguage>;
+		const languageDoc = await transaction.get(languageRef);
+		const weight = languageDoc.data()?.weight ?? 1;
+
+		const newScore = (rankingData?.score ?? 0) + weight;
+		const newAcquiredCells = [...(rankingData?.acquiredCells ?? []), submission.languageIndex];
+
+		transaction.set(rankingRef, {
+			athlon: game.athlon,
+			userId: submission.userId,
+			score: newScore,
+			acquiredCells: newAcquiredCells,
+			// @ts-expect-error: Date is compatible with Timestamp
+			updatedAt: new Date(),
+		});
+
+		const scoreRef = db.doc(`games/${gameId}/scores/${submission.userId}`) as DocumentReference<Score>;
+		transaction.set(scoreRef, {
+			athlon: game.athlon,
+			user: submission.userId,
+			rawScore: newScore,
+			tiebreakScore: submission.createdAt.toMillis(),
+		});
+	});
+};
+
+const processEsolangExecution = async (game: Game, execution: Execution) => {
+	const submissionRef = db.doc(
+		`games/${execution.gameId}/submissions/${execution.submissionId}`,
+	) as DocumentReference<EsolangSubmission>;
+	const submissionDoc = await submissionRef.get();
+	const submission = submissionDoc.data();
+	if (!submission) {
+		return;
+	}
+
+	const config = game.configuration as EsolangConfiguration;
+
+	type TestcaseStatus = 'error' | 'failed' | 'success';
+
+	const testcaseResults: {
+		stdin: string,
+		stdout: string | null,
+		stderr: string | null,
+		duration: number | null,
+		status: TestcaseStatus,
+	}[] = [];
+
+	for (const [i, testcase] of config.testcases.entries()) {
+		const result = execution.results[i] ?? null;
+		const stdout = result?.stdout ?? '';
+		const stderr = result?.stderr ?? '';
+		const duration = result?.durationMs ?? null;
+
+		let status: TestcaseStatus;
+		if (execution.error) {
+			status = 'error';
+		} else if (isTestcaseCorrect(stdout, testcase.output, config.judgeType)) {
+			status = 'success';
+		} else {
+			status = 'failed';
+		}
+
+		testcaseResults.push({
+			stdin: testcase.input,
+			stdout: result ? stdout : null,
+			stderr: result ? stderr : null,
+			duration,
+			status,
+		});
+	}
+
+	let totalStatus: TestcaseStatus;
+	if (testcaseResults.some(({status}) => status === 'error')) {
+		totalStatus = 'error';
+	} else if (testcaseResults.some(({status}) => status === 'failed')) {
+		totalStatus = 'failed';
+	} else {
+		totalStatus = 'success';
+	}
+
+	await submissionRef.update({
+		status: totalStatus,
+		...(execution.error ? {errorMessage: execution.error} : {}),
+		testcases: testcaseResults,
+		executedAt: new Date(),
+	});
+
+	if (totalStatus === 'success') {
+		await updateEsolangScore(execution.gameId, game, submission);
+	}
+};
+
 export const onExecutionCreated = onDocumentCreated(
 	'executions/{submissionId}',
 	async (event) => {
@@ -526,6 +645,13 @@ export const onExecutionCreated = onDocumentCreated(
 		}
 
 		const execution = event.data.data() as Execution;
+
+		// --- esolang test (no game context) ---
+		if (execution.gameId === 'esolang-test') {
+			await processEsolangTestExecution(execution);
+			return;
+		}
+
 		const gameDoc = await db.collection('games').doc(execution.gameId).get();
 		const game = gameDoc.data() as Game;
 
@@ -550,6 +676,12 @@ export const onExecutionCreated = onDocumentCreated(
 		// --- sql ---
 		if (game.rule.path === 'gameRules/sql') {
 			await processSqlExecution(game, execution);
+			return;
+		}
+
+		// --- esolang ---
+		if (game.rule.path === 'gameRules/esolang') {
+			await processEsolangExecution(game, execution);
 		}
 	},
 );
