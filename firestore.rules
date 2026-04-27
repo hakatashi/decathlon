@@ -192,7 +192,7 @@ service cloud.firestore {
           && submission.languageIndex <= 63
           && submission.languageId is string
           && submission.languageId.size() > 0
-          && submission.code is string
+          && submission.code is bytes
           && submission.code.size() > 0
           && submission.testcases is list
           && submission.testcases.size() == 0
@@ -317,7 +317,7 @@ service cloud.firestore {
                     && request.resource.data.userId == request.auth.uid
                     && request.resource.data.languageId is string
                     && request.resource.data.languageId.size() > 0
-                    && request.resource.data.code is string
+                    && request.resource.data.code is bytes
                     && request.resource.data.stdin is string
                     && request.resource.data.status == 'pending'
                     && request.resource.data.stdout == null
