@@ -33,6 +33,7 @@ import {blue, green, red} from '@suid/material/colors';
 import dayjs from 'dayjs';
 import {
 	addDoc,
+	Bytes,
 	collection,
 	CollectionReference,
 	doc,
@@ -87,6 +88,48 @@ const exampleCodeToString = (code: unknown): string => {
 	return '';
 };
 
+const getBytes = (code: unknown): Uint8Array => {
+	if (code instanceof Uint8Array) {
+		return code;
+	}
+	if (code && typeof (code as {toUint8Array?: unknown}).toUint8Array === 'function') {
+		return (code as {toUint8Array: () => Uint8Array}).toUint8Array();
+	}
+	if (typeof code === 'string') {
+		return new TextEncoder().encode(code);
+	}
+	return new Uint8Array(0);
+};
+
+const bytesToBase64 = (bytes: Uint8Array): string => {
+	let binary = '';
+	for (const byte of bytes) {
+		binary += String.fromCharCode(byte);
+	}
+	return btoa(binary);
+};
+
+const base64ToBytes = (base64: string): Uint8Array => {
+	const binary = atob(base64);
+	const bytes = new Uint8Array(binary.length);
+	for (let i = 0; i < binary.length; i++) {
+		bytes[i] = binary.charCodeAt(i);
+	}
+	return bytes;
+};
+
+const fileToBytesOrText = async (file: File): Promise<{bytes: Bytes, text: string | null}> => {
+	const ab = await file.arrayBuffer();
+	const uint8 = new Uint8Array(ab);
+	let text: string | null = null;
+	try {
+		text = new TextDecoder('utf-8', {fatal: true}).decode(uint8);
+	} catch {
+		// binary file
+	}
+	return {bytes: Bytes.fromUint8Array(uint8), text};
+};
+
 const getAdjacentIndices = (idx: number): number[] => {
 	const row = Math.floor(idx / 8);
 	const col = idx % 8;
@@ -112,7 +155,7 @@ interface MainTabProps {
 }
 
 const MainTab = (props: MainTabProps) => {
-	const [searchParams] = useSearchParams();
+	const [searchParams, setSearchParams] = useSearchParams();
 	const gameId = Array.isArray(searchParams.gameId) ? searchParams.gameId[0] : searchParams.gameId;
 
 	const app = useFirebaseApp();
@@ -172,12 +215,14 @@ const MainTab = (props: MainTabProps) => {
 	const [selectedCell, setSelectedCell] = createSignal<number | null>(null);
 	const [dialogOpen, setDialogOpen] = createSignal(false);
 	const [code, setCode] = createSignal('');
+	const [codeFile, setCodeFile] = createSignal<File | null>(null);
 	const [submitStatus, setSubmitStatus] = createSignal<'ready' | 'executing' | 'throttled'>('ready');
 	const [lastSubmissionTime, setLastSubmissionTime] = createSignal<number | null>(null);
 	const [throttleTime, setThrottleTime] = createSignal(0);
 	const [currentSubmission, setCurrentSubmission] =
 		createSignal<UseFireStoreReturn<EsolangSubmission | null | undefined> | null>(null);
 
+	let fileInputRef!: HTMLInputElement;
 	let descriptionEl!: HTMLElement;
 
 	createEffect(async () => {
@@ -218,6 +263,10 @@ const MainTab = (props: MainTabProps) => {
 	const handleOpenCell = (idx: number) => {
 		setSelectedCell(idx);
 		setCode('');
+		setCodeFile(null);
+		if (fileInputRef) {
+			fileInputRef.value = '';
+		}
 		setCurrentSubmission(null);
 		setSubmitStatus('ready');
 		setDialogOpen(true);
@@ -239,8 +288,17 @@ const MainTab = (props: MainTabProps) => {
 		if (cellConfig?.type !== 'language') {
 			return;
 		}
-		if (code().length === 0) {
-			return;
+
+		const file = codeFile();
+		let codeBytes: Bytes;
+		if (file) {
+			const {bytes} = await fileToBytesOrText(file);
+			codeBytes = bytes;
+		} else {
+			if (code().length === 0) {
+				return;
+			}
+			codeBytes = Bytes.fromUint8Array(new TextEncoder().encode(code()));
 		}
 
 		setCurrentSubmission(null);
@@ -254,7 +312,7 @@ const MainTab = (props: MainTabProps) => {
 				status: 'pending',
 				languageIndex: cellIdx,
 				languageId: cellConfig.id,
-				code: code(),
+				code: codeBytes,
 				testcases: [],
 				createdAt: serverTimestamp(),
 				executedAt: null,
@@ -285,6 +343,29 @@ const MainTab = (props: MainTabProps) => {
 		}
 		return allAcquiredCells().has(idx);
 	});
+
+	const selectedCellIsAvailable = createMemo(() => {
+		const idx = selectedCell();
+		if (idx === null) {
+			return false;
+		}
+		return availableCells().has(idx);
+	});
+
+	const hasCode = createMemo(() => codeFile() !== null || code().length > 0);
+
+	const handleFilenameClick = (lang: EsolangBoxLanguage, example: EsolangBoxLanguage['examples'][number]) => {
+		const codeBytes = getBytes(example.code);
+		const base64Code = bytesToBase64(codeBytes);
+		handleCloseDialog();
+		setSearchParams({
+			tab: 'test',
+			submissionId: undefined,
+			testLanguageId: lang.id,
+			testCode: base64Code,
+			testStdin: example.stdin ?? '',
+		});
+	};
 
 	return (
 		<Doc data={gameData}>
@@ -323,19 +404,19 @@ const MainTab = (props: MainTabProps) => {
 												return `${styles.cell} ${styles.cellBase}`;
 											}
 											if (isAcquired()) {
-												return `${styles.cell} ${styles.cellAcquired}`;
+												return `${styles.cell} ${styles.cellAcquired} ${styles.cellLanguage}`;
 											}
 											if (isAvailable()) {
 												return `${styles.cell} ${styles.cellAvailable}`;
 											}
-											return `${styles.cell} ${styles.cellUnavailable}`;
+											return `${styles.cell} ${styles.cellUnavailable}${cellConfig?.type === 'language' ? ` ${styles.cellLanguage}` : ''}`;
 										});
 
 										return (
 											<div
 												class={cellClass()}
 												onClick={() => {
-													if (isAvailable() && cellConfig?.type === 'language') {
+													if (cellConfig?.type === 'language') {
 														handleOpenCell(i);
 													}
 												}}
@@ -392,7 +473,16 @@ const MainTab = (props: MainTabProps) => {
 												<For each={lang.examples}>
 													{(example) => (
 														<Box>
-															<Typography variant="body2" color="text.secondary">
+															<Typography
+																variant="body2"
+																sx={{
+																	cursor: 'pointer',
+																	color: 'primary.main',
+																	textDecoration: 'underline',
+																	display: 'inline',
+																}}
+																onClick={() => handleFilenameClick(lang, example)}
+															>
 																{example.filename}
 															</Typography>
 															<Show
@@ -437,20 +527,64 @@ const MainTab = (props: MainTabProps) => {
 											<Show when={selectedCellIsAcquired()}>
 												<Alert severity="success">このマスはすでに獲得済みです。</Alert>
 											</Show>
-											<Show when={!selectedCellIsAcquired()}>
-												<TextField
-													label="提出コード"
-													multiline
-													minRows={4}
-													value={code()}
-													onChange={(_event, value) => setCode(value)}
-													disabled={props.phase === 'finished' || submitStatus() === 'executing'}
-													// @ts-expect-error: type error
-													sx={{
-														width: '100%',
-														'& textarea': {'font-family': 'monospace', 'line-height': '1em'},
-													}}
-												/>
+											<Show when={!selectedCellIsAcquired() && !selectedCellIsAvailable()}>
+												<Alert severity="info">
+													このマスはまだ解放されていません。隣接するマスを先に獲得してください。
+												</Alert>
+											</Show>
+											<Show when={!selectedCellIsAcquired() && selectedCellIsAvailable()}>
+												<Stack spacing={1}>
+													<TextField
+														label="提出コード"
+														multiline
+														minRows={4}
+														value={codeFile() ? `[ファイル: ${codeFile()?.name ?? ''}]` : code()}
+														onChange={(_event, value) => {
+															if (!codeFile()) {
+																setCode(value);
+															}
+														}}
+														disabled={props.phase === 'finished' || submitStatus() === 'executing' || codeFile() !== null}
+														// @ts-expect-error: type error
+														sx={{
+															width: '100%',
+															'& textarea': {'font-family': 'monospace', 'line-height': '1em'},
+														}}
+													/>
+													<Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+														<input
+															ref={(el) => {
+																fileInputRef = el;
+															}}
+															type="file"
+															style={{display: 'none'}}
+															onChange={(event) => setCodeFile(event.currentTarget.files?.[0] ?? null)}
+														/>
+														<Button
+															size="small"
+															variant="outlined"
+															disabled={props.phase === 'finished' || submitStatus() === 'executing'}
+															onClick={() => fileInputRef.click()}
+														>
+															ファイルを選択
+														</Button>
+														<Show when={codeFile()}>
+															<Typography variant="body2" component="span">{codeFile()?.name ?? ''}</Typography>
+															<Button
+																size="small"
+																color="error"
+																onClick={() => {
+																	setCodeFile(null);
+																	if (fileInputRef) {
+																		fileInputRef.value = '';
+																	}
+																}}
+															>
+																クリア
+															</Button>
+														</Show>
+													</Box>
+												</Stack>
 												<Show when={submitStatus() !== 'executing' && currentSubmission() !== null}>
 													<Doc data={currentSubmission()}>
 														{(sub) => (
@@ -477,13 +611,13 @@ const MainTab = (props: MainTabProps) => {
 							</DialogContent>
 							<DialogActions>
 								<Button onClick={handleCloseDialog}>閉じる</Button>
-								<Show when={!selectedCellIsAcquired() && props.phase !== 'finished'}>
+								<Show when={!selectedCellIsAcquired() && selectedCellIsAvailable() && props.phase !== 'finished'}>
 									<Switch>
 										<Match when={submitStatus() === 'ready'}>
 											<Button
 												onClick={handleSubmit}
 												variant="contained"
-												disabled={code().length === 0}
+												disabled={!hasCode()}
 											>
 												送信
 											</Button>
@@ -578,7 +712,7 @@ const SubmissionsTab = (props: SubmissionsTabProps) => {
 							<Typography variant="h4" component="h2" my={1}>Language</Typography>
 							<p>{langMap().get(submission()?.languageId ?? '')?.name ?? submission()?.languageId}</p>
 							<Typography variant="h4" component="h2" my={1}>Code</Typography>
-							<pre>{submission()?.code}</pre>
+							<pre>{exampleCodeToString(submission()?.code)}</pre>
 							<Show when={submission()?.errorMessage}>
 								<Typography variant="h4" component="h2" my={1}>Error</Typography>
 								<pre>{submission()?.errorMessage}</pre>
@@ -713,7 +847,7 @@ const TestTab = () => {
 		const languagesMap = new Map(
 			sortedLanguages().map((language) => (
 				[language.id, language]
-			))
+			)),
 		);
 
 		const gameConfiguration = gameData?.data?.configuration as EsolangConfiguration | undefined;
@@ -729,12 +863,60 @@ const TestTab = () => {
 
 	const [selectedLanguageId, setSelectedLanguageId] = createSignal('');
 	const [code, setCode] = createSignal('');
+	const [codeFile, setCodeFile] = createSignal<File | null>(null);
 	const [stdin, setStdin] = createSignal('');
 	const [testStatus, setTestStatus] = createSignal<'ready' | 'executing' | 'throttled'>('ready');
 	const [lastTestTime, setLastTestTime] = createSignal<number | null>(null);
 	const [throttleTime, setThrottleTime] = createSignal(0);
 	const [testResult, setTestResult] =
 		createSignal<UseFireStoreReturn<EsolangTestSubmission | null | undefined> | null>(null);
+	const [initialized, setInitialized] = createSignal(false);
+
+	let testFileInputRef!: HTMLInputElement;
+
+	// Initialize from URL params (e.g. after clicking a sample filename)
+	createEffect(() => {
+		const langs = languagesList();
+		if (langs.length > 0 && !initialized()) {
+			setInitialized(true);
+			const rawLangId = searchParams.testLanguageId;
+			const rawCode = searchParams.testCode;
+			const rawStdin = searchParams.testStdin;
+
+			const testLangId = Array.isArray(rawLangId) ? rawLangId[0] : rawLangId;
+			const testCodeB64 = Array.isArray(rawCode) ? rawCode[0] : rawCode;
+			const testStdin = Array.isArray(rawStdin) ? rawStdin[0] : rawStdin;
+
+			if (testLangId) {
+				setSelectedLanguageId(testLangId);
+			}
+			if (testCodeB64) {
+				try {
+					const bytes = base64ToBytes(testCodeB64);
+					let text: string | null = null;
+					try {
+						text = new TextDecoder('utf-8', {fatal: true}).decode(bytes);
+					} catch {
+						// binary - create a File object
+					}
+					if (text === null) {
+						const blob = new Blob([new Uint8Array(bytes)]);
+						const file = new File([blob], 'code.bin');
+						setCodeFile(file);
+						setCode('');
+					} else {
+						setCode(text);
+						setCodeFile(null);
+					}
+				} catch {
+					// ignore invalid base64
+				}
+			}
+			if (testStdin) {
+				setStdin(testStdin);
+			}
+		}
+	});
 
 	const intervalId = setInterval(() => {
 		const lastTime = lastTestTime();
@@ -759,11 +941,22 @@ const TestTab = () => {
 		}
 	});
 
+	const hasCode = createMemo(() => codeFile() !== null || code().length > 0);
+
 	const handleTest = async () => {
 		const uid = user()?.uid;
 		const languageId = selectedLanguageId();
-		if (!uid || !languageId || code().length === 0) {
+		if (!uid || !languageId || !hasCode()) {
 			return;
+		}
+
+		const file = codeFile();
+		let codeBytes: Bytes;
+		if (file) {
+			const {bytes} = await fileToBytesOrText(file);
+			codeBytes = bytes;
+		} else {
+			codeBytes = Bytes.fromUint8Array(new TextEncoder().encode(code()));
 		}
 
 		setTestResult(null);
@@ -774,7 +967,7 @@ const TestTab = () => {
 			{
 				userId: uid,
 				languageId,
-				code: code(),
+				code: codeBytes,
 				stdin: stdin(),
 				status: 'pending',
 				stdout: null,
@@ -804,19 +997,58 @@ const TestTab = () => {
 					</For>
 				</Select>
 			</FormControl>
-			<TextField
-				label="コード"
-				multiline
-				minRows={6}
-				value={code()}
-				onChange={(_event, value) => setCode(value)}
-				disabled={testStatus() === 'executing'}
-				// @ts-expect-error: type error
-				sx={{
-					width: '100%',
-					'& textarea': {'font-family': 'monospace', 'line-height': '1em'},
-				}}
-			/>
+			<Stack spacing={1}>
+				<TextField
+					label="コード"
+					multiline
+					minRows={6}
+					value={codeFile() ? `[ファイル: ${codeFile()?.name ?? ''}]` : code()}
+					onChange={(_event, value) => {
+						if (!codeFile()) {
+							setCode(value);
+						}
+					}}
+					disabled={testStatus() === 'executing' || codeFile() !== null}
+					// @ts-expect-error: type error
+					sx={{
+						width: '100%',
+						'& textarea': {'font-family': 'monospace', 'line-height': '1em'},
+					}}
+				/>
+				<Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+					<input
+						ref={(el) => {
+							testFileInputRef = el;
+						}}
+						type="file"
+						style={{display: 'none'}}
+						onChange={(event) => setCodeFile(event.currentTarget.files?.[0] ?? null)}
+					/>
+					<Button
+						size="small"
+						variant="outlined"
+						disabled={testStatus() === 'executing'}
+						onClick={() => testFileInputRef.click()}
+					>
+						ファイルを選択
+					</Button>
+					<Show when={codeFile()}>
+						<Typography variant="body2" component="span">{codeFile()?.name ?? ''}</Typography>
+						<Button
+							size="small"
+							color="error"
+							onClick={() => {
+								setCodeFile(null);
+								if (testFileInputRef) {
+									testFileInputRef.value = '';
+								}
+							}}
+						>
+							クリア
+						</Button>
+					</Show>
+				</Box>
+			</Stack>
 			<TextField
 				label="標準入力 (stdin)"
 				multiline
@@ -836,7 +1068,7 @@ const TestTab = () => {
 						<Button
 							onClick={handleTest}
 							variant="contained"
-							disabled={selectedLanguageId() === '' || code().length === 0}
+							disabled={selectedLanguageId() === '' || !hasCode()}
 						>
 							実行
 						</Button>

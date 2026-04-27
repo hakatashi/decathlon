@@ -1,5 +1,5 @@
 import type {User as SlackUser} from '@slack/web-api/dist/types/response/UsersInfoResponse';
-import type {DocumentData, DocumentReference, FirestoreError, Timestamp} from 'firebase/firestore';
+import type {Bytes, DocumentData, DocumentReference, FirestoreError, Timestamp} from 'firebase/firestore';
 
 export interface User extends DocumentData {
 	displayName: string,
@@ -333,7 +333,7 @@ export interface EsolangSubmission extends DocumentData {
 	status: 'pending' | 'executing' | 'failed' | 'success' | 'error' | 'invalid',
 	languageIndex: number,
 	languageId: string,
-	code: string,
+	code: Bytes,
 	testcases: {
 		stdin: string,
 		stdout: string | null,
@@ -357,7 +357,7 @@ export interface EsolangRanking extends DocumentData {
 export interface EsolangTestSubmission extends DocumentData {
 	userId: string,
 	languageId: string,
-	code: string,
+	code: Bytes,
 	stdin: string,
 	status: 'pending' | 'executing' | 'success' | 'error',
 	stdout: string | null,
