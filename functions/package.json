@@ -22,7 +22,7 @@
     "firebase-functions": "^7.2.5",
     "ioredis": "^5.0.0",
     "mdiff": "^1.4.2",
-    "remeda": "^2.33.7"
+    "remeda": "^2.34.0"
   },
   "devDependencies": {
     "@hakatashi/eslint-config": "^2.1.1",
