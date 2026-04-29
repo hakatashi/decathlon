@@ -873,6 +873,7 @@ const TestTab = () => {
 	const [initialized, setInitialized] = createSignal(false);
 
 	let testFileInputRef!: HTMLInputElement;
+	let executingTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
 	// Initialize from URL params (e.g. after clicking a sample filename)
 	createEffect(() => {
@@ -930,12 +931,21 @@ const TestTab = () => {
 			setTestStatus('ready');
 		}
 	}, 1000);
-	onCleanup(() => clearInterval(intervalId));
+	onCleanup(() => {
+		clearInterval(intervalId);
+		if (executingTimeoutId !== null) {
+			clearTimeout(executingTimeoutId);
+		}
+	});
 
 	createEffect(() => {
 		const result = testResult();
 		if (testStatus() === 'executing') {
 			if ((['success', 'error'] as (string | undefined)[]).includes(result?.data?.status)) {
+				if (executingTimeoutId !== null) {
+					clearTimeout(executingTimeoutId);
+					executingTimeoutId = null;
+				}
 				setTestStatus('throttled');
 			}
 		}
@@ -961,6 +971,16 @@ const TestTab = () => {
 
 		setTestResult(null);
 		setTestStatus('executing');
+
+		if (executingTimeoutId !== null) {
+			clearTimeout(executingTimeoutId);
+		}
+		executingTimeoutId = setTimeout(() => {
+			executingTimeoutId = null;
+			if (testStatus() === 'executing') {
+				setTestStatus('throttled');
+			}
+		}, 90000);
 
 		const testRef = await addDoc(
 			collection(db, 'esolangTestSubmissions') as CollectionReference<EsolangTestSubmission>,
