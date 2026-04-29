@@ -1165,6 +1165,24 @@ const Esolang = () => {
 	const gameRef = doc(db, 'games', gameId) as DocumentReference<Game>;
 	const gameData = useFirestore(gameRef);
 
+	const isGameAdmin = createMemo(() => {
+		const uid = user()?.uid;
+		const admins = gameData.data?.admins;
+		if (!uid || !admins) {
+			return false;
+		}
+		return admins.includes(uid);
+	});
+
+	const effectivePhase = createMemo(() => {
+		if (phase() === 'waiting' && isGameAdmin()) {
+			return 'playing' as const;
+		}
+		return phase();
+	});
+
+	const adminViewingUnpublished = createMemo(() => phase() === 'waiting' && isGameAdmin());
+
 	setArenaTitle('難解プログラミング言語');
 
 	createEffect(() => {
@@ -1173,7 +1191,7 @@ const Esolang = () => {
 			const rankingRef = doc(db, `games/${gameId}/ranking/${userData.uid}`) as DocumentReference<EsolangRanking>;
 			setMyRanking(useFirestore(rankingRef));
 
-			if (phase() === 'playing') {
+			if (effectivePhase() === 'playing') {
 				setSubmissions(useFirestore(
 					query(
 						collection(gameRef, 'submissions') as CollectionReference<EsolangSubmission>,
@@ -1181,7 +1199,7 @@ const Esolang = () => {
 						orderBy('createdAt', 'desc'),
 					),
 				));
-			} else if (phase() === 'finished') {
+			} else if (effectivePhase() === 'finished') {
 				setSubmissions(useFirestore(
 					query(
 						collection(gameRef, 'submissions') as CollectionReference<EsolangSubmission>,
@@ -1232,14 +1250,19 @@ const Esolang = () => {
 
 	return (
 		<Switch>
-			<Match when={phase() === 'waiting'}>
+			<Match when={effectivePhase() === 'waiting'}>
 				<Typography variant="h3" component="p" textAlign="center" py={6}>
 					競技開始までしばらくお待ち下さい。
 				</Typography>
 			</Match>
-			<Match when={phase() === 'playing' || phase() === 'finished'}>
+			<Match when={effectivePhase() === 'playing' || effectivePhase() === 'finished'}>
 				<main>
 					<Container maxWidth="lg" sx={{py: 3}}>
+						<Show when={adminViewingUnpublished()}>
+							<Alert severity="warning" sx={{mb: 1}}>
+								この競技はまだ公開されていません。あなたはこのゲームのadminのため、閲覧・提出が可能です。
+							</Alert>
+						</Show>
 						<Alert severity="info" sx={{mb: 2}}>
 							盤面上のプログラミング言語でコードを提出し、マスを獲得してください。
 							獲得済みのマスに隣接するマス（青色）のみ提出できます。
@@ -1274,7 +1297,7 @@ const Esolang = () => {
 						</Box>
 						<Switch>
 							<Match when={searchParams.tab === 'main'}>
-								<MainTab myRanking={myRanking()} phase={phase()}/>
+								<MainTab myRanking={myRanking()} phase={effectivePhase()}/>
 							</Match>
 							<Match when={searchParams.tab === 'submissions'}>
 								<SubmissionsTab submissions={submissions()}/>
