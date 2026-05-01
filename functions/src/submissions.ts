@@ -121,7 +121,7 @@ export const onSubmissionCreated = onDocumentCreated(
 			jobData = {
 				gameId: changedGameId,
 				submissionId: changedSubmissionId,
-				imageId: 'hakatashi/diff-challenge-python',
+				imageId: 'hakatashi/diff-challenge-cpp',
 				code: `${answer.toString('base64')}\n${Buffer.from(submission.code, 'utf-8').toString('base64')}`,
 				testcases: [{stdin: ''}],
 			};
