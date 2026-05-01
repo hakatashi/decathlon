@@ -3,6 +3,7 @@ import {A, useParams} from '@solidjs/router';
 import {Breadcrumbs, Button, Container, Link as LinkUi, Dialog, TextField, Typography, DialogContent, DialogContentText, DialogActions, Alert} from '@suid/material';
 import {getAuth} from 'firebase/auth';
 import {CollectionReference, DocumentReference, collection, deleteDoc, doc, getFirestore, query, serverTimestamp, setDoc, updateDoc, where} from 'firebase/firestore';
+import remarkGfm from 'remark-gfm';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, Show} from 'solid-js';
 import {SolidMarkdown} from 'solid-markdown';
@@ -44,7 +45,7 @@ const AthlonWriteup = (props: WriteupProps) => {
 				<SolidMarkdown
 					class="markdown"
 					children={props.content}
-					// remarkPlugins={[remarkGfm]}
+					remarkPlugins={[remarkGfm]}
 					linkTarget="_blank"
 				/>
 			</div>
