@@ -1,6 +1,6 @@
 import {sum, sortBy, prop} from 'remeda';
 import type {Game, Score, ScoreConfiguration} from '~/lib/schema.js';
-import assert from 'assert';
+import assert from 'node:assert';
 
 export const calculateScore = (
 	rawScore: number,
