@@ -146,6 +146,14 @@ export const onScoreChanged = onDocumentWritten(
 			const ranking = calculateRanking(gameDocs, scoreDocs);
 
 			const athlonRankings = athlon.collection('rankings') as CollectionReference<AthlonRanking>;
+			const existingRankings = await transaction.get(athlonRankings);
+
+			const newUserIds = new Set(ranking.map((entry) => entry.userId));
+			for (const existingEntry of existingRankings.docs) {
+				if (!newUserIds.has(existingEntry.id)) {
+					transaction.delete(existingEntry.ref);
+				}
+			}
 
 			for (const rankingEntry of ranking) {
 				const {userId} = rankingEntry;

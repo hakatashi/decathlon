@@ -29,6 +29,9 @@ export const calculateScore = (
 		if (rawScore > highestRawScore) {
 			throw new Error('rawScore cannot be larger than highestRawScore');
 		}
+		if (highestRawScore === 0) {
+			return 0;
+		}
 		return rawScore / highestRawScore * maxPoint;
 	}
 
