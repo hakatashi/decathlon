@@ -17,6 +17,7 @@ interface DecathlonJobData {
 	code: string;
 	testcases: {stdin: string}[];
 	codeEncoding?: 'utf-8' | 'base64';
+	timeoutMs?: number;
 }
 
 // Converts Firestore binary data (admin SDK returns Buffer/Uint8Array/Blob) to Buffer
@@ -214,6 +215,7 @@ export const onSubmissionCreated = onDocumentCreated(
 				code: toBuffer(submission.code).toString('base64'),
 				codeEncoding: 'base64',
 				testcases: config.testcases.map((tc) => ({stdin: tc.input})),
+				timeoutMs: 50000,
 			};
 		}
 
