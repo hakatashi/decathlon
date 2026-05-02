@@ -1,5 +1,6 @@
 import {sum, sortBy, prop} from 'remeda';
 import type {Game, Score, ScoreConfiguration} from '~/lib/schema.js';
+import assert from 'assert';
 
 export const calculateScore = (
 	rawScore: number,
@@ -24,6 +25,12 @@ export const calculateScore = (
 
 	if (configuration.type === 'timestamp') {
 		return rawScore * configuration.attenuationFactor ** rank;
+	}
+
+	assert(configuration.type === 'score-and-rank');
+
+	if (rawScore === 0) {
+		return 0;
 	}
 
 	const maxRankPoint = maxPoint * configuration.rankRatio;
