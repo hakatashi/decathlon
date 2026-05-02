@@ -1,6 +1,18 @@
 import {sum, sortBy, prop} from 'remeda';
 import type {Game, Score, ScoreConfiguration} from '~/lib/schema.js';
-import assert from 'node:assert';
+
+class AssertionError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = 'AssertionError'; 
+	}
+}
+
+function assert(condition: boolean): asserts condition is true {
+	if (!condition) {
+		throw new AssertionError('Condition is not met');
+	}
+}
 
 export const calculateScore = (
 	rawScore: number,
