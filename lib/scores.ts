@@ -4,10 +4,11 @@ import type {Game, Score, ScoreConfiguration} from '~/lib/schema.js';
 class AssertionError extends Error {
 	constructor(message: string) {
 		super(message);
-		this.name = 'AssertionError'; 
+		this.name = 'AssertionError';
 	}
 }
 
+// eslint-disable-next-line func-style
 function assert(condition: boolean): asserts condition is true {
 	if (!condition) {
 		throw new AssertionError('Condition is not met');
