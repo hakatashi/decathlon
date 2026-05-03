@@ -1,5 +1,6 @@
+import {Link} from '@solidjs/meta';
 import {A, useParams} from '@solidjs/router';
-import {Typography, Container, Breadcrumbs, Link, Button, Chip, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Stack, TextField, Grid, Box, Checkbox, FormControlLabel} from '@suid/material';
+import {Typography, Container, Breadcrumbs, Link as LinkUi, Button, Chip, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Stack, TextField, Grid, Box, Checkbox, FormControlLabel} from '@suid/material';
 import dayjs from 'dayjs';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, query, setDoc, where} from 'firebase/firestore';
@@ -181,6 +182,70 @@ const RuleCategoryChip = (props: {ruleRef: DocumentReference<Rule>}) => {
 	);
 };
 
+const ScoreDescriptionSection = (props: {game: Game}) => {
+	let containerRef!: HTMLDivElement;
+
+	createEffect(async () => {
+		// @ts-expect-error: URL import
+		// eslint-disable-next-line import/no-unresolved
+		const {default: renderMathInElement} = await import('https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.mjs');
+		renderMathInElement(containerRef, {
+			delimiters: [
+				{left: '$$', right: '$$', display: true},
+				{left: '$', right: '$', display: false},
+			],
+		});
+	});
+
+	const descriptionHtml = createMemo(() => {
+		const c = props.game.scoreConfiguration;
+		const mp = props.game.maxPoint;
+
+		if (c.type === 'score') {
+			if (c.scoreWeight === 1) {
+				return `<p>配点: ${mp}点満点</p><p>素点がそのまま獲得得点になります。</p>`;
+			}
+			return `<p>配点: ${mp}点満点</p><p>$$\\text{獲得得点} = \\min(${mp},\\ \\text{素点} \\times ${c.scoreWeight})$$</p>`;
+		}
+
+		if (c.type === 'max-ratio') {
+			return `<p>配点: ${mp}点満点</p>
+<p>参加者の中で最も高い素点を${mp}点としたときの点数が各参加者の獲得得点となります。</p>
+<p>$$\\text{獲得得点} = \\frac{\\text{素点}}{\\text{最高素点}} \\times ${mp}$$</p>`;
+		}
+
+		if (c.type === 'timestamp') {
+			return `<p>配点: ${mp}点満点</p>
+<p>問題が解けた場合: $\\text{獲得得点} = ${mp} \\times ${c.attenuationFactor}^{\\text{順位}}$（順位は0-indexed）</p>
+<p>問題が解けなかった場合: 0点</p>`;
+		}
+
+		const maxRankPoint = Math.round(mp * c.rankRatio);
+		const maxScorePoint = mp - maxRankPoint;
+		const rankDenominator = c.rankWeight === 1 ? '\\text{順位}' : `\\text{順位} + ${c.rankWeight - 1}`;
+
+		if (c.rankRatio >= 1) {
+			return `<p>配点: ${mp}点満点（順位点のみ）</p>
+<p>$$\\text{獲得得点} = ${mp} \\times \\frac{${c.rankWeight}}{${rankDenominator}}$$</p>
+<p>（順位は1-indexed）</p>`;
+		}
+
+		const scoreFormula = c.scoreWeight > 0
+			? `<p>$$\\text{素点点数} = \\min(${maxScorePoint},\\ \\text{素点} \\times ${c.scoreWeight})$$</p>`
+			: '';
+		return `<p>配点: 素点${maxScorePoint}点 + 順位点${maxRankPoint}点 = ${mp}点満点</p>
+${scoreFormula}<p>$$\\text{順位点} = ${maxRankPoint} \\times \\frac{${c.rankWeight}}{${rankDenominator}}$$</p>
+<p>（順位は1-indexed）</p>`;
+	});
+
+	return (
+		<div ref={containerRef} class="markdown">
+			<h2>獲得得点の計算方法</h2>
+			<div innerHTML={descriptionHtml()}/>
+		</div>
+	);
+};
+
 const AthlonGame = () => {
 	const param = useParams<{id: string, ruleId: string}>();
 	const athlonData = useAthlon(param.id);
@@ -241,6 +306,7 @@ const AthlonGame = () => {
 
 	return (
 		<main>
+			<Link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css"/>
 			<Doc data={athlonData}>
 				{(athlon) => (
 					<Doc data={ruleData}>
@@ -253,19 +319,19 @@ const AthlonGame = () => {
 			<div class={styles.header}>
 				<Container maxWidth="lg">
 					<Breadcrumbs aria-label="breadcrumb" sx={{pt: 3, pb: 3}}>
-						<Link component={A} underline="hover" color="inherit" href="/athlons">
+						<LinkUi component={A} underline="hover" color="inherit" href="/athlons">
 							Athlons
-						</Link>
+						</LinkUi>
 						<Doc data={athlonData}>
 							{(athlon) => (
-								<Link
+								<LinkUi
 									underline="hover"
 									color="inherit"
 									component={A}
 									href={`/athlons/${athlon.id}`}
 								>
 									{athlon.name}
-								</Link>
+								</LinkUi>
 							)}
 						</Doc>
 						<Doc data={ruleData}>
@@ -393,9 +459,9 @@ const AthlonGame = () => {
 											Your score: {myScore()}
 										</Typography>
 										<Box sx={{mb: 3}} >
-											<Link component={A} href="./leaderboard">
+											<LinkUi component={A} href="./leaderboard">
 												ランキングを表示する
-											</Link>
+											</LinkUi>
 										</Box>
 									</Grid>
 								</Grid>
@@ -407,12 +473,15 @@ const AthlonGame = () => {
 			<Container maxWidth="lg">
 				<Collection data={gameData}>
 					{(game) => (
-						<SolidMarkdown
-							class="markdown"
-							children={game.description}
-							remarkPlugins={[remarkGfm]}
-							linkTarget="_blank"
-						/>
+						<>
+							<SolidMarkdown
+								class="markdown"
+								children={game.description}
+								remarkPlugins={[remarkGfm]}
+								linkTarget="_blank"
+							/>
+							<ScoreDescriptionSection game={game}/>
+						</>
 					)}
 				</Collection>
 				<Collection data={gameData}>
