@@ -19,6 +19,13 @@ interface onGameFinishedDialogProps {
 	gameId: string,
 }
 
+const normalizeTypingJapaneseText = (input: string) => (
+	input.normalize('NFKC')
+		.replaceAll(',', '、')
+		.replaceAll('.', '。')
+		.replaceAll(/\s/g, '')
+);
+
 const OnGameFinishedDialog = (props: onGameFinishedDialogProps) => {
 	const app = useFirebaseApp();
 	const db = getFirestore(app);
@@ -68,7 +75,7 @@ const OnGameFinishedDialog = (props: onGameFinishedDialogProps) => {
 									スコア: {submission.score}
 								</Typography>
 								<Typography variant="body1" component="p">
-									入力長: {submission.submissionText.length}
+									入力長: {normalizeTypingJapaneseText(submission.submissionText).length}
 								</Typography>
 								<Show when={submission.editDistance !== undefined}>
 									<Typography variant="body1" component="p">
