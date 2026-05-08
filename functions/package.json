@@ -29,7 +29,7 @@
     "@types/common-tags": "^1.8.4",
     "common-tags": "^1.8.2",
     "eslint": "^10.2.1",
-    "firebase-functions-test": "^3.4.1",
+    "firebase-functions-test": "^3.5.0",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3"
   },
