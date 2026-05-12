@@ -467,12 +467,30 @@ const QuantumComputing = () => {
 	const gameRef = doc(db, 'games', gameId) as DocumentReference<Game>;
 	const gameData = useFirestore(gameRef);
 
+	const isGameAdmin = createMemo(() => {
+		const uid = user()?.uid;
+		const admins = gameData.data?.admins;
+		if (!uid || !admins) {
+			return false;
+		}
+		return admins.includes(uid);
+	});
+
+	const effectivePhase = createMemo(() => {
+		if (phase() === 'waiting' && isGameAdmin()) {
+			return 'playing' as const;
+		}
+		return phase();
+	});
+
+	const adminViewingUnpublished = createMemo(() => phase() === 'waiting' && isGameAdmin());
+
 	setArenaTitle('diff');
 
 	createEffect(() => {
 		const userData = user();
 		if (userData?.uid) {
-			if (phase() === 'playing') {
+			if (effectivePhase() === 'playing') {
 				const submissionsData = useFirestore(
 					query(
 					collection(gameRef, 'submissions') as CollectionReference<QuantumComputingSubmission>,
@@ -481,7 +499,7 @@ const QuantumComputing = () => {
 					),
 				);
 				setSubmissions(submissionsData);
-			} else if (phase() === 'finished') {
+			} else if (effectivePhase() === 'finished') {
 				const submissionsData = useFirestore(
 					query(
 					collection(gameRef, 'submissions') as CollectionReference<QuantumComputingSubmission>,
@@ -546,7 +564,7 @@ const QuantumComputing = () => {
 
 	return (
 		<Switch>
-			<Match when={phase() === 'waiting'}>
+			<Match when={effectivePhase() === 'waiting'}>
 				<Typography
 					variant="h3"
 					component="p"
@@ -557,10 +575,15 @@ const QuantumComputing = () => {
 				</Typography>
 			</Match>
 			<Match
-				when={phase() === 'playing' || phase() === 'finished'}
+				when={effectivePhase() === 'playing' || effectivePhase() === 'finished'}
 			>
 				<main class={styles.app}>
 					<Container maxWidth="lg" sx={{py: 3}}>
+						<Show when={adminViewingUnpublished()}>
+							<Alert severity="warning" sx={{mb: 1}}>
+								この競技はまだ公開されていません。あなたはこのゲームのadminのため、閲覧・提出が可能です。
+							</Alert>
+						</Show>
 						<Alert severity="info">
 							与えられた条件を満たす量子回路を設計し、Pythonコードとして提出してください。
 						</Alert>
@@ -582,7 +605,7 @@ const QuantumComputing = () => {
 						</Box>
 						<Switch>
 							<Match when={searchParams.tab === 'main'}>
-								<MainTab phase={phase()}/>
+								<MainTab phase={effectivePhase()}/>
 							</Match>
 							<Match when={searchParams.tab === 'submissions'}>
 								<SubmissionsTab submissions={submissions()} config={config()}/>
