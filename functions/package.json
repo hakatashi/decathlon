@@ -17,7 +17,7 @@
   "main": "lib/index.js",
   "dependencies": {
     "@slack/web-api": "^7.15.2",
-    "bullmq": "^5.76.7",
+    "bullmq": "^5.76.8",
     "firebase-admin": "^13.9.0",
     "firebase-functions": "^7.2.5",
     "ioredis": "^5.0.0",
