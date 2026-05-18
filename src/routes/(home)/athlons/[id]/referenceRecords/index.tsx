@@ -27,12 +27,7 @@ const ReferenceRecordsIndex = () => {
 		}
 	});
 
-	const isAdmin = createMemo(() => userData()?.data?.isAdmin === true);
-	const notAdmin = createMemo(() => (
-		!authState.loading &&
-		(userData() !== null) &&
-		!isAdmin()
-	));
+	const notAdmin = createMemo(() => userData()?.data?.isAdmin === false);
 
 	const referenceRecordsData = useFirestore(
 		collection(db, 'athlons', param.id, 'referenceRecords') as CollectionReference<ReferenceRecord>,
