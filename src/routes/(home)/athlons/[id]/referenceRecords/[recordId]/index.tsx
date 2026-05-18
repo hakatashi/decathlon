@@ -27,12 +27,7 @@ const ReferenceRecordEdit = () => {
 		}
 	});
 
-	const isAdmin = createMemo(() => userData()?.data?.isAdmin === true);
-	const notAdmin = createMemo(() => (
-		!authState.loading &&
-		(userData() !== null) &&
-		!isAdmin()
-	));
+	const notAdmin = createMemo(() => userData()?.data?.isAdmin === false);
 
 	const existingRecordData = useFirestore(
 		doc(db, 'athlons', param.id, 'referenceRecords', param.recordId) as DocumentReference<ReferenceRecord>,
