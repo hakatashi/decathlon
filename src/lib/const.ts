@@ -1,26 +1,39 @@
-export const athlonNames = new Map<number | undefined, string>([
-	[0, 'Medenathlon'],
-	[1, 'Monoathlon'],
-	[2, 'Duathlon'],
-	[3, 'Triathlon'],
-	[4, 'Tetrathlon'],
-	[5, 'Pentathlon'],
-	[6, 'Hexathlon'],
-	[7, 'Heptathlon'],
-	[8, 'Octathlon'],
-	[9, 'Enneathlon'],
-	[10, 'Decathlon'],
-	[11, 'Hendecathlon'],
-	[12, 'Dodecathlon'],
-	[13, 'Triadecathlon'],
-	[14, 'Tessaradecathlon'],
-	[15, 'Pentedecathlon'],
-	[16, 'Hexadecathlon'],
-	[17, 'Heptadecathlon'],
-	[18, 'Octodecathlon'],
-	[19, 'Enneadecathlon'],
-	[20, 'Icosathlon'],
-]);
+const UNITS_STANDALONE = ['', 'Mono', 'Du', 'Tri', 'Tetra', 'Pent', 'Hexa', 'Hepta', 'Octa', 'Ennea'];
+const UNITS_COMPOUND = ['', 'Hen', 'Do', 'Tria', 'Tessara', 'Pente', 'Hexa', 'Hepta', 'Octo', 'Ennea'];
+const TENS_STANDALONE = ['', 'Deca', 'Icosa', 'Triaconta', 'Tetraconta', 'Pentaconta', 'Hexaconta', 'Heptaconta', 'Octaconta', 'Enneaconta'];
+const TENS_COMPOUND = ['', '', 'Icosi', ...TENS_STANDALONE.slice(3)];
+
+const elide = (s: string) => (s.endsWith('a') ? s.slice(0, -1) : s);
+
+export const getAthlonName = (n: number | undefined): string | undefined => {
+	if (n === undefined || n < 0 || n > 100) {
+		return undefined;
+	}
+	if (n === 0) {
+		return 'Medenathlon';
+	}
+	if (n === 100) {
+		return 'Hectoathlon';
+	}
+
+	const t = Math.floor(n / 10);
+	const u = n % 10;
+
+	// 1-9: standalone units with elision before 'athlon'
+	if (t === 0) {
+		return `${elide(UNITS_STANDALONE[u])}athlon`;
+	}
+	// 10, 20, ..., 90: standalone tens with elision
+	if (u === 0) {
+		return `${elide(TENS_STANDALONE[t])}athlon`;
+	}
+	// 11-19: [compound_units][deca]athlon
+	if (t === 1) {
+		return `${elide(`${UNITS_COMPOUND[u]}deca`)}athlon`;
+	}
+	// 21-99: [tens_compound]kai[units_standalone]athlon
+	return `${TENS_COMPOUND[t]}kai${elide(UNITS_STANDALONE[u]).toLowerCase()}athlon`;
+};
 
 export const codegolfLanguageAllowList: [string, string][] = [
 	['multi-reader', 'multi-reader'],
