@@ -1,5 +1,5 @@
 import assert, {AssertionError} from 'node:assert';
-import type {DocumentReference} from 'firebase-admin/firestore';
+import type {DocumentReference, DocumentSnapshot} from 'firebase-admin/firestore';
 import {Queue} from 'bullmq';
 import {onDocumentCreated} from 'firebase-functions/firestore';
 import {info as logInfo, warn as logWarn} from 'firebase-functions/logger';
@@ -76,6 +76,56 @@ const isAdjacentToAcquired = (cellIndex: number, acquiredCells: Set<number>): bo
 		}
 	}
 	return false;
+};
+
+const buildEsolangJobData = async ({
+	changedGameId,
+	changedSubmissionId,
+	snapshot,
+	config,
+	submissionRef,
+}: {
+	changedGameId: string;
+	changedSubmissionId: string;
+	snapshot: DocumentSnapshot;
+	config: EsolangConfiguration;
+	submissionRef: ReturnType<typeof db.doc>;
+}): Promise<DecathlonJobData | null> => {
+	const submission = snapshot.data() as EsolangSubmission;
+	const cellConfig = config.languages[submission.languageIndex];
+	if (!cellConfig || cellConfig.type !== 'language') {
+		await submissionRef.update({status: 'invalid', errorMessage: 'Invalid cell: not a language cell'});
+		return null;
+	}
+	if (cellConfig.id !== submission.languageId) {
+		await submissionRef.update({status: 'invalid', errorMessage: 'Language ID mismatch'});
+		return null;
+	}
+	const rankingRef = db.doc(`games/${changedGameId}/ranking/${submission.userId}`) as DocumentReference<EsolangRanking>;
+	const rankingDoc = await rankingRef.get();
+	const rankingData = rankingDoc.data();
+	const acquiredCells = new Set<number>();
+	for (let i = 0; i < config.languages.length; i++) {
+		if (config.languages[i]?.type === 'base') {
+			acquiredCells.add(i);
+		}
+	}
+	for (const cell of rankingData?.acquiredCells ?? []) {
+		acquiredCells.add(cell);
+	}
+	if (!isAdjacentToAcquired(submission.languageIndex, acquiredCells)) {
+		await submissionRef.update({status: 'invalid', errorMessage: 'Cell is not adjacent to any acquired cell'});
+		return null;
+	}
+	return {
+		gameId: changedGameId,
+		submissionId: changedSubmissionId,
+		imageId: `esolang/${submission.languageId}`,
+		code: toBuffer(submission.code).toString('base64'),
+		codeEncoding: 'base64',
+		testcases: config.testcases.map((tc) => ({stdin: tc.input})),
+		timeoutMs: 50000,
+	};
 };
 
 // --- Trigger 1: enqueue BullMQ job on new submission ---
@@ -173,50 +223,13 @@ export const onSubmissionCreated = onDocumentCreated(
 		}
 
 		if (game.rule.path === 'gameRules/esolang') {
-			const submission = snapshot.data() as EsolangSubmission;
-			const config = game.configuration as EsolangConfiguration;
-
-			const cellConfig = config.languages[submission.languageIndex];
-			if (!cellConfig || cellConfig.type !== 'language') {
-				await submissionRef.update({status: 'invalid', errorMessage: 'Invalid cell: not a language cell'});
-				return;
-			}
-
-			if (cellConfig.id !== submission.languageId) {
-				await submissionRef.update({status: 'invalid', errorMessage: 'Language ID mismatch'});
-				return;
-			}
-
-			const rankingRef = db.doc(`games/${changedGameId}/ranking/${submission.userId}`) as DocumentReference<EsolangRanking>;
-			const rankingDoc = await rankingRef.get();
-			const rankingData = rankingDoc.data();
-
-			const acquiredCells = new Set<number>();
-			for (let i = 0; i < config.languages.length; i++) {
-				if (config.languages[i]?.type === 'base') {
-					acquiredCells.add(i);
-				}
-			}
-			for (const cell of rankingData?.acquiredCells ?? []) {
-				acquiredCells.add(cell);
-			}
-
-			const isAdjacent = isAdjacentToAcquired(submission.languageIndex, acquiredCells);
-
-			if (!isAdjacent) {
-				await submissionRef.update({status: 'invalid', errorMessage: 'Cell is not adjacent to any acquired cell'});
-				return;
-			}
-
-			jobData = {
-				gameId: changedGameId,
-				submissionId: changedSubmissionId,
-				imageId: `esolang/${submission.languageId}`,
-				code: toBuffer(submission.code).toString('base64'),
-				codeEncoding: 'base64',
-				testcases: config.testcases.map((tc) => ({stdin: tc.input})),
-				timeoutMs: 50000,
-			};
+			jobData = await buildEsolangJobData({
+				changedGameId,
+				changedSubmissionId,
+				snapshot,
+				config: game.configuration as EsolangConfiguration,
+				submissionRef,
+			});
 		}
 
 		if (jobData) {
