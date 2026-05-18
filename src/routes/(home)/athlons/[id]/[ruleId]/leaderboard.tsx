@@ -1,17 +1,17 @@
 import {A, useParams} from '@solidjs/router';
 import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Stack, Chip} from '@suid/material';
-import {blue} from '@suid/material/colors';
+import {blue, grey} from '@suid/material/colors';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, query, where} from 'firebase/firestore';
 import {floor} from 'remeda';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
-import {For, Show} from 'solid-js';
+import {createMemo, For, Show} from 'solid-js';
 import {calculateGameRanking} from '~/../lib/scores';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import PageTitle from '~/components/PageTitle';
 import Username from '~/components/Username';
-import type {Game, GameRule, Score} from '~/lib/schema';
+import type {Game, GameRule, RankingEntry, ReferenceRecord, Score} from '~/lib/schema';
 import useAthlon from '~/lib/useAthlon';
 
 const Leaderboard = () => {
@@ -30,6 +30,12 @@ const Leaderboard = () => {
 			where('athlon', '==', doc(db, 'athlons', param.id)),
 			where('rule', '==', ruleRef),
 		),
+	);
+	const athlonRankingsData = useFirestore(
+		collection(db, 'athlons', param.id, 'rankings') as CollectionReference<RankingEntry>,
+	);
+	const referenceRecordsData = useFirestore(
+		collection(db, 'athlons', param.id, 'referenceRecords') as CollectionReference<ReferenceRecord>,
 	);
 	const authState = useAuth(auth);
 
@@ -110,45 +116,96 @@ const Leaderboard = () => {
 													const rankedScores = calculateGameRanking(game, scores);
 													const hasDecimalRawScore = scores.some((score) => !Number.isInteger(score.rawScore));
 
-													return (
-														<For each={rankedScores}>
-															{(score) => {
-																const isMe = authState?.data?.uid === score.id;
+													const isGameEnded = createMemo(() => {
+														if (!game.endAt) {
+															return false;
+														}
+														return game.endAt.toDate() < new Date();
+													});
 
-																return (
-																	<TableRow sx={isMe ? {backgroundColor: blue[50]} : {}}>
+													const refEntries = createMemo(() => {
+														if (!isGameEnded()) {
+															return [];
+														}
+														const rankings = athlonRankingsData.data ?? [];
+														const refRecords = referenceRecordsData.data ?? [];
+														return rankings
+															.filter((r) => r.referenceRecordId)
+															.map((r) => {
+																const gameEntry = r.games.find((g) => g.gameId === game.id);
+																const record = refRecords.find((rec) => rec.id === r.referenceRecordId);
+																return {ranking: r, gameEntry, record};
+															})
+															.filter(({gameEntry}) => gameEntry?.hasScore);
+													});
+
+													return (
+														<>
+															<For each={rankedScores}>
+																{(score) => {
+																	const isMe = authState?.data?.uid === score.id;
+
+																	return (
+																		<TableRow sx={isMe ? {backgroundColor: blue[50]} : {}}>
+																			<TableCell>
+																				<Show when={!score.isAuthor}>
+																					{score.rank + 1}
+																				</Show>
+																			</TableCell>
+																			<TableCell>
+																				<Stack direction="row">
+																					<Username userId={score.user}/>
+																					<Show when={score.isAuthor}>
+																						<Chip label="author" color="primary" variant="outlined" sx={{ml: 1}}/>
+																					</Show>
+																				</Stack>
+																			</TableCell>
+																			<TableCell align="right">
+																				<Show when={!score.isAuthor}>
+																					{hasDecimalRawScore ? floor(score.rawScore, 2).toFixed(2) : score.rawScore}
+																				</Show>
+																			</TableCell>
+																			<TableCell align="right">
+																				<Show when={!score.isAuthor}>
+																					{score.tiebreakScore}
+																				</Show>
+																			</TableCell>
+																			<TableCell align="right">
+																				<strong>
+																					{floor(score.point, 2).toFixed(2)}
+																				</strong>
+																			</TableCell>
+																		</TableRow>
+																	);
+																}}
+															</For>
+															<For each={refEntries()}>
+																{({ranking, gameEntry, record}) => (
+																	<TableRow sx={{backgroundColor: grey[100]}}>
 																		<TableCell>
-																			<Show when={!score.isAuthor}>
-																				{score.rank + 1}
-																			</Show>
+																			{gameEntry?.rank !== null && gameEntry?.rank !== undefined ? gameEntry.rank + 1 : ''}
 																		</TableCell>
 																		<TableCell>
-																			<Stack direction="row">
-																				<Username userId={score.user}/>
-																				<Show when={score.isAuthor}>
-																					<Chip label="author" color="primary" variant="outlined" sx={{ml: 1}}/>
-																				</Show>
+																			<Stack direction="row" alignItems="center" gap={1}>
+																				<span>{record?.name ?? ranking.referenceRecordId}</span>
+																				<Chip label="参考" size="small" variant="outlined" color="default"/>
 																			</Stack>
 																		</TableCell>
 																		<TableCell align="right">
-																			<Show when={!score.isAuthor}>
-																				{hasDecimalRawScore ? floor(score.rawScore, 2).toFixed(2) : score.rawScore}
-																			</Show>
+																			{gameEntry?.rawScore ?? ''}
 																		</TableCell>
 																		<TableCell align="right">
-																			<Show when={!score.isAuthor}>
-																				{score.tiebreakScore}
-																			</Show>
+																			{gameEntry?.tiebreakScore ?? ''}
 																		</TableCell>
 																		<TableCell align="right">
 																			<strong>
-																				{floor(score.point, 2).toFixed(2)}
+																				{floor(gameEntry?.point ?? 0, 2).toFixed(2)}
 																			</strong>
 																		</TableCell>
 																	</TableRow>
-																);
-															}}
-														</For>
+																)}
+															</For>
+														</>
 													);
 												}}
 											</Show>

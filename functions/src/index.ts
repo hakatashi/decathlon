@@ -10,9 +10,9 @@ import {info as logInfo, error as logError} from 'firebase-functions/logger';
 import {defineString} from 'firebase-functions/params';
 import {user as authUser} from 'firebase-functions/v1/auth';
 import {Diff} from 'mdiff';
-import type {Athlon, Game, PromptEngineeringVote, Score, TypingJapaneseSubmission, SlackUserInfo, AthlonRanking} from '~/lib/schema.js';
+import type {Athlon, Game, PromptEngineeringVote, ReferenceRecord, Score, TypingJapaneseSubmission, SlackUserInfo, AthlonRanking} from '~/lib/schema.js';
 import {db} from './firebase.js';
-import {calculateRanking, updatePromptEngineeringScores} from './scores.js';
+import {calculateRanking, calculateReferenceRecordRankings, updatePromptEngineeringScores} from './scores.js';
 
 export * from './submissions.js';
 export * from './executions.js';
@@ -95,6 +95,9 @@ export const onRankingWritten = onDocumentWritten(
 	'athlons/{athlonId}/rankings/{userId}',
 	async (event) => {
 		const {userId} = event.params;
+		if (userId.startsWith('ref_')) {
+			return;
+		}
 		const existed = event.data?.before?.exists ?? false;
 		const exists = event.data?.after?.exists ?? false;
 
@@ -145,12 +148,23 @@ export const onScoreChanged = onDocumentWritten(
 
 			const ranking = calculateRanking(gameDocs, scoreDocs);
 
+			const referenceRecordsRef = athlon.collection('referenceRecords') as CollectionReference<ReferenceRecord>;
+			const referenceRecordsDocs = await transaction.get(referenceRecordsRef);
+			const referenceRecords = referenceRecordsDocs.docs.map((d) => ({id: d.id, data: d.data()}));
+			const refRankings = calculateReferenceRecordRankings(referenceRecords, gameDocs, scoreDocs, ranking);
+
 			const athlonRankings = athlon.collection('rankings') as CollectionReference<AthlonRanking>;
 			const existingRankings = await transaction.get(athlonRankings);
 
 			const newUserIds = new Set(ranking.map((entry) => entry.userId));
+			const newRefIds = new Set(refRankings.map((r) => `ref_${r.referenceRecordId}`));
 			for (const existingEntry of existingRankings.docs) {
-				if (!newUserIds.has(existingEntry.id)) {
+				const docId = existingEntry.id;
+				if (docId.startsWith('ref_')) {
+					if (!newRefIds.has(docId)) {
+						transaction.delete(existingEntry.ref);
+					}
+				} else if (!newUserIds.has(docId)) {
 					transaction.delete(existingEntry.ref);
 				}
 			}
@@ -159,6 +173,51 @@ export const onScoreChanged = onDocumentWritten(
 				const {userId} = rankingEntry;
 				const rankingEntryRef = athlonRankings.doc(userId);
 				transaction.set(rankingEntryRef, {...rankingEntry, athlonId: athlon.id});
+			}
+
+			for (const refRanking of refRankings) {
+				const refRankingRef = athlonRankings.doc(`ref_${refRanking.referenceRecordId}`);
+				transaction.set(refRankingRef, refRanking);
+			}
+		});
+	},
+);
+
+export const onReferenceRecordWritten = onDocumentWritten(
+	'athlons/{athlonId}/referenceRecords/{recordId}',
+	async (event) => {
+		const {athlonId, recordId} = event.params;
+		const athlonRankings = db.collection('athlons').doc(athlonId).collection('rankings') as CollectionReference<AthlonRanking>;
+		const refRankingRef = athlonRankings.doc(`ref_${recordId}`);
+
+		const afterData = event.data?.after?.data() as ReferenceRecord | undefined;
+		if (!afterData) {
+			await refRankingRef.delete();
+			return;
+		}
+
+		const athlonRef = db.collection('athlons').doc(athlonId) as DocumentReference<Athlon>;
+		await db.runTransaction(async (transaction) => {
+			const gameDocs = await transaction.get(
+				(db.collection('games') as CollectionReference<Game>)
+					.where('athlon', '==', athlonRef)
+					.orderBy('order', 'asc'),
+			);
+			const scoreDocs = await transaction.get(
+				(db.collectionGroup('scores') as CollectionGroup<Score>)
+					.where('athlon', '==', athlonRef),
+			);
+
+			const userRanking = calculateRanking(gameDocs, scoreDocs);
+			const refRankings = calculateReferenceRecordRankings(
+				[{id: recordId, data: afterData}],
+				gameDocs,
+				scoreDocs,
+				userRanking,
+			);
+
+			if (refRankings.length > 0) {
+				transaction.set(refRankingRef, refRankings[0]);
 			}
 		});
 	},

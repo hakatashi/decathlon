@@ -15,6 +15,7 @@ export type SlackUserInfo = SlackUser
 
 export interface RankingEntry {
 	userId: string,
+	referenceRecordId?: string,
 	athlonId: string,
 	point: number,
 	rank: number,
@@ -27,6 +28,21 @@ export interface RankingEntry {
 		tiebreakScore: number,
 		rank: number | null,
 	}[],
+}
+
+export interface ReferenceRecordGameScore {
+	rawScore: number,
+	tiebreakScore: number,
+	description: string,
+}
+
+export interface ReferenceRecord extends DocumentData {
+	name: string,
+	description: string,
+	athlonId: string,
+	scores: Record<string, ReferenceRecordGameScore>,
+	createdAt: Timestamp,
+	updatedAt: Timestamp,
 }
 
 export interface Athlon {
