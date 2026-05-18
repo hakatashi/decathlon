@@ -127,7 +127,7 @@ const Settings = () => {
 								<Typography variant="caption">
 									Icon
 								</Typography>
-								<img src={photoURL()} style={{width: '10rem', height: '10rem', 'object-fit': 'contain'}}/>
+								<img src={photoURL()} style={{width: '10rem', height: '10rem', 'object-fit': 'contain'}} alt="Icon preview"/>
 								<Button variant="contained" component="label">
 									<span>Select File</span>
 									<input

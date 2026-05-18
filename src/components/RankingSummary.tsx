@@ -16,7 +16,7 @@ const RankingSummary = (props: Props) => (
 					size="large"
 					direction="column"
 					accessory={
-						<img src="/images/crown-solid.svg" class={styles.crown}/>
+						<img src="/images/crown-solid.svg" class={styles.crown} alt=""/>
 					}
 					sx={{mt: 5}}
 				/>

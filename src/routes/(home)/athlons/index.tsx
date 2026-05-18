@@ -77,7 +77,7 @@ const Athlons = () => {
 															{(rank, j) => (
 																<Stack direction="row" px={1}>
 																	<Show when={j() === 0}>
-																		<img src="/images/crown-solid.svg" style={{width: '36px'}}/>
+																		<img src="/images/crown-solid.svg" style={{width: '36px'}} alt=""/>
 																	</Show>
 																	<Show when={j() > 0}>
 																		<div class={styles.rank}>{j() + 1}</div>

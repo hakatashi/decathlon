@@ -9,14 +9,14 @@ import {db, storage} from './firebase.js';
 const normalizeCodegolfOutput = (text: string, judgeType: CodegolfJudgeType) => {
 	if (judgeType === 'ignore-newline-type') {
 		return text
-			.replaceAll(/\r\n/g, '\n')
+			.replaceAll('\r\n', '\n')
 			.replace(/\n+$/, '');
 	}
 	if (judgeType === 'number-sequence-ignore-whitespaces') {
 		return text
 			.trim()
 			.split(/\s+/)
-			.map((s) => parseFloat(s).toString())
+			.map((s) => Number.parseFloat(s).toString())
 			.join(' ');
 	}
 	return text.replaceAll(/\s/g, '');
@@ -261,7 +261,7 @@ const processReversingDiffExecution = async (
 		error = 'stdout is not a valid format';
 	}
 
-	let score = error ? null : parseInt(stdout);
+	let score = error ? null : Number.parseInt(stdout);
 	if (score !== null && !Number.isFinite(score)) {
 		score = null;
 	}
@@ -286,7 +286,7 @@ const processReversingDiffExecution = async (
 	}
 
 	const [fileMetadata] = await storage.bucket().file(`assets/reversing-diff/${mainFile.filename}`).getMetadata();
-	const fileSize = parseInt(String(fileMetadata.size));
+	const fileSize = Number.parseInt(String(fileMetadata.size));
 	logInfo(`correct file size: ${fileSize}`);
 
 	const batch = db.batch();

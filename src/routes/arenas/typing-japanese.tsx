@@ -174,7 +174,7 @@ const TypingJapanese = () => {
 			setPhase('waiting');
 
 			const startTimeString = localStorage.getItem(`typing-japanese_${gameId}_startTime`);
-			const startTime = startTimeString ? parseFloat(startTimeString) : null;
+			const startTime = startTimeString ? Number.parseFloat(startTimeString) : null;
 			if (savedConfig.enabled && startTime !== null) {
 				setPhase('playing');
 			}
@@ -265,6 +265,7 @@ const TypingJapanese = () => {
 
 			{/* eslint-disable-next-line react/iframe-missing-sandbox -- https://github.com/whatwg/html/issues/3958 */}
 			<iframe
+				title="Typing text PDF"
 				class={styles.pdf}
 				style={{visibility: phase() === 'playing' || phase() === 'finished' ? 'visible' : 'hidden'}}
 				src={`${pdfUrl()}#${new URLSearchParams({
