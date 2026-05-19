@@ -58,6 +58,64 @@ This is a monorepo with two deployable units:
 - The frontend reads rankings and scores in real-time via Firestore subscriptions
 - Rankings are pre-computed and stored; the frontend does not calculate them
 
+### Code Execution Pipeline
+
+For game types that run code (esolang, codegolf, quantum-computing, sql, reversing-diff), Firebase Cloud Functions and the **esolang-battle-2** worker (separate repo at `../esolang-battle-2`) collaborate via a BullMQ queue backed by Redis.
+
+#### Regular submission (`games/{gameId}/submissions/{submissionId}`)
+
+```
+Frontend
+  └─ addDoc → games/{gameId}/submissions/{id}  status: 'pending'
+        │
+        ▼ Firestore trigger
+functions/src/submissions.ts: onSubmissionCreated
+  ├─ Validate submission (adjacency check, etc.)
+  ├─ Update status → 'executing'
+  └─ Enqueue job to BullMQ queue "decathlon"
+       { gameId, submissionId, imageId, code (base64), testcases }
+        │
+        ▼ esolang-battle-2 Worker
+apps/worker/src/jobs/decathlon.ts: processDecathlonSubmission
+  ├─ runAllTestCasesInSingleContainer() — runs Docker container (timeout: 20s)
+  └─ Write to executions/{submissionId} in Firestore
+       { gameId, submissionId, results[], error, completedAt }
+        │
+        ▼ Firestore trigger
+functions/src/executions.ts: onExecutionCreated
+  ├─ Route to handler based on gameId/rule
+  │   processEsolangExecution / processCodegolfExecution / etc.
+  ├─ Update submission status and testcases (success / failed / error)
+  └─ On success: update ranking and score
+```
+
+#### Esolang code test (`esolangTestSubmissions/{submissionId}`)
+
+```
+Frontend
+  └─ addDoc → esolangTestSubmissions/{id}  status: 'pending'
+        │
+        ▼ Firestore trigger
+functions/src/submissions.ts: onEsolangTestSubmissionCreated
+  ├─ Update status → 'executing'
+  └─ Enqueue job to BullMQ queue "decathlon"
+       { gameId: 'esolang-test', submissionId, imageId, code (base64), testcases }
+        │
+        ▼ esolang-battle-2 Worker (same processDecathlonSubmission flow)
+        │
+        ▼ Firestore trigger
+functions/src/executions.ts: onExecutionCreated → processEsolangTestExecution
+  └─ Update esolangTestSubmissions/{id}: status, stdout, stderr, duration
+       (success / error)
+```
+
+#### Key notes
+
+- The **esolang-battle-2 Worker** runs as a separate process (separate server) and connects to the same Firebase project (`tsg-decathlon`) Firestore and the same Redis instance.
+- Code is passed to BullMQ jobs as base64 (`codeEncoding: 'base64'`).
+- If the worker fails to write to `executions/` after Docker execution, the submission status stays stuck at `'executing'` forever. The frontend has a 90-second client-side timeout as a safety net (`src/routes/arenas/esolang.tsx`).
+- The `executions/` collection acts as a one-way handoff: the worker writes, Cloud Functions read and react.
+
 ## Tech Stack
 
 - **Frontend**: Solid.js, SolidStart, Vinxi, SUID (Material Design), SCSS
