@@ -20,8 +20,8 @@ const transpose = <T, >(array: T[][]): T[][] => (
 );
 
 const isUserIdNewerThanOrEqualTo = (userId: string, thresholdUserId: string) => {
-	const userIdNumber = parseInt(userId.slice(1), 36);
-	const thresholdUserIdNumber = parseInt(thresholdUserId.slice(1), 36);
+	const userIdNumber = Number.parseInt(userId.slice(1), 36);
+	const thresholdUserIdNumber = Number.parseInt(thresholdUserId.slice(1), 36);
 
 	return userIdNumber >= thresholdUserIdNumber;
 };

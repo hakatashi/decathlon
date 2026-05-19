@@ -98,7 +98,7 @@ const ScoreRecordDialog = (props: Props) => {
 									value={dayjs(tiebreakScore() || 0).format('HH:mm:ss')}
 									onChange={(event) => {
 										const time = event.currentTarget.value;
-										const [hours, minutes, seconds] = time.split(':').map((component) => parseInt(component));
+										const [hours, minutes, seconds] = time.split(':').map((component) => Number.parseInt(component));
 										const timeData = dayjs().set('hours', hours).set('minutes', minutes).set('seconds', seconds);
 
 										setTiebreakScore(timeData.valueOf());
@@ -116,7 +116,7 @@ const ScoreRecordDialog = (props: Props) => {
 								required
 								value={score()}
 								onChange={(event, value) => {
-									setScore(parseInt(value));
+									setScore(Number.parseInt(value));
 									setTiebreakScore(0);
 								}}
 							/>

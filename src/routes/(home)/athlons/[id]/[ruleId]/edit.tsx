@@ -57,12 +57,12 @@ const AthlonEdit = () => {
 				console.error(`Invalid userId: ${userId}`);
 				return;
 			}
-			const rawScore = parseFloat(rawScoreText);
+			const rawScore = Number.parseFloat(rawScoreText);
 			if (!Number.isFinite(rawScore)) {
 				console.error(`Invalid rawScore: ${rawScoreText}`);
 				return;
 			}
-			const tiebreakScore = parseFloat(tiebreakScoreText);
+			const tiebreakScore = Number.parseFloat(tiebreakScoreText);
 			if (!Number.isFinite(tiebreakScore)) {
 				console.error(`Invalid tiebreakScore: ${tiebreakScoreText}`);
 				return;

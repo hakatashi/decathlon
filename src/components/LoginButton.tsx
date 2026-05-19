@@ -46,7 +46,7 @@ const LoginButton = () => {
 					{loginErrorMessage()}
 				</DialogTitle>
 				<DialogContent>
-					<img src="https://user-images.githubusercontent.com/3126484/230712207-9e179595-8337-47fc-9ccd-dd060a862b6d.png" width="100%"/>
+					<img src="https://user-images.githubusercontent.com/3126484/230712207-9e179595-8337-47fc-9ccd-dd060a862b6d.png" width="100%" alt=""/>
 					<DialogContentText>
 						ログイン用のポップアップが表示されたら、右上のワークスペースが「TSG」になっているのを確認した上で「許可する」を押してください。(「TSG」でない場合は選択してください)
 					</DialogContentText>
