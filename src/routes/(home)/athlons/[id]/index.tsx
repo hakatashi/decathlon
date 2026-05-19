@@ -119,7 +119,7 @@ const Home = () => {
 				</Head>
 				<Doc data={athlonRankingsData}>
 					{(athlonRankings) => (
-						<RankingSummary users={athlonRankings.map((rank) => rank.userId)}/>
+						<RankingSummary users={athlonRankings.filter((r) => !r.referenceRecordId).map((rank) => rank.userId)}/>
 					)}
 				</Doc>
 				<Box textAlign="center" my={3}>

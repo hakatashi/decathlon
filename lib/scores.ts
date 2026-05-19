@@ -58,6 +58,24 @@ export const calculateScore = (
 	return scorePoint + rankPoint;
 };
 
+// Like calculateScore but for reference records: for max-ratio, realMaxRawScore is
+// computed from real users only, so ref scores above that cap at maxPoint.
+export const calculateReferenceScore = (
+	rawScore: number,
+	rank: number,
+	maxPoint: number,
+	configuration: ScoreConfiguration,
+	realMaxRawScore: number,
+) => {
+	if (configuration.type === 'max-ratio') {
+		if (realMaxRawScore === 0) {
+			return rawScore > 0 ? maxPoint : 0;
+		}
+		return Math.min(maxPoint, rawScore / realMaxRawScore * maxPoint);
+	}
+	return calculateScore(rawScore, rank, maxPoint, configuration);
+};
+
 export interface RankedScore extends Score {
 	rank: number,
 	point: number,

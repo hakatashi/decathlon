@@ -3,9 +3,9 @@
 
 import type {CollectionReference, DocumentReference, DocumentSnapshot, QuerySnapshot} from 'firebase-admin/firestore';
 import {prop, sortBy, sum} from 'remeda';
-import type {Game, PromptEngineeringResult, PromptEngineeringSubmission, PromptEngineeringVote, Score} from '~/lib/schema.js';
+import type {Game, PromptEngineeringResult, PromptEngineeringSubmission, PromptEngineeringVote, ReferenceRecord, Score} from '~/lib/schema.js';
 import {db} from './firebase.js';
-import {RankedScore, calculateGameRanking} from './lib/scores.js';
+import {RankedScore, calculateGameRanking, calculateReferenceScore} from './lib/scores.js';
 
 export const calculateRanking = (gameDocs: QuerySnapshot<Game>, scoreDocs: QuerySnapshot<Score>) => {
 	const usersSet = new Set<string>();
@@ -109,6 +109,78 @@ export const calculateRanking = (gameDocs: QuerySnapshot<Game>, scoreDocs: Query
 	});
 
 	return ranking;
+};
+
+export const calculateReferenceRecordRankings = (
+	referenceRecords: {id: string, data: ReferenceRecord}[],
+	gameDocs: QuerySnapshot<Game>,
+	scoreDocs: QuerySnapshot<Score>,
+	userRanking: ReturnType<typeof calculateRanking>,
+) => {
+	const scoresMap = new Map<string, Score[]>();
+	for (const score of scoreDocs.docs) {
+		const gameId = score.ref.parent.parent?.id!;
+		if (!scoresMap.has(gameId)) {
+			scoresMap.set(gameId, []);
+		}
+		scoresMap.get(gameId)!.push(score.data());
+	}
+
+	const gamesMap = new Map<string, Game>();
+	for (const game of gameDocs.docs) {
+		gamesMap.set(game.id, game.data());
+	}
+
+	const gameRealScores = new Map<string, RankedScore[]>();
+	const gameRealMaxRawScore = new Map<string, number>();
+	for (const gameDoc of gameDocs.docs) {
+		const scores = scoresMap.get(gameDoc.id) ?? [];
+		const ranked = calculateGameRanking(gameDoc.data(), scores);
+		const realScores = ranked.filter((s) => !s.isAuthor);
+		gameRealScores.set(gameDoc.id, realScores);
+		gameRealMaxRawScore.set(
+			gameDoc.id,
+			realScores.length > 0 ? Math.max(...realScores.map((s) => s.rawScore)) : 0,
+		);
+	}
+
+	return referenceRecords.map(({id: recordId, data: record}) => {
+		const games = gameDocs.docs.map((gameDoc) => {
+			const gameId = gameDoc.id;
+			const game = gameDoc.data();
+			const refScore = record.scores[gameId];
+
+			if (!refScore) {
+				return {gameId, hasScore: false, isAuthor: false, point: 0, rawScore: 0, tiebreakScore: 0, rank: null};
+			}
+
+			const realScores = gameRealScores.get(gameId) ?? [];
+			const realMaxRawScore = gameRealMaxRawScore.get(gameId) ?? 0;
+
+			const rank = realScores.filter((s) => {
+				if (s.rawScore > refScore.rawScore) {
+					return true;
+				}
+				if (s.rawScore === refScore.rawScore) {
+					return game.tiebreakOrder === 'asc'
+						? s.tiebreakScore < refScore.tiebreakScore
+						: s.tiebreakScore > refScore.tiebreakScore;
+				}
+				return false;
+			}).length;
+
+			const point = calculateReferenceScore(
+				refScore.rawScore, rank, game.maxPoint, game.scoreConfiguration, realMaxRawScore,
+			);
+
+			return {gameId, hasScore: true, isAuthor: false, point, rawScore: refScore.rawScore, tiebreakScore: refScore.tiebreakScore, rank};
+		});
+
+		const pointSum = sum(games.map(({gameId, point}) => point * (gamesMap.get(gameId)?.weight ?? 1)));
+		const rank = userRanking.filter((u) => u.point > pointSum).length;
+
+		return {userId: '', referenceRecordId: recordId, athlonId: record.athlonId, point: pointSum, rank, games};
+	});
 };
 
 export const updatePromptEngineeringScores = async (game: DocumentSnapshot<Game>) => {

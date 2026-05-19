@@ -1,7 +1,7 @@
 import {A, useParams, useSearchParams} from '@solidjs/router';
 import {ElectricBolt, Star} from '@suid/icons-material';
-import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Stack, FormControlLabel, Switch as SwitchControl, Box, ButtonGroup, Button} from '@suid/material';
-import {blue, orange, red, yellow} from '@suid/material/colors';
+import {Chip, Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Stack, FormControlLabel, Switch as SwitchControl, Box, ButtonGroup, Button} from '@suid/material';
+import {blue, grey, orange, red, yellow} from '@suid/material/colors';
 import dayjs from 'dayjs';
 import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, getFirestore, orderBy, query, where} from 'firebase/firestore';
@@ -12,7 +12,7 @@ import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import PageTitle from '~/components/PageTitle';
 import Username from '~/components/Username';
-import type {Game, RankingEntry, User} from '~/lib/schema';
+import type {Game, RankingEntry, ReferenceRecord, User} from '~/lib/schema';
 import useAthlon from '~/lib/useAthlon';
 
 const transpose = <T, >(array: T[][]): T[][] => (
@@ -32,6 +32,8 @@ interface RankingTableProps {
 	rookieThresholdId: string | null,
 	thresholdId: string | null,
 	showRawScore: boolean,
+	referenceRecords: ReferenceRecord[],
+	isAthlonEnded: boolean,
 }
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- Type compatibility with useParams
@@ -59,39 +61,47 @@ const RankingTable = (props: RankingTableProps) => {
 	);
 
 	const ranking = createMemo<(RankingEntry & {originalRank?: number})[]>(() => {
+		const allRanking = [...props.ranking].sort((a, b) => b.point - a.point);
 		const thresholdId = props.thresholdId;
-		if (!thresholdId) {
-			return props.ranking;
+
+		if (thresholdId) {
+			const usersInfoData = usersData.data;
+			if (!usersInfoData) {
+				return allRanking.filter((r) => !r.referenceRecordId);
+			}
+
+			let rankCounter = 0;
+			return allRanking
+				.filter((user) => {
+					if (user.referenceRecordId) {
+						return false;
+					}
+					const userInfo = usersInfoData.find((u) => u.id === user.userId);
+					if (!userInfo) {
+						return false;
+					}
+					return isUserIdNewerThanOrEqualTo(userInfo.slackId, thresholdId);
+				})
+				.map((user) => {
+					const newRank = rankCounter;
+					rankCounter++;
+					return {
+						...user,
+						rank: newRank,
+						originalRank: user.rank,
+					};
+				});
 		}
 
-		const usersInfoData = usersData.data;
-		if (!usersInfoData) {
-			return props.ranking;
+		if (!props.isAthlonEnded) {
+			return allRanking.filter((r) => !r.referenceRecordId);
 		}
-
-		let rankCounter = 0;
-		return props.ranking
-			.filter((user) => {
-				const userInfo = usersInfoData.find((u) => u.id === user.userId);
-				if (!userInfo) {
-					return false;
-				}
-				return isUserIdNewerThanOrEqualTo(userInfo.slackId, thresholdId);
-			})
-			.map((user) => {
-				const newRank = rankCounter;
-				rankCounter++;
-				return {
-					...user,
-					rank: newRank,
-					originalRank: user.rank,
-				};
-			});
+		return allRanking;
 	});
 
 	const participants = createMemo(() => (
 		transpose(
-			ranking().map((user) => (
+			ranking().filter((r) => !r.referenceRecordId).map((user) => (
 				user.games.map((game) => game.hasScore && game.point > 0 && !game.isAuthor)
 			)),
 		).map((users) => filter(users, (user) => user === true).length)
@@ -132,10 +142,11 @@ const RankingTable = (props: RankingTableProps) => {
 				<TableBody>
 					<For each={ranking()}>
 						{(userEntry) => {
-							const isMe = authState?.data?.uid === userEntry.userId;
+							const isRef = () => Boolean(userEntry.referenceRecordId);
+							const isMe = !isRef() && authState?.data?.uid === userEntry.userId;
 
 							const isRookie = createMemo(() => {
-								if (!props.rookieThresholdId) {
+								if (isRef() || !props.rookieThresholdId) {
 									return false;
 								}
 
@@ -146,8 +157,24 @@ const RankingTable = (props: RankingTableProps) => {
 								return isUserIdNewerThanOrEqualTo(userInfo.slackId, props.rookieThresholdId);
 							});
 
+							const refName = createMemo(() => {
+								if (!userEntry.referenceRecordId) {
+									return null;
+								}
+								return props.referenceRecords.find((r) => r.id === userEntry.referenceRecordId)?.name ?? userEntry.referenceRecordId;
+							});
+
+							const getRowBg = () => {
+								if (isRef()) {
+									return grey[100];
+								}
+								if (isMe) {
+									return blue[50];
+								}
+								return undefined;
+							};
 							return (
-								<TableRow sx={isMe ? {backgroundColor: blue[50]} : {}}>
+								<TableRow sx={getRowBg() !== undefined ? {backgroundColor: getRowBg()} : {}}>
 									<TableCell>
 										<strong>
 											{userEntry.rank + 1}
@@ -161,10 +188,20 @@ const RankingTable = (props: RankingTableProps) => {
 										</Show>
 									</TableCell>
 									<TableCell>
-										<Stack direction="row" alignItems="center">
-											<Username userId={userEntry.userId}/>
-											<Show when={isRookie()} >
-												🔰
+										<Stack direction="row" alignItems="center" gap={1}>
+											<Show
+												when={isRef()}
+												fallback={
+													<Stack direction="row" alignItems="center">
+														<Username userId={userEntry.userId}/>
+														<Show when={isRookie()}>
+															🔰
+														</Show>
+													</Stack>
+												}
+											>
+												<span>{refName()}</span>
+												<Chip label="参考" size="small" variant="outlined" color="default"/>
 											</Show>
 										</Stack>
 									</TableCell>
@@ -258,6 +295,9 @@ const Leaderboard = () => {
 			collection(db, 'athlons', param.id, 'rankings') as CollectionReference<RankingEntry>,
 			orderBy('rank'),
 		),
+	);
+	const referenceRecordsData = useFirestore(
+		collection(db, 'athlons', param.id, 'referenceRecords') as CollectionReference<ReferenceRecord>,
 	);
 
 	const [showRawScore, setShowRawScore] = createSignal<boolean>(false);
@@ -361,6 +401,8 @@ const Leaderboard = () => {
 									rookieThresholdId={athlon.rookieThresholdId}
 									thresholdId={searchParams.mode === 'rookie' ? athlon.rookieThresholdId : null}
 									showRawScore={showRawScore()}
+									referenceRecords={referenceRecordsData.data ?? []}
+									isAthlonEnded={isEnded() === true}
 								/>
 							)}
 						</Doc>
