@@ -11,7 +11,7 @@ import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import PageTitle from '~/components/PageTitle';
 import RankingSummary from '~/components/RankingSummary';
-import {athlonNames} from '~/lib/const';
+import {getAthlonName} from '~/lib/const';
 import type {Game, RankingEntry} from '~/lib/schema';
 import useAthlon from '~/lib/useAthlon';
 
@@ -63,7 +63,7 @@ const Home = () => {
 						</Typography>
 					)}
 				</Doc>
-				<Show when={athlonNames.get(gamesData?.data?.length)} keyed>
+				<Show when={getAthlonName(gamesData?.data?.length)} keyed>
 					{(athlonName) => (
 						<Typography variant="h3" component="h2" class={styles.athlonName}>
 							<For each={Array.from(athlonName)} >
