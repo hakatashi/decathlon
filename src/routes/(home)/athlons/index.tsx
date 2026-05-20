@@ -62,7 +62,7 @@ const Athlons = () => {
 									<Doc data={athlonRankingsData}>
 										{(athlonRankings) => {
 											const athlonRanking = athlonRankings
-												.filter((ranking) => ranking.athlonId === athlon.id)
+												.filter((ranking) => ranking.athlonId === athlon.id && !ranking.referenceRecordId)
 												.sort((a, b) => a.rank - b.rank);
 
 											return (
