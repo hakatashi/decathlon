@@ -65,7 +65,7 @@ const ReferenceRecordsIndex = () => {
 						variant="contained"
 						startIcon={<Add/>}
 						component={A}
-						href={`/athlons/${param.id}/referenceRecords/new`}
+						href={`/athlons/${param.id}/referenceRecords/new/edit`}
 					>
 						新規参考記録を追加
 					</Button>
@@ -77,7 +77,7 @@ const ReferenceRecordsIndex = () => {
 					{(record) => (
 						<List>
 							<ListItem disablePadding>
-								<ListItemButton component={A} href={`/athlons/${param.id}/referenceRecords/${record.id}`}>
+								<ListItemButton component={A} href={`/athlons/${param.id}/referenceRecords/${record.id}/edit`}>
 									<ListItemText
 										primary={record.name}
 										secondary={record.description.slice(0, 100) || '説明なし'}
