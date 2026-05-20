@@ -187,7 +187,14 @@ const Leaderboard = () => {
 																		</TableCell>
 																		<TableCell>
 																			<Stack direction="row" alignItems="center" gap={1}>
-																				<span>{record?.name ?? ranking.referenceRecordId}</span>
+																				<Link
+																					component={A}
+																					href={`/athlons/${param.id}/referenceRecords/${ranking.referenceRecordId}/${param.ruleId}`}
+																					underline="hover"
+																					color="inherit"
+																				>
+																					{record?.name ?? ranking.referenceRecordId}
+																				</Link>
 																				<Chip label="参考" size="small" variant="outlined" color="default"/>
 																			</Stack>
 																		</TableCell>

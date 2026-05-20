@@ -200,7 +200,14 @@ const RankingTable = (props: RankingTableProps) => {
 													</Stack>
 												}
 											>
-												<span>{refName()}</span>
+												<Link
+													component={A}
+													href={`/athlons/${props.athlonId}/referenceRecords/${userEntry.referenceRecordId}`}
+													underline="hover"
+													color="inherit"
+												>
+													{refName()}
+												</Link>
 												<Chip label="参考" size="small" variant="outlined" color="default"/>
 											</Show>
 										</Stack>
