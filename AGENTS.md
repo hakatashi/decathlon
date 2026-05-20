@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Decathlon is a full-stack web application for managing competitive programming/skill competitions called "Athlons". It supports multiple challenge types: codegolf, typing, SQL, reversing, quantum computing, and prompt engineering.
+Decathlon is a full-stack web application for managing competitive programming/skill competitions called "Athlons". It supports multiple challenge types: codegolf, typing, SQL, reversing, quantum computing, prompt engineering, and esolang (esoteric programming languages).
 
 ## Commands
 
@@ -50,13 +50,28 @@ This is a monorepo with two deployable units:
 
 **`/lib/scores.ts` — Shared scoring utilities** used by both frontend and functions.
 
-**`/src/lib/schema.d.ts`** defines all Firestore data model interfaces. This is the authoritative source for data shapes: `Athlon`, `Game`, `Score`, `Submission`, `Ranking`, `User`, `Writeup`, etc.
+**`/src/lib/schema.d.ts`** defines all Firestore data model interfaces. This is the authoritative source for data shapes: `Athlon`, `Game`, `Score`, `Submission`, `Ranking`, `User`, `Writeup`, `Rule`, `GameRule`, `ReferenceRecord`, etc.
 
 ### Data Flow
 - Submissions and results are stored in Firestore
 - Cloud Functions trigger on Firestore writes to compute scores and rankings
 - The frontend reads rankings and scores in real-time via Firestore subscriptions
 - Rankings are pre-computed and stored; the frontend does not calculate them
+
+### Reference Records
+Admins can record reference scores (e.g. AI agent benchmarks) for each athlon. `ReferenceRecord` documents live in `athlons/{athlonId}/referenceRecords/`. They appear in leaderboards after each game ends with a "参考" badge (identified by `referenceRecordId` in `AthlonRanking`). Reference entries **do not** affect other participants' ranking points. Admin control pages are at `/athlons/{id}/referenceRecords` and `/athlons/{id}/referenceRecords/{recordId}`.
+
+### User Pages
+`/users` lists all users sorted by `participationCount` (number of athlons participated in). `/users/{userId}` shows a user profile with summary stats and per-athlon results. The `description` field on `User` is editable from the settings page. `participationCount` is a computed field updated automatically by the `onRankingWritten` Cloud Function — do not set it manually.
+
+### Game Admin Preview
+`Game.admins` is an array of user IDs who can preview and interact with a game even when the game is not yet published (enabled=false). Used in the esolang and quantum-computing arenas. A warning banner is shown when a user is viewing in admin-preview mode.
+
+### Rule Categories
+`Game.ruleCategories` is an array of `DocumentReference<Rule>` pointing to documents in the `rules` collection. Categories are displayed as chips on the game detail page. The `rules` collection is admin-only writable; pages at `/rules` and `/rules/{ruleId}` allow admins to manage rule documents with Markdown descriptions.
+
+### Athlon Names
+Athlon names (e.g. "Decathlon", "Heptathlon") are generated dynamically by `getAthlonName(n)` in `src/lib/const.ts`, which covers 0–100 using Greek/Latin numeral prefixes with elision rules. Do not hardcode athlon names — always call this function.
 
 ### Code Execution Pipeline
 
@@ -223,6 +238,9 @@ The `.markdown` class (defined in `src/app.css`) handles word-break, link colour
 - Use `addDoc` when the document ID should be auto-generated.
 - Use `setDoc(doc(db, collection, id), data)` when the caller specifies the ID.
 - Use `serverTimestamp()` for `createdAt`/`updatedAt` fields. Immediately after a write the local pending state may have a `null`-like timestamp, so null-check before calling `formatTimestamp`.
+
+### KaTeX rendering
+Game rule pages display score calculation formulas using KaTeX. To render math inline, import `katex` and its CSS (`katex/dist/katex.min.css`), call `katex.renderToString(expression, {throwOnError: false})`, and inject the result via `innerHTML` (e.g. `<span innerHTML={rendered} />`). Do not use a React/Solid KaTeX wrapper — direct `innerHTML` injection is the established pattern here.
 
 ### Schema and Firestore rules
 - Add new Firestore document shapes to `src/lib/schema.d.ts` (cast refs with `as CollectionReference<T>` / `as DocumentReference<T>`).
