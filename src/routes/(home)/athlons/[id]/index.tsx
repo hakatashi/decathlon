@@ -2,13 +2,12 @@ import {A, useParams} from '@solidjs/router';
 import {EmojiEvents} from '@suid/icons-material';
 import {Typography, Container, List, ListItem, ListItemAvatar, Avatar, ListItemText, Button, Box} from '@suid/material';
 import {collection, CollectionReference, doc, getFirestore, orderBy, query, where} from 'firebase/firestore';
-import remarkGfm from 'remark-gfm';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {For, JSX, Show} from 'solid-js';
-import {SolidMarkdown} from 'solid-markdown';
 import styles from './index.module.css';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
+import MarkdownWithMath from '~/components/MarkdownWithMath';
 import PageTitle from '~/components/PageTitle';
 import RankingSummary from '~/components/RankingSummary';
 import {getAthlonName} from '~/lib/const';
@@ -78,12 +77,7 @@ const Home = () => {
 			<Container maxWidth="md">
 				<Doc data={athlonData}>
 					{(athlon) => (
-						<SolidMarkdown
-							class="markdown"
-							children={athlon.description}
-							remarkPlugins={[remarkGfm]}
-							linkTarget="_blank"
-						/>
+						<MarkdownWithMath content={athlon.description}/>
 					)}
 				</Doc>
 				<Head>

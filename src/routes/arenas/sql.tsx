@@ -1,18 +1,16 @@
 /* eslint-disable react/jsx-key */
-import {Link} from '@solidjs/meta';
 import {useSearchParams} from '@solidjs/router';
 import {Alert, Box, Button, ButtonGroup, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControl, FormControlLabel, FormLabel, Link as LinkUi, Paper, Radio, RadioGroup, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from '@suid/material';
 import dayjs from 'dayjs';
 import {addDoc, collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, serverTimestamp, where} from 'firebase/firestore';
-import remarkGfm from 'remark-gfm';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, For, Match, onCleanup, Show, Switch} from 'solid-js';
-import {SolidMarkdown} from 'solid-markdown';
 import type {QueryExecResult} from 'sql.js';
 import {setArenaTitle, useUser} from '../arenas';
 import styles from './reversing-diff.module.css';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
+import MarkdownWithMath from '~/components/MarkdownWithMath';
 import Username from '~/components/Username';
 import PageNotFoundError from '~/lib/PageNotFoundError';
 import {Game, SqlConfiguration, SqlSubmission, UseFireStoreReturn} from '~/lib/schema';
@@ -78,20 +76,6 @@ const MainTab = (props: MainTabProps) => {
 		errorMessage: '',
 	});
 	const [sqlEngine, setSqlEngine] = createSignal<'mysql' | 'postgresql' | 'sqlite'>('sqlite');
-
-	let descriptionEl!: HTMLElement;
-
-	createEffect(async () => {
-		// @ts-expect-error: URL import
-		// eslint-disable-next-line import/no-unresolved
-		const {default: renderMathInElement} = await import('https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.mjs');
-		renderMathInElement(descriptionEl, {
-			delimiters: [
-				{left: '$$', right: '$$', display: true},
-				{left: '$', right: '$', display: false},
-			],
-		});
-	});
 
 	const handleClickSubmit = async () => {
 		const userData = user();
@@ -218,7 +202,6 @@ const MainTab = (props: MainTabProps) => {
 
 				return (
 					<>
-						<Link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css"/>
 						<Dialog
 							open={localExecutionResult().status !== 'none'}
 							onClose={() => setLocalExecutionResult({
@@ -304,13 +287,8 @@ const MainTab = (props: MainTabProps) => {
 								</Button>
 							</DialogActions>
 						</Dialog>
-						<Typography variant="body1" ref={descriptionEl}>
-							<SolidMarkdown
-								class="markdown"
-								children={config.description}
-								remarkPlugins={[remarkGfm]}
-								linkTarget="_blank"
-							/>
+						<Typography variant="body1">
+							<MarkdownWithMath content={config.description}/>
 						</Typography>
 						<Typography variant="h4" component="h2">テーブルスキーマ</Typography>
 						{config.tableSchemas.map((schema) => (

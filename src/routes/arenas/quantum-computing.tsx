@@ -1,16 +1,14 @@
-import {Link} from '@solidjs/meta';
 import {useSearchParams} from '@solidjs/router';
 import {Alert, Box, Button, ButtonGroup, CircularProgress, Container, Link as LinkUi, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography} from '@suid/material';
 import dayjs from 'dayjs';
 import {addDoc, collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, serverTimestamp, where} from 'firebase/firestore';
-import remarkGfm from 'remark-gfm';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, For, Match, onCleanup, Show, Switch} from 'solid-js';
-import {SolidMarkdown} from 'solid-markdown';
 import {setArenaTitle, useUser} from '../arenas';
 import styles from './quantum-computing.module.css';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
+import MarkdownWithMath from '~/components/MarkdownWithMath';
 import Username from '~/components/Username';
 import PageNotFoundError from '~/lib/PageNotFoundError';
 import {Athlon, Game, QuantumComputingConfiguration, QuantumComputingSubmission, UseFireStoreReturn} from '~/lib/schema';
@@ -41,20 +39,6 @@ const Challenge = (props: ChallengeProps) => {
 	const [submission, setSubmission] = createSignal<UseFireStoreReturn<QuantumComputingSubmission | null | undefined> | null>(null);
 	const [lastSubmissionTime, setLastSubmissionTime] = createSignal<number | null>(null);
 	const [throttleTime, setThrottleTime] = createSignal<number>(0);
-
-	let descriptionEl!: HTMLElement;
-
-	createEffect(async () => {
-		// @ts-expect-error: URL import
-		// eslint-disable-next-line import/no-unresolved
-		const {default: renderMathInElement} = await import('https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.mjs');
-		renderMathInElement(descriptionEl, {
-			delimiters: [
-				{left: '$$', right: '$$', display: true},
-				{left: '$', right: '$', display: false},
-			],
-		});
-	});
 
 	const handleClickSubmit = async () => {
 		const userData = user();
@@ -127,14 +111,8 @@ const Challenge = (props: ChallengeProps) => {
 
 	return (
 		<>
-			<Link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css"/>
-			<Typography variant="body1" ref={descriptionEl}>
-				<SolidMarkdown
-					class="markdown"
-					children={props.description}
-					remarkPlugins={[remarkGfm]}
-					linkTarget="_blank"
-				/>
+			<Typography variant="body1">
+				<MarkdownWithMath content={props.description}/>
 			</Typography>
 			<Show when={props.judgeCode}>
 				{(judgeCode) => (
