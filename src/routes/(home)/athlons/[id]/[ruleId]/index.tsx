@@ -6,14 +6,13 @@ import {getAuth} from 'firebase/auth';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, query, setDoc, where} from 'firebase/firestore';
 import {getFunctions, httpsCallable} from 'firebase/functions';
 import {getStorage, ref} from 'firebase/storage';
-import remarkGfm from 'remark-gfm';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, For, Match, Show, Switch} from 'solid-js';
-import {SolidMarkdown} from 'solid-markdown';
 import {tippy} from 'solid-tippy';
 import styles from './index.module.scss';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
+import MarkdownWithMath from '~/components/MarkdownWithMath';
 import PageTitle from '~/components/PageTitle';
 import {useStorageBytes} from '~/lib/firebase';
 import type {Game, GameRule, Rule, Score} from '~/lib/schema';
@@ -474,12 +473,7 @@ const AthlonGame = () => {
 				<Collection data={gameData}>
 					{(game) => (
 						<>
-							<SolidMarkdown
-								class="markdown"
-								children={game.description}
-								remarkPlugins={[remarkGfm]}
-								linkTarget="_blank"
-							/>
+							<MarkdownWithMath content={game.description}/>
 							<ScoreDescriptionSection game={game}/>
 						</>
 					)}

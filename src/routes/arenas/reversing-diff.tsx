@@ -4,14 +4,13 @@ import {blue} from '@suid/material/colors';
 import dayjs from 'dayjs';
 import {addDoc, collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, serverTimestamp, where} from 'firebase/firestore';
 import {getStorage, ref} from 'firebase/storage';
-import remarkGfm from 'remark-gfm';
 import {useDownloadURL, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, For, Match, onCleanup, Show, Switch} from 'solid-js';
-import {SolidMarkdown} from 'solid-markdown';
 import {setArenaTitle, setHeaderText, useUser} from '../arenas';
 import styles from './reversing-diff.module.css';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
+import MarkdownWithMath from '~/components/MarkdownWithMath';
 import Username from '~/components/Username';
 import PageNotFoundError from '~/lib/PageNotFoundError';
 import {DiffConfiguration, Game, ReversingDiffRanking, ReversingDiffSubmission, UseFireStoreReturn} from '~/lib/schema';
@@ -157,12 +156,7 @@ const MainTab = (props: MainTabProps) => {
 				return (
 					<>
 						<Typography variant="body1">
-							<SolidMarkdown
-								class="markdown"
-								children={config.rule}
-								remarkPlugins={[remarkGfm]}
-								linkTarget="_blank"
-							/>
+							<MarkdownWithMath content={config.rule}/>
 						</Typography>
 						<Stack gap={2} direction="row" flexWrap="wrap">
 							<For each={config.files}>

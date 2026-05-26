@@ -6,6 +6,7 @@ import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createMemo, Show} from 'solid-js';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
+import MarkdownWithMath from '~/components/MarkdownWithMath';
 import PageTitle from '~/components/PageTitle';
 import type {AthlonRanking, Game, GameRule, ReferenceRecord} from '~/lib/schema';
 import useAthlon from '~/lib/useAthlon';
@@ -82,6 +83,9 @@ const ReferenceRecordDetail = () => {
 									)}
 								</Show>
 							</Stack>
+							<Show when={record.description}>
+								<MarkdownWithMath content={record.description}/>
+							</Show>
 							<TableContainer component={Paper}>
 								<Table>
 									<TableHead>

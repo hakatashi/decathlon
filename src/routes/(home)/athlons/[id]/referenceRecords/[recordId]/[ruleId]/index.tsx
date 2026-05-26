@@ -1,39 +1,15 @@
-import {Link} from '@solidjs/meta';
 import {A, useParams} from '@solidjs/router';
 import {Breadcrumbs, Chip, Container, Divider, Link as LinkUi, Stack, Typography} from '@suid/material';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, query, where} from 'firebase/firestore';
-import remarkGfm from 'remark-gfm';
 import {floor} from 'remeda';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
-import {createEffect, createMemo, Show} from 'solid-js';
-import {SolidMarkdown} from 'solid-markdown';
+import {createMemo, Show} from 'solid-js';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
+import MarkdownWithMath from '~/components/MarkdownWithMath';
 import PageTitle from '~/components/PageTitle';
 import type {AthlonRanking, Game, GameRule, ReferenceRecord} from '~/lib/schema';
 import useAthlon from '~/lib/useAthlon';
-
-const MarkdownWithMath = (props: {content: string}) => {
-	let containerRef!: HTMLDivElement;
-
-	createEffect(async () => {
-		// @ts-expect-error: URL import
-		// eslint-disable-next-line import/no-unresolved
-		const {default: renderMathInElement} = await import('https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.mjs');
-		renderMathInElement(containerRef, {
-			delimiters: [
-				{left: '$$', right: '$$', display: true},
-				{left: '$', right: '$', display: false},
-			],
-		});
-	});
-
-	return (
-		<div ref={containerRef}>
-			<SolidMarkdown class="markdown" children={props.content} remarkPlugins={[remarkGfm]} linkTarget="_blank"/>
-		</div>
-	);
-};
 
 const ReferenceRecordGameDetail = () => {
 	const param = useParams<{id: string, recordId: string, ruleId: string}>();
@@ -67,7 +43,6 @@ const ReferenceRecordGameDetail = () => {
 
 	return (
 		<main>
-			<Link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css"/>
 			<Container maxWidth="md" sx={{py: 3}}>
 				<Doc data={athlonData}>
 					{(athlon) => (
@@ -143,7 +118,7 @@ const ReferenceRecordGameDetail = () => {
 															fallback={<Typography variant="h4" color="text.secondary">—</Typography>}
 														>
 															{(r) => (
-																<Typography variant="h4">
+																<Typography variant="h6">
 																	<strong>{floor(r.point, 2).toFixed(2)}</strong>
 																</Typography>
 															)}
@@ -158,10 +133,6 @@ const ReferenceRecordGameDetail = () => {
 														<Typography variant="h6">{s.tiebreakScore}</Typography>
 													</Stack>
 												</Stack>
-												<Show when={record.description}>
-													<Divider/>
-													<MarkdownWithMath content={record.description}/>
-												</Show>
 												<Show when={s.description}>
 													<Divider/>
 													<MarkdownWithMath content={s.description}/>

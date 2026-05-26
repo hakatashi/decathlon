@@ -2,11 +2,10 @@ import {A, useParams} from '@solidjs/router';
 import {Box, Breadcrumbs, Button, Container, Dialog, DialogActions, DialogContent, DialogTitle, Link as LinkUi, TextField, Typography} from '@suid/material';
 import {getAuth} from 'firebase/auth';
 import {doc, DocumentReference, getFirestore, serverTimestamp, updateDoc} from 'firebase/firestore';
-import remarkGfm from 'remark-gfm';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, Show} from 'solid-js';
-import {SolidMarkdown} from 'solid-markdown';
 import Doc from '~/components/Doc';
+import MarkdownWithMath from '~/components/MarkdownWithMath';
 import PageTitle from '~/components/PageTitle';
 import {formatTimestamp} from '~/lib/date';
 import type {Rule, UseFireStoreReturn, User} from '~/lib/schema';
@@ -93,12 +92,7 @@ const RuleDetail = () => {
 						<Typography variant="body2" color="text.secondary" sx={{mb: 3}}>
 							最終更新: {rule.updatedAt ? formatTimestamp(rule.updatedAt) : '—'}
 						</Typography>
-						<SolidMarkdown
-							class="markdown"
-							children={rule.description}
-							remarkPlugins={[remarkGfm]}
-							linkTarget="_blank"
-						/>
+						<MarkdownWithMath content={rule.description}/>
 					</>
 				)}
 			</Doc>

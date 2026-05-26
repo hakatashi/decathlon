@@ -1,14 +1,12 @@
-import {Link} from '@solidjs/meta';
 import {A, useParams} from '@solidjs/router';
 import {Breadcrumbs, Button, Container, Link as LinkUi, Dialog, TextField, Typography, DialogContent, DialogContentText, DialogActions, Alert} from '@suid/material';
 import {getAuth} from 'firebase/auth';
 import {CollectionReference, DocumentReference, collection, deleteDoc, doc, getFirestore, query, serverTimestamp, setDoc, updateDoc, where} from 'firebase/firestore';
-import remarkGfm from 'remark-gfm';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, Show} from 'solid-js';
-import {SolidMarkdown} from 'solid-markdown';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
+import MarkdownWithMath from '~/components/MarkdownWithMath';
 import Username from '~/components/Username';
 import type {Game, GameRule, Writeup} from '~/lib/schema';
 import useAthlon from '~/lib/useAthlon';
@@ -19,39 +17,14 @@ interface WriteupProps {
 	id: string;
 }
 
-const AthlonWriteup = (props: WriteupProps) => {
-	let ref!: HTMLDivElement;
-
-	createEffect(async () => {
-		console.log(`Writeup content was updated: ${props.content}`);
-
-		// @ts-expect-error: URL import
-		// eslint-disable-next-line import/no-unresolved
-		const {default: renderMathInElement} = await import('https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.mjs');
-		renderMathInElement(ref, {
-			delimiters: [
-				{left: '$$', right: '$$', display: true},
-				{left: '$', right: '$', display: false},
-			],
-		});
-	});
-
-	return (
-		<div>
-			<Typography variant="h4" component="h2">
-				{props.title} by <Username userId={props.id} display="inline" size={64}/>
-			</Typography>
-			<div ref={ref}>
-				<SolidMarkdown
-					class="markdown"
-					children={props.content}
-					remarkPlugins={[remarkGfm]}
-					linkTarget="_blank"
-				/>
-			</div>
-		</div>
-	);
-};
+const AthlonWriteup = (props: WriteupProps) => (
+	<div>
+		<Typography variant="h4" component="h2">
+			{props.title} by <Username userId={props.id} display="inline" size={64}/>
+		</Typography>
+		<MarkdownWithMath content={props.content}/>
+	</div>
+);
 
 const AthlonWriteups = () => {
 	const param = useParams<{id: string, ruleId: string}>();
@@ -115,7 +88,6 @@ const AthlonWriteups = () => {
 
 	return (
 		<Container maxWidth="lg" sx={{py: 3}}>
-			<Link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css"/>
 			<Breadcrumbs aria-label="breadcrumb" sx={{pt: 3, pb: 3}}>
 				<LinkUi component={A} underline="hover" color="inherit" href="/athlons">
 					Athlons

@@ -1,4 +1,3 @@
-import {Link} from '@solidjs/meta';
 import {useSearchParams} from '@solidjs/router';
 import {
 	Alert,
@@ -44,7 +43,6 @@ import {
 	serverTimestamp,
 	where,
 } from 'firebase/firestore';
-import remarkGfm from 'remark-gfm';
 import {floor} from 'remeda';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {
@@ -57,11 +55,11 @@ import {
 	Show,
 	Switch,
 } from 'solid-js';
-import {SolidMarkdown} from 'solid-markdown';
 import {setArenaTitle, useUser} from '../arenas';
 import styles from './esolang.module.css';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
+import MarkdownWithMath from '~/components/MarkdownWithMath';
 import Username from '~/components/Username';
 import PageNotFoundError from '~/lib/PageNotFoundError';
 import type {
@@ -223,19 +221,6 @@ const MainTab = (props: MainTabProps) => {
 		createSignal<UseFireStoreReturn<EsolangSubmission | null | undefined> | null>(null);
 
 	let fileInputRef!: HTMLInputElement;
-	let descriptionEl!: HTMLElement;
-
-	createEffect(async () => {
-		// @ts-expect-error: URL import
-		// eslint-disable-next-line import/no-unresolved
-		const {default: renderMathInElement} = await import('https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.mjs');
-		renderMathInElement(descriptionEl, {
-			delimiters: [
-				{left: '$$', right: '$$', display: true},
-				{left: '$', right: '$', display: false},
-			],
-		});
-	});
 
 	const intervalId = setInterval(() => {
 		const lastTime = lastSubmissionTime();
@@ -374,14 +359,8 @@ const MainTab = (props: MainTabProps) => {
 
 				return (
 					<>
-						<Link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css"/>
-						<Typography variant="body1" ref={descriptionEl}>
-							<SolidMarkdown
-								class="markdown"
-								children={config.description}
-								remarkPlugins={[remarkGfm]}
-								linkTarget="_blank"
-							/>
+						<Typography variant="body1">
+							<MarkdownWithMath content={config.description}/>
 						</Typography>
 						<Box sx={{mt: 2}}>
 							<div class={styles.grid}>

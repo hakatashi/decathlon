@@ -5,7 +5,6 @@ import {blue} from '@suid/material/colors';
 import dayjs from 'dayjs';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, serverTimestamp, setDoc, where} from 'firebase/firestore';
 import {getFunctions, httpsCallable} from 'firebase/functions';
-import remarkGfm from 'remark-gfm';
 import {zip} from 'remeda';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, For, Match, Show, Switch} from 'solid-js';
@@ -15,6 +14,7 @@ import {setArenaTitle, useUser} from '../arenas';
 import styles from './reversing-diff.module.css';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
+import MarkdownWithMath from '~/components/MarkdownWithMath';
 import Username from '~/components/Username';
 import PageNotFoundError from '~/lib/PageNotFoundError';
 import {Game, PromptEngineeringConfiguration, PromptEngineeringPhase, PromptEngineeringResult, PromptEngineeringSubmission, PromptEngineeringVote, UseFireStoreReturn} from '~/lib/schema';
@@ -103,12 +103,7 @@ const SubmissionTab = (props: SubmissionTabProps) => {
 				return (
 					<>
 						<Typography variant="body1">
-							<SolidMarkdown
-								class="markdown"
-								children={config.briefRegulation}
-								remarkPlugins={[remarkGfm]}
-								linkTarget="_blank"
-							/>
+							<MarkdownWithMath content={config.briefRegulation}/>
 						</Typography>
 						<SwitchUi
 							checked={isDetailedRegulationShown()}
