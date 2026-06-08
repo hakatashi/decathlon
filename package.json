@@ -38,7 +38,7 @@
     "firebase": "^12.14.0",
     "nanoid": "^5.1.11",
     "remark-gfm": "^4.0.1",
-    "remeda": "^2.37.0",
+    "remeda": "^2.38.0",
     "solid-firebase": "^0.3.0",
     "solid-js": "^1.9.13",
     "solid-markdown": "^2.1.1",
