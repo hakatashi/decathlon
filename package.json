@@ -28,7 +28,7 @@
     "@firebase/util": "^1.13.0",
     "@solid-primitives/resize-observer": "^2.2.0",
     "@solidjs/meta": "^0.29.4",
-    "@solidjs/router": "^0.16.3",
+    "@solidjs/router": "^1.0.0",
     "@solidjs/start": "^1.2.0",
     "@suid/base": "^0.11.0",
     "@suid/icons-material": "^0.9.0",
