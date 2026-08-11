@@ -19,7 +19,7 @@
     "@types/sql.js": "^1.4.11",
     "@typescript-eslint/parser": "^8.66.0",
     "eslint": "^9.39.1",
-    "postcss": "^8.5.25",
+    "postcss": "^8.5.26",
     "sass": "^1.102.0",
     "serve": "^14.2.6",
     "typescript": "^6.0.3"
