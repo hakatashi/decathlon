@@ -25,7 +25,7 @@
     "typescript": "^6.0.3"
   },
   "dependencies": {
-    "@firebase/util": "^1.15.2",
+    "@firebase/util": "^1.15.3",
     "@solid-primitives/resize-observer": "^2.2.0",
     "@solidjs/meta": "^0.29.4",
     "@solidjs/router": "^1.0.0",
