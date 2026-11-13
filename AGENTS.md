@@ -6,6 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Decathlon is a full-stack web application for managing competitive programming/skill competitions called "Athlons". It supports multiple challenge types: codegolf, typing, SQL, reversing, quantum computing, prompt engineering, and esolang (esoteric programming languages).
 
+### Sister Projects
+
+- **`decathlon-infra` (`../decathlon-infra/`)**: Infrastructure-as-Code (Terraform/Packer) repository managing GCP/Firebase resources (`tsg-decathlon`), Firestore documents (`gameRules`, `athlons`, `games`), competition problem assets (`assets/`), and worker VM configuration. Refer to `../decathlon-infra/` as needed when checking GCP/Firebase configuration, actual Firestore document definitions/data, or competition assets.
+- **`esolang-battle-2` (`../esolang-battle-2/`)**: Separate worker repository that executes submitted code in Docker containers via BullMQ (see [Code Execution Pipeline](#code-execution-pipeline)).
+
 ## Commands
 
 ### Frontend (root)
