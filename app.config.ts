@@ -8,11 +8,14 @@ const __filename = fileURLToPath(import.meta.url);
 // eslint-disable-next-line no-underscore-dangle
 const __dirname = path.dirname(__filename);
 
-export default defineConfig({
+const app = defineConfig({
 	vite: {
 		plugins: [
 			suidPlugin(),
 		],
+		server: {
+			allowedHosts: ['decathlon.matrix.hakatashi.com'],
+		},
 		build: {target: 'esnext'},
 		optimizeDeps: {
 			exclude: [
@@ -48,3 +51,16 @@ export default defineConfig({
 	},
 	ssr: false,
 });
+
+// Fix the client router's HMR port so firewall rules (e.g. ufw) can allow Hot Reload over LAN
+const parsedHmrPort = Number.parseInt(process.env.HMR_PORT ?? '');
+const clientRouter = app.getRouter('client');
+clientRouter.server = {
+	...clientRouter.server,
+	hmr: {
+		...clientRouter.server?.hmr,
+		port: Number.isNaN(parsedHmrPort) ? 3003 : parsedHmrPort,
+	},
+};
+
+export default app;
