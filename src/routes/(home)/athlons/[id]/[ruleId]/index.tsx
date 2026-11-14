@@ -18,6 +18,7 @@ import {useStorageBytes} from '~/lib/firebase';
 import type {Game, GameRule, Rule, Score} from '~/lib/schema';
 import 'tippy.js/dist/tippy.css';
 import useAthlon from '~/lib/useAthlon';
+import {reset as resetCnnReversing} from '~/routes/arenas/cnn-reversing';
 import {reset as resetTypingJapanese} from '~/routes/arenas/typing-japanese';
 
 interface Props {
@@ -509,6 +510,9 @@ const AthlonGame = () => {
 
 							if (game.rule.path === 'gameRules/typing-japanese') {
 								resetTypingJapanese(game.id);
+							}
+							if (game.rule.path === 'gameRules/cnn-reversing') {
+								resetCnnReversing(game.id);
 							}
 
 							setResetDialogOpen(false);

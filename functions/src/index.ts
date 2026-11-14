@@ -4,11 +4,10 @@ import {FieldValue} from 'firebase-admin/firestore';
 import type {DocumentReference, CollectionReference, CollectionGroup} from 'firebase-admin/firestore';
 import {onDocumentWritten} from 'firebase-functions/firestore';
 import {onCall} from 'firebase-functions/https';
-import {HttpsError, beforeUserCreated, beforeUserSignedIn} from 'firebase-functions/identity';
+import {HttpsError, beforeUserCreated, beforeUserSignedIn, onUserCreated as onAuthUserCreated} from 'firebase-functions/identity';
 import type {AuthUserRecord} from 'firebase-functions/identity';
 import {info as logInfo, error as logError} from 'firebase-functions/logger';
 import {defineString} from 'firebase-functions/params';
-import {user as authUser} from 'firebase-functions/v1/auth';
 import {Diff} from 'mdiff';
 import type {Athlon, Game, PromptEngineeringVote, ReferenceRecord, Score, TypingJapaneseSubmission, SlackUserInfo, AthlonRanking} from '~/lib/schema.js';
 import {db} from './firebase.js';
@@ -66,8 +65,8 @@ export const beforeUserSignInBlockingFunction = beforeUserSignedIn(async (event)
 	await checkSlackTeamEligibility(event.data);
 });
 
-// Firebase Functions v2 does not support onCreate for user creation events yet
-export const onUserCreated = authUser().onCreate(async (user) => {
+export const onUserCreated = onAuthUserCreated(async (event) => {
+	const user = event.data;
 	await db.runTransaction(async (transaction) => {
 		const userRef = db.collection('users').doc(user.uid);
 		const userData = await transaction.get(userRef);
