@@ -139,7 +139,7 @@ functions/src/executions.ts: onExecutionCreated → processEsolangTestExecution
 ## Tech Stack
 
 - **Frontend**: Solid.js, SolidStart, Vinxi, SUID (Material Design), SCSS
-- **Backend**: Firebase Cloud Functions (Node 20), Firestore, Cloud Storage
+- **Backend**: Firebase Cloud Functions (Node 24), Firestore, Cloud Storage
 - **Testing**: Playwright — 5 browser profiles (Chromium, Firefox, WebKit, iPhone 15, Pixel 7)
 - **Language**: TypeScript with strict mode throughout
 - **Linting**: ESLint with `@hakatashi/eslint-config`
