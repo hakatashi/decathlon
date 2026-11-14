@@ -299,6 +299,22 @@ export interface TypingJapaneseConfiguration {
 	textUrl?: string,
 }
 
+export interface CnnReversingConfiguration {
+	enabled: boolean,
+	duration: number,
+	modelUrl: string,
+}
+
+export interface CnnReversingSubmission extends DocumentData {
+	athlon: DocumentReference<Athlon>,
+	userId: string,
+	score: number,
+	image: string,
+	evaluationCount: number,
+	achievedAt: number,
+	createdAt: Timestamp,
+}
+
 export interface SqlConfiguration {
 	enabled: boolean,
 	description: string,
@@ -389,6 +405,7 @@ type Configuration =
 	QuantumComputingConfigurationV1 |
 	PromptEngineeringConfiguration |
 	TypingJapaneseConfiguration |
+	CnnReversingConfiguration |
 	SqlConfiguration |
 	EsolangConfiguration;
 
