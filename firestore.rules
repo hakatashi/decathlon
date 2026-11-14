@@ -200,6 +200,31 @@ service cloud.firestore {
           && submission.executedAt == null;
       }
 
+      function isValidCnnReversingSubmission(submission, game, submissionId) {
+        return submission.keys().hasOnly([
+            'athlon', 'userId', 'score', 'image', 'evaluationCount', 'achievedAt', 'createdAt'])
+          && submission.keys().hasAll([
+            'athlon', 'userId', 'score', 'image', 'evaluationCount', 'achievedAt', 'createdAt'])
+          && submission.athlon is path
+          && game.athlon == submission.athlon
+          && submission.userId == submissionId
+          && isFiniteNumber(submission.score)
+          && submission.image is string
+          && submission.image.size() <= 4096
+          && submission.evaluationCount is int
+          && submission.evaluationCount >= 1
+          && isFiniteNumber(submission.achievedAt)
+          && submission.achievedAt >= 0
+          && submission.createdAt == request.time;
+      }
+
+      // CNN Reversing: participants who already submitted can see others' submissions
+      function hasSubmittedCnnReversing() {
+        return request.auth != null
+          && gameData().rule == /databases/$(database)/documents/gameRules/cnn-reversing
+          && exists(/databases/$(database)/documents/games/$(gameId)/submissions/$(request.auth.uid));
+      }
+
       match /submissions/{submissionId} {
         allow read: if (
           (
@@ -209,7 +234,8 @@ service cloud.firestore {
               submissionId == request.auth.uid
             )
           ) ||
-          isGameEnded()
+          isGameEnded() ||
+          hasSubmittedCnnReversing()
         );
         allow create: if (
           (request.auth != null && request.resource.data.userId == request.auth.uid) &&
@@ -238,6 +264,10 @@ service cloud.firestore {
             (
               gameData().rule == /databases/$(database)/documents/gameRules/esolang &&
               isValidEsolangSubmission(request.resource.data, gameData())
+            ) ||
+            (
+              gameData().rule == /databases/$(database)/documents/gameRules/cnn-reversing &&
+              isValidCnnReversingSubmission(request.resource.data, gameData(), submissionId)
             )
           )
         );

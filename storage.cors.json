@@ -1,15 +1,17 @@
 [
-  {
-    "origin": [
-      "https://decathlon.hakatashi.com",
-      "http://localhost:3000"
-    ],
-    "method": [
-      "GET"
-    ],
-    "responseHeader": [
-      "Content-Type"
-    ],
-    "maxAgeSeconds": 3600
-  }
+	{
+		"origin": [
+			"https://decathlon.hakatashi.com",
+			"http://localhost:3000",
+			"http://decathlon.matrix.hakatashi.com:3002",
+			"http://localhost:3002"
+		],
+		"method": [
+			"GET"
+		],
+		"responseHeader": [
+			"Content-Type"
+		],
+		"maxAgeSeconds": 3600
+	}
 ]
