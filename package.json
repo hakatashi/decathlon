@@ -17,17 +17,17 @@
     "@types/common-tags": "^1.8.4",
     "@types/node": "^26.6.6",
     "@types/sql.js": "^1.4.11",
-    "@typescript-eslint/parser": "^8.72.1",
+    "@typescript-eslint/parser": "^8.72.2",
     "eslint": "^9.39.1",
     "postcss": "^8.5.32",
-    "sass": "^1.107.1",
-    "serve": "^14.2.6",
+    "sass": "^1.108.1",
+    "serve": "^14.2.7",
     "typescript": "^6.0.3"
   },
   "dependencies": {
     "@firebase/util": "^1.15.3",
     "@solid-primitives/resize-observer": "^2.2.0",
-    "@solidjs/meta": "^0.29.4",
+    "@solidjs/meta": "^0.29.8",
     "@solidjs/router": "^1.0.1",
     "@solidjs/start": "^1.2.0",
     "@suid/base": "^0.11.0",
@@ -35,20 +35,20 @@
     "@suid/material": "^0.19.0",
     "common-tags": "^1.8.2",
     "dayjs": "^1.11.23",
-    "firebase": "^13.1.0",
+    "firebase": "^13.2.0",
     "nanoid": "^6.0.2",
     "remark-gfm": "^4.0.1",
-    "remeda": "^2.57.0",
+    "remeda": "^2.59.0",
     "solid-firebase": "^0.3.0",
     "solid-js": "^1.9.18",
     "solid-markdown": "^2.1.1",
     "solid-tippy": "^0.2.1",
     "sql.js": "^1.15.2",
     "tippy.js": "^6.3.7",
-    "undici": "^8.12.3",
+    "undici": "^8.12.4",
     "vinxi": "^0.5.11"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=24"
   }
 }
