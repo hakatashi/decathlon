@@ -303,6 +303,7 @@ export interface CnnReversingConfiguration {
 	enabled: boolean,
 	duration: number,
 	modelUrl: string,
+	explanation?: string,
 }
 
 export interface CnnReversingSubmission extends DocumentData {

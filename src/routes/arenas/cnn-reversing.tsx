@@ -1,3 +1,4 @@
+import {createElementSize} from '@solid-primitives/resize-observer';
 import {useSearchParams} from '@solidjs/router';
 import {AutoFixNormal, Circle, Create, CropSquare, Delete, FormatColorFill, HorizontalRule, RadioButtonUnchecked, Redo, Send, Square, Undo} from '@suid/icons-material';
 import {
@@ -5,9 +6,11 @@ import {
 	IconButton, Paper, Stack, ToggleButton, ToggleButtonGroup, Typography,
 } from '@suid/material';
 import {collection, CollectionReference, doc, DocumentReference, getFirestore, orderBy, query, serverTimestamp, setDoc} from 'firebase/firestore';
+import remarkGfm from 'remark-gfm';
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, For, onCleanup, onMount, Show, untrack} from 'solid-js';
 import type {JSX} from 'solid-js';
+import {SolidMarkdown} from 'solid-markdown';
 import {setArenaTitle, setHeaderText, useUser} from '../arenas';
 import styles from './cnn-reversing.module.css';
 import Collection from '~/components/Collection';
@@ -43,6 +46,13 @@ const loadEvaluations = (gameId: string): Evaluation[] => {
 
 const formatScore = (score: number) => score.toFixed(3);
 
+// Background color for a score: red (<= -10) -> yellow (0) -> green (>= 10)
+const scoreColor = (score: number) => {
+	const clamped = Math.max(-10, Math.min(10, score));
+	const hue = ((clamped + 10) / 20) * 120;
+	return `hsl(${hue.toFixed(0)}, 80%, 82%)`;
+};
+
 const formatElapsed = (ms: number) => {
 	const seconds = Math.floor(ms / 1000);
 	return `${Math.floor(seconds / 60)}:${(seconds % 60).toString().padStart(2, '0')}`;
@@ -69,6 +79,7 @@ interface GalleryItemProps {
 	submission: CnnReversingSubmission,
 	rank: number,
 	isMine: boolean,
+	revealed: boolean,
 }
 
 const GalleryItem = (props: GalleryItemProps) => {
@@ -78,7 +89,9 @@ const GalleryItem = (props: GalleryItemProps) => {
 
 	return (
 		<Paper class={styles.galleryItem} variant="outlined" sx={props.isMine ? {borderColor: 'primary.main', borderWidth: 2} : {}}>
-			<BitmapImage image={props.submission.image} class={styles.galleryImage}/>
+			<Show when={props.revealed} fallback={<div class={styles.galleryHidden}>?</div>}>
+				<BitmapImage image={props.submission.image} class={styles.galleryImage}/>
+			</Show>
 			<Typography variant="subtitle2" component="p">
 				#{props.rank} {formatScore(props.submission.score)}
 			</Typography>
@@ -95,6 +108,7 @@ const GalleryItem = (props: GalleryItemProps) => {
 interface GalleryProps {
 	gameId: string,
 	uid: string,
+	revealed: boolean,
 }
 
 const Gallery = (props: GalleryProps) => {
@@ -107,12 +121,42 @@ const Gallery = (props: GalleryProps) => {
 		<Box class={styles.gallery}>
 			<Collection data={submissions} empty={<Typography>まだ提出がありません</Typography>}>
 				{(submission, index) => (
-					<GalleryItem submission={submission} rank={index() + 1} isMine={submission.userId === props.uid}/>
+					<GalleryItem
+						submission={submission}
+						rank={index() + 1}
+						isMine={submission.userId === props.uid}
+						revealed={props.revealed}
+					/>
 				)}
 			</Collection>
 		</Box>
 	);
 };
+
+interface SpoilerProps {
+	label: string,
+	revealed: boolean,
+	onReveal: () => void,
+	children: JSX.Element,
+}
+
+const Spoiler = (props: SpoilerProps) => (
+	<Show
+		when={props.revealed}
+		fallback={
+			<Paper variant="outlined" class={styles.spoiler}>
+				<Typography variant="body2" sx={{color: 'text.secondary', mb: 1}}>
+					{props.label}はネタバレを含みます
+				</Typography>
+				<Button variant="outlined" onClick={() => props.onReveal()}>
+					ネタバレを表示する
+				</Button>
+			</Paper>
+		}
+	>
+		{props.children}
+	</Show>
+);
 
 const CnnReversing = () => {
 	const [searchParams] = useSearchParams();
@@ -161,6 +205,11 @@ const CnnReversing = () => {
 	const [tool, setTool] = createSignal<Tool>('pen');
 	const [brush, setBrush] = createSignal(3);
 	const [canvasEl, setCanvasEl] = createSignal<HTMLCanvasElement | null>(null);
+	const canvasSize = createElementSize(canvasEl);
+	// Display pixels per bitmap pixel, used to preview the brush at its actual size
+	const canvasScale = createMemo(() => (canvasSize.width ?? SIZE * 5) / SIZE);
+	const [isGalleryRevealed, setIsGalleryRevealed] = createSignal(false);
+	const [isExplanationRevealed, setIsExplanationRevealed] = createSignal(false);
 
 	const [evaluations, setEvaluations] = createSignal<Evaluation[]>(loadEvaluations(gameId));
 	const [isEvaluating, setIsEvaluating] = createSignal(false);
@@ -623,8 +672,11 @@ const CnnReversing = () => {
 							>
 								<For each={BRUSH_SIZES}>
 									{(size) => (
-										<ToggleButton value={size} title={`太さ ${size}px`}>
-											<span class={styles.brushLabel}>{size}</span>
+										<ToggleButton value={size} title={`太さ ${size}px`} aria-label={`太さ ${size}px`}>
+											<span
+												class={styles.brushDot}
+												style={{width: `${size * canvasScale()}px`, height: `${size * canvasScale()}px`}}
+											/>
 										</ToggleButton>
 									)}
 								</For>
@@ -711,6 +763,7 @@ const CnnReversing = () => {
 										type="button"
 										class={styles.historyItem}
 										classList={{[styles.historyBest]: evaluation === best()}}
+										style={{'background-color': scoreColor(evaluation.score)}}
 										onClick={() => loadImage(evaluation.image)}
 									>
 										<BitmapImage image={evaluation.image} class={styles.historyImage}/>
@@ -774,10 +827,30 @@ const CnnReversing = () => {
 						)}
 					</Doc>
 					<Typography variant="h6" component="h2" gutterBottom>
-						みんなの提出
+						このモデルについて
 					</Typography>
+					<Box sx={{mb: 4}}>
+						<Spoiler label="モデルの解説" revealed={isExplanationRevealed()} onReveal={() => setIsExplanationRevealed(true)}>
+							<SolidMarkdown
+								class="markdown"
+								children={config()?.explanation ?? '解説はまだありません。'}
+								remarkPlugins={[remarkGfm]}
+								linkTarget="_blank"
+							/>
+						</Spoiler>
+					</Box>
+					<Stack direction="row" alignItems="center" gap={2} sx={{mb: 1}}>
+						<Typography variant="h6" component="h2">
+							みんなの提出
+						</Typography>
+						<Show when={!isGalleryRevealed()}>
+							<Button size="small" variant="outlined" onClick={() => setIsGalleryRevealed(true)}>
+								画像を表示する (ネタバレ)
+							</Button>
+						</Show>
+					</Stack>
 					<Show when={user()?.uid}>
-						{(uid) => <Gallery gameId={gameId} uid={uid()}/>}
+						{(uid) => <Gallery gameId={gameId} uid={uid()} revealed={isGalleryRevealed()}/>}
 					</Show>
 				</Container>
 			</Show>
