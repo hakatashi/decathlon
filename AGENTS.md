@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Decathlon is a full-stack web application for managing competitive programming/skill competitions called "Athlons". It supports multiple challenge types: codegolf, typing, SQL, reversing, quantum computing, prompt engineering, and esolang (esoteric programming languages).
+Decathlon is a full-stack web application for managing competitive programming/skill competitions called "Athlons". It supports multiple challenge types: codegolf, typing, SQL, reversing, bitflip procon, quantum computing, prompt engineering, and esolang (esoteric programming languages).
 
 ### Sister Projects
 
@@ -72,6 +72,14 @@ Admins can record reference scores (e.g. AI agent benchmarks) for each athlon. `
 ### Game Admin Preview
 `Game.admins` is an array of user IDs who can preview and interact with a game even when the game is not yet published (enabled=false). Used in the esolang and quantum-computing arenas. A warning banner is shown when a user is viewing in admin-preview mode.
 
+### Bitflip Procon
+In the `bitflip-procon` game (`src/routes/arenas/bitflip-procon.tsx`), participants submit a patched ELF binary that must pass all the testcases of a competitive-programming-style problem. The score is the bitwise Hamming distance from the challenge binary (`lib/bitflip.ts`, shared by the frontend and functions; length difference counts as 8 bitflips per byte). Lower is better.
+
+- `games/{gameId}/submissions/{id}` holds only metadata and results and is readable by all signed-in users during the game. The binary itself lives in `games/{gameId}/submissionCodes/{id}` (created in the same batch; readable only by the author until the game ends).
+- Testcases (sample + hidden) live in `games/{gameId}/secrets/bitflip-procon`, which is not readable from clients.
+- The challenge binary is stored in Cloud Storage at `assets/bitflip-procon/{filename}` (`configuration.files`).
+- Binaries are executed by the `hakatashi/bitflip-procon` image (defined in `../diff-challenge/langs/bitflip-procon`).
+
 ### Rule Categories
 `Game.ruleCategories` is an array of `DocumentReference<Rule>` pointing to documents in the `rules` collection. Categories are displayed as chips on the game detail page. The `rules` collection is admin-only writable; pages at `/rules` and `/rules/{ruleId}` allow admins to manage rule documents with Markdown descriptions.
 
@@ -80,7 +88,7 @@ Athlon names (e.g. "Decathlon", "Heptathlon") are generated dynamically by `getA
 
 ### Code Execution Pipeline
 
-For game types that run code (esolang, codegolf, quantum-computing, sql, reversing-diff), Firebase Cloud Functions and the **esolang-battle-2** worker (separate repo at `../esolang-battle-2`) collaborate via a BullMQ queue backed by Redis.
+For game types that run code (esolang, codegolf, quantum-computing, sql, reversing-diff, bitflip-procon), Firebase Cloud Functions and the **esolang-battle-2** worker (separate repo at `../esolang-battle-2`) collaborate via a BullMQ queue backed by Redis.
 
 #### Regular submission (`games/{gameId}/submissions/{submissionId}`)
 

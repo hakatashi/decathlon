@@ -142,6 +142,50 @@ export interface ReversingDiffSubmission extends DocumentData {
 	executedAt: Timestamp | null,
 }
 
+export type BitflipProconTestcaseStatus = 'failed' | 'success' | 'error';
+
+// Stored at games/{gameId}/submissions/{submissionId}.
+// Readable by all the participants during the game, so this must not contain the submitted binary.
+export interface BitflipProconSubmission extends DocumentData {
+	athlon: DocumentReference<Athlon>,
+	userId: string,
+	status: 'pending' | 'executing' | 'failed' | 'success' | 'error' | 'invalid',
+	size: number,
+	// Number of bitflips from the challenge binary. Calculated regardless of the status.
+	bitflips: number | null,
+	// Equals to bitflips if and only if the submission passed all the testcases.
+	score: number | null,
+	testcases: {
+		name: string,
+		isSample: boolean,
+		// stdout and stderr are recorded only for the sample testcases
+		stdout: string | null,
+		stderr: string | null,
+		duration: number | null,
+		status: BitflipProconTestcaseStatus,
+	}[],
+	errorMessage?: string,
+	createdAt: Timestamp,
+	executedAt: Timestamp | null,
+}
+
+// Stored at games/{gameId}/submissionCodes/{submissionId}.
+// Readable only by the author until the game ends.
+export interface BitflipProconSubmissionCode extends DocumentData {
+	userId: string,
+	code: Bytes,
+}
+
+// Stored at games/{gameId}/secrets/bitflip-procon. Not readable from the clients.
+export interface BitflipProconSecret extends DocumentData {
+	testcases: {
+		name: string,
+		input: string,
+		output: string,
+		isSample: boolean,
+	}[],
+}
+
 export interface CodegolfSubmission extends DocumentData {
 	athlon: DocumentReference<Athlon>,
 	userId: string,
@@ -232,6 +276,16 @@ export interface SqlSubmission extends DocumentData {
 export interface DiffConfiguration {
 	enabled: boolean,
 	language: string,
+	rule: string,
+	files: {
+		filename: string,
+		label: string,
+		isMain: boolean,
+	}[],
+}
+
+export interface BitflipProconConfiguration {
+	enabled: boolean,
 	rule: string,
 	files: {
 		filename: string,
@@ -402,6 +456,7 @@ export interface EsolangTestSubmission extends DocumentData {
 
 type Configuration =
 	DiffConfiguration |
+	BitflipProconConfiguration |
 	CodegolfConfiguration |
 	QuantumComputingConfigurationV1 |
 	PromptEngineeringConfiguration |
@@ -426,6 +481,13 @@ export interface Execution extends DocumentData {
 }
 
 export interface ReversingDiffRanking extends DocumentData {
+	athlon: DocumentReference<Athlon>,
+	userId: string,
+	score: number,
+	createdAt: Timestamp,
+}
+
+export interface BitflipProconRanking extends DocumentData {
 	athlon: DocumentReference<Athlon>,
 	userId: string,
 	score: number,
