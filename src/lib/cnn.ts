@@ -29,23 +29,31 @@ interface DenseLayer {
 
 type Layer = ConvLayer | GapLayer | DenseLayer;
 
+// How the game score is derived from the final outputs. Absent: the first output is the score.
+interface DifferenceScore {
+	type: 'difference',
+	positive: number,
+	negative: number,
+}
+
 export interface CnnModel {
 	inputSize: number,
 	layers: Layer[],
 	params: Float32Array,
+	score?: DifferenceScore,
 }
 
 export const parseCnnModel = (buffer: ArrayBuffer): CnnModel => {
 	const view = new DataView(buffer);
 	const headerLength = view.getUint32(0, true);
 	const headerText = new TextDecoder().decode(new Uint8Array(buffer, 4, headerLength));
-	const header = JSON.parse(headerText) as {version: number, inputSize: number, layers: Layer[]};
+	const header = JSON.parse(headerText) as {version: number, inputSize: number, layers: Layer[], score?: DifferenceScore};
 	if (header.version !== 1) {
 		throw new Error(`Unsupported model version: ${header.version}`);
 	}
 	const dataOffset = 4 + headerLength;
 	const params = new Float32Array(buffer.slice(dataOffset));
-	return {inputSize: header.inputSize, layers: header.layers, params};
+	return {inputSize: header.inputSize, layers: header.layers, params, score: header.score};
 };
 
 interface FeatureMap {
@@ -148,6 +156,9 @@ export const runCnn = (model: CnnModel, image: Uint8Array): number => {
 		}
 	}
 
+	if (model.score?.type === 'difference') {
+		return data[model.score.positive] - data[model.score.negative];
+	}
 	return data[0];
 };
 
