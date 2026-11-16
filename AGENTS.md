@@ -73,7 +73,7 @@ Admins can record reference scores (e.g. AI agent benchmarks) for each athlon. `
 `Game.admins` is an array of user IDs who can preview and interact with a game even when the game is not yet published (enabled=false). Used in the esolang and quantum-computing arenas. A warning banner is shown when a user is viewing in admin-preview mode.
 
 ### Bitflip Procon
-In the `bitflip-procon` game (`src/routes/arenas/bitflip-procon.tsx`), participants submit a patched x86 (32-bit) ELF binary that must pass all the testcases of a competitive-programming-style problem. The score is the bitwise Hamming distance from the challenge binary (`lib/bitflip.ts`, shared by the frontend and functions; length difference counts as 8 bitflips per byte). Lower is better.
+In the `bitflip-procon` game (`src/routes/arenas/bitflip-procon.tsx`), participants submit a patched ELF binary that must pass all the testcases of a competitive-programming-style problem. The score is the bitwise Hamming distance from the challenge binary (`lib/bitflip.ts`, shared by the frontend and functions; length difference counts as 8 bitflips per byte). Lower is better.
 
 - `games/{gameId}/submissions/{id}` holds only metadata and results and is readable by all signed-in users during the game. The binary itself lives in `games/{gameId}/submissionCodes/{id}` (created in the same batch; readable only by the author until the game ends).
 - Testcases (sample + hidden) live in `games/{gameId}/secrets/bitflip-procon`, which is not readable from clients.
