@@ -3,8 +3,9 @@ import type {Timestamp, CollectionReference, DocumentReference} from 'firebase-a
 import {onDocumentCreated} from 'firebase-functions/firestore';
 import {info as logInfo} from 'firebase-functions/logger';
 import {firstBy, groupBy, identity, last, reverse, sortBy, sum, zip} from 'remeda';
-import type {CodegolfConfiguration, CodegolfJudgeType, CodegolfRanking, CodegolfSubmission, DiffConfiguration, EsolangBoxLanguage, EsolangConfiguration, EsolangRanking, EsolangSubmission, EsolangTestSubmission, Execution, Game, QuantumComputingConfiguration, QuantumComputingResult, QuantumComputingSubmission, ReversingDiffRanking, ReversingDiffSubmission, Score, SqlResult, SqlSubmission, SqlTestcaseResult} from '~/lib/schema.js';
+import type {BitflipProconConfiguration, BitflipProconRanking, BitflipProconSecret, BitflipProconSubmission, BitflipProconSubmissionCode, BitflipProconTestcaseStatus, CodegolfConfiguration, CodegolfJudgeType, CodegolfRanking, CodegolfSubmission, DiffConfiguration, EsolangBoxLanguage, EsolangConfiguration, EsolangRanking, EsolangSubmission, EsolangTestSubmission, Execution, Game, QuantumComputingConfiguration, QuantumComputingResult, QuantumComputingSubmission, ReversingDiffRanking, ReversingDiffSubmission, Score, SqlResult, SqlSubmission, SqlTestcaseResult} from '~/lib/schema.js';
 import {db, storage} from './firebase.js';
+import {countBitflips} from './lib/bitflip.js';
 
 const normalizeCodegolfOutput = (text: string, judgeType: CodegolfJudgeType) => {
 	if (judgeType === 'ignore-newline-type') {
@@ -319,6 +320,129 @@ const processReversingDiffExecution = async (
 	}
 
 	await batch.commit();
+};
+
+const BITFLIP_PROCON_OUTPUT_LIMIT = 1000;
+
+const toUint8Array = (data: unknown): Uint8Array => {
+	if (data instanceof Uint8Array) {
+		return data;
+	}
+	if (data && typeof (data as {toUint8Array?: unknown}).toUint8Array === 'function') {
+		return (data as {toUint8Array: () => Uint8Array}).toUint8Array();
+	}
+	return new Uint8Array(0);
+};
+
+const updateBitflipProconRanking = async (gameId: string, athlon: BitflipProconSubmission['athlon']) => {
+	const submissionDocs = await (db.collection(`games/${gameId}/submissions`) as CollectionReference<BitflipProconSubmission>)
+		.where('status', '==', 'success').get();
+	const submissionsByUser = groupBy(submissionDocs.docs.map((s) => s.data()), (s) => s.userId);
+
+	const batch = db.batch();
+	for (const [userId, submissions] of Object.entries(submissionsByUser)) {
+		const bestSubmission = firstBy(
+			submissions,
+			[(s) => s.score ?? Infinity, 'asc'],
+			[(s) => s.createdAt.toMillis(), 'asc'],
+		);
+		const score = bestSubmission.score;
+		if (typeof score !== 'number') {
+			continue;
+		}
+
+		const rankingRef = db.doc(`games/${gameId}/ranking/${userId}`) as DocumentReference<BitflipProconRanking>;
+		batch.set(rankingRef, {
+			athlon,
+			userId,
+			score,
+			createdAt: bestSubmission.createdAt,
+		});
+
+		// Fewer bitflips are better, so the raw score is the reciprocal of the bitflip count
+		const scoreRef = db.doc(`games/${gameId}/scores/${userId}`) as DocumentReference<Score>;
+		batch.set(scoreRef, {
+			athlon,
+			user: userId,
+			rawScore: 1 / Math.max(score, 1),
+			tiebreakScore: bestSubmission.createdAt.toMillis(),
+		});
+	}
+
+	await batch.commit();
+};
+
+const processBitflipProconExecution = async (
+	game: Game,
+	execution: Execution,
+) => {
+	const submissionRef = db.doc(`games/${execution.gameId}/submissions/${execution.submissionId}`) as DocumentReference<BitflipProconSubmission>;
+	const submissionDoc = await submissionRef.get();
+	const submission = submissionDoc.data();
+	if (!submission) {
+		return;
+	}
+
+	const config = game.configuration as BitflipProconConfiguration;
+	const mainFile = config.files.find((file) => file.isMain);
+	if (!mainFile) {
+		throw new AssertionError({message: 'Main file is not found'});
+	}
+
+	const secretRef = db.doc(`games/${execution.gameId}/secrets/bitflip-procon`) as DocumentReference<BitflipProconSecret>;
+	const codeRef = db.doc(`games/${execution.gameId}/submissionCodes/${execution.submissionId}`) as DocumentReference<BitflipProconSubmissionCode>;
+	const [secretDoc, codeDoc, [originalBinary]] = await Promise.all([
+		secretRef.get(),
+		codeRef.get(),
+		storage.bucket().file(`assets/bitflip-procon/${mainFile.filename}`).download(),
+	]);
+
+	const testcases = secretDoc.data()?.testcases ?? [];
+	const bitflips = countBitflips(originalBinary, toUint8Array(codeDoc.data()?.code));
+
+	const testcaseResults: BitflipProconSubmission['testcases'] = testcases.map((testcase, i) => {
+		const result = execution.results[i];
+
+		let status: BitflipProconTestcaseStatus;
+		if (execution.error || !result || result.exitCode !== 0) {
+			status = 'error';
+		} else if (isTestcaseCorrect(result.stdout, testcase.output, 'ignore-newline-type')) {
+			status = 'success';
+		} else {
+			status = 'failed';
+		}
+
+		return {
+			name: testcase.name,
+			isSample: testcase.isSample,
+			stdout: testcase.isSample && result ? result.stdout.slice(0, BITFLIP_PROCON_OUTPUT_LIMIT) : null,
+			stderr: testcase.isSample && result ? result.stderr.slice(0, BITFLIP_PROCON_OUTPUT_LIMIT) : null,
+			duration: result?.durationMs ?? null,
+			status,
+		};
+	});
+
+	let totalStatus: BitflipProconTestcaseStatus;
+	if (testcaseResults.length === 0 || testcaseResults.some(({status}) => status === 'error')) {
+		totalStatus = 'error';
+	} else if (testcaseResults.some(({status}) => status === 'failed')) {
+		totalStatus = 'failed';
+	} else {
+		totalStatus = 'success';
+	}
+
+	await submissionRef.update({
+		status: totalStatus,
+		...(execution.error ? {errorMessage: execution.error} : {}),
+		bitflips,
+		score: totalStatus === 'success' ? bitflips : null,
+		testcases: testcaseResults,
+		executedAt: new Date(),
+	});
+
+	if (totalStatus === 'success') {
+		await updateBitflipProconRanking(execution.gameId, submission.athlon);
+	}
 };
 
 const processCodegolfExecution = async (
@@ -658,6 +782,12 @@ export const onExecutionCreated = onDocumentCreated(
 		// --- reversing-diff ---
 		if (game.rule.path === 'gameRules/reversing-diff') {
 			await processReversingDiffExecution(game, execution);
+			return;
+		}
+
+		// --- bitflip-procon ---
+		if (game.rule.path === 'gameRules/bitflip-procon') {
+			await processBitflipProconExecution(game, execution);
 			return;
 		}
 

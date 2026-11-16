@@ -5,7 +5,7 @@ import {onDocumentCreated} from 'firebase-functions/firestore';
 import {info as logInfo, warn as logWarn} from 'firebase-functions/logger';
 import {defineString} from 'firebase-functions/params';
 import {Redis} from 'ioredis';
-import type {CodegolfConfiguration, CodegolfSubmission, EsolangConfiguration, EsolangRanking, EsolangSubmission, EsolangTestSubmission, Game, QuantumComputingConfiguration, QuantumComputingSubmission, ReversingDiffSubmission, SqlSubmission} from '~/lib/schema.js';
+import type {BitflipProconSecret, BitflipProconSubmissionCode, CodegolfConfiguration, CodegolfSubmission, EsolangConfiguration, EsolangRanking, EsolangSubmission, EsolangTestSubmission, Game, QuantumComputingConfiguration, QuantumComputingSubmission, ReversingDiffSubmission, SqlSubmission} from '~/lib/schema.js';
 import {db, storage} from './firebase.js';
 
 const REDIS_URL = defineString('REDIS_URL');
@@ -128,6 +128,43 @@ const buildEsolangJobData = async ({
 	};
 };
 
+const buildBitflipProconJobData = async ({
+	changedGameId,
+	changedSubmissionId,
+	submissionRef,
+}: {
+	changedGameId: string;
+	changedSubmissionId: string;
+	submissionRef: ReturnType<typeof db.doc>;
+}): Promise<DecathlonJobData | null> => {
+	const codeRef = db.doc(`games/${changedGameId}/submissionCodes/${changedSubmissionId}`) as DocumentReference<BitflipProconSubmissionCode>;
+	const codeDoc = await codeRef.get();
+	const code = toBuffer(codeDoc.data()?.code);
+	if (code.length === 0) {
+		await submissionRef.update({status: 'invalid', errorMessage: 'Submitted binary is not found'});
+		return null;
+	}
+
+	const secretRef = db.doc(`games/${changedGameId}/secrets/bitflip-procon`) as DocumentReference<BitflipProconSecret>;
+	const secretDoc = await secretRef.get();
+	const testcases = secretDoc.data()?.testcases ?? [];
+	if (testcases.length === 0) {
+		await submissionRef.update({status: 'invalid', errorMessage: 'Testcases are not configured'});
+		return null;
+	}
+
+	return {
+		gameId: changedGameId,
+		submissionId: changedSubmissionId,
+		imageId: 'hakatashi/bitflip-procon',
+		code: code.toString('base64'),
+		codeEncoding: 'base64',
+		testcases: testcases.map((tc) => ({stdin: tc.input})),
+		// The docker image enforces the time limit of 2 seconds per testcase
+		timeoutMs: testcases.length * 2500 + 10000,
+	};
+};
+
 // --- Trigger 1: enqueue BullMQ job on new submission ---
 
 export const onSubmissionCreated = onDocumentCreated(
@@ -176,6 +213,10 @@ export const onSubmissionCreated = onDocumentCreated(
 				code: `${answer.toString('base64')}\n${Buffer.from(submission.code, 'utf-8').toString('base64')}`,
 				testcases: [{stdin: ''}],
 			};
+		}
+
+		if (game.rule.path === 'gameRules/bitflip-procon') {
+			jobData = await buildBitflipProconJobData({changedGameId, changedSubmissionId, submissionRef});
 		}
 
 		if (game.rule.path === 'gameRules/codegolf') {

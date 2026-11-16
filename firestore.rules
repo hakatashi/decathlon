@@ -97,6 +97,33 @@ service cloud.firestore {
           && submission.executedAt == null;
       }
 
+      function isBitflipProconGame() {
+        return gameData().rule == /databases/$(database)/documents/gameRules/bitflip-procon;
+      }
+
+      // The submitted binary is stored in submissionCodes/{submissionId} and must be created in the same batch
+      function isValidBitflipProconSubmission(submission, game, submissionId) {
+        return submission.keys().hasOnly([
+            'athlon', 'userId', 'status', 'size', 'bitflips', 'score',
+            'testcases', 'createdAt', 'executedAt'])
+          && submission.keys().hasAll([
+            'athlon', 'userId', 'status', 'size', 'bitflips', 'score',
+            'testcases', 'createdAt', 'executedAt'])
+          && submission.athlon is path
+          && game.athlon == submission.athlon
+          && submission.userId is string
+          && submission.status == 'pending'
+          && submission.size is int
+          && submission.bitflips == null
+          && submission.score == null
+          && submission.testcases is list
+          && submission.testcases.size() == 0
+          && submission.createdAt == request.time
+          && submission.executedAt == null
+          && getAfter(/databases/$(database)/documents/games/$(gameId)/submissionCodes/$(submissionId)).data.userId == submission.userId
+          && getAfter(/databases/$(database)/documents/games/$(gameId)/submissionCodes/$(submissionId)).data.code.size() == submission.size;
+      }
+
       function isValidCodegolfSubmission(submission, game) {
         return submission.keys().hasOnly([
             'athlon', 'userId', 'status', 'language', 'code', 'size',
@@ -235,7 +262,9 @@ service cloud.firestore {
             )
           ) ||
           isGameEnded() ||
-          hasSubmittedCnnReversing()
+          hasSubmittedCnnReversing() ||
+          // bitflip-procon: submission statuses are public (the binaries are stored in submissionCodes)
+          (request.auth != null && isBitflipProconGame())
         );
         allow create: if (
           (request.auth != null && request.resource.data.userId == request.auth.uid) &&
@@ -268,6 +297,10 @@ service cloud.firestore {
             (
               gameData().rule == /databases/$(database)/documents/gameRules/cnn-reversing &&
               isValidCnnReversingSubmission(request.resource.data, gameData(), submissionId)
+            ) ||
+            (
+              isBitflipProconGame() &&
+              isValidBitflipProconSubmission(request.resource.data, gameData(), submissionId)
             )
           )
         );
@@ -281,6 +314,25 @@ service cloud.firestore {
             )
           )
         );
+      }
+
+      // bitflip-procon: submitted binaries (hidden from the other participants until the game ends)
+      match /submissionCodes/{submissionId} {
+        allow read: if request.auth != null && (
+          resource.data.userId == request.auth.uid ||
+          isGameEnded() ||
+          isAdmin()
+        );
+        allow create: if request.auth != null
+                      && !isGameEnded()
+                      && isBitflipProconGame()
+                      && request.resource.data.keys().hasOnly(['userId', 'code'])
+                      && request.resource.data.keys().hasAll(['userId', 'code'])
+                      && request.resource.data.userId == request.auth.uid
+                      && request.resource.data.code is bytes
+                      && request.resource.data.code.size() > 0
+                      && request.resource.data.code.size() <= 262144
+                      && getAfter(/databases/$(database)/documents/games/$(gameId)/submissions/$(submissionId)).data.userId == request.auth.uid;
       }
 
       match /ranking/{userId} {
