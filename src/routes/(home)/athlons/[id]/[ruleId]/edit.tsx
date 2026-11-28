@@ -1,11 +1,12 @@
 import {Navigate, useParams} from '@solidjs/router';
 import {Button, Container, TextField} from '@suid/material';
 import {getAuth} from 'firebase/auth';
-import {CollectionReference, DocumentReference, collection, doc, getFirestore, query, updateDoc, where, writeBatch} from 'firebase/firestore';
-import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
+import {CollectionReference, DocumentReference, collection, doc, getFirestore, updateDoc, writeBatch} from 'firebase/firestore';
+import {useAuth, useFirebaseApp} from 'solid-firebase';
 import {Show, createEffect, createMemo, createSignal} from 'solid-js';
 import Collection from '~/components/Collection';
-import type {Game, GameRule, Score} from '~/lib/schema';
+import type {Game, Score} from '~/lib/schema';
+import useGameBySlug from '~/lib/useGameBySlug';
 
 const AthlonEdit = () => {
 	const param = useParams<{id: string, ruleId: string}>();
@@ -13,15 +14,8 @@ const AthlonEdit = () => {
 	const db = getFirestore(app);
 	const auth = getAuth(app);
 
-	const ruleRef = doc(db, 'gameRules', param.ruleId) as DocumentReference<GameRule>;
 
-	const gameData = useFirestore(
-		query(
-			collection(db, 'games') as CollectionReference<Game>,
-			where('athlon', '==', doc(db, 'athlons', param.id)),
-			where('rule', '==', ruleRef),
-		),
-	);
+	const {gameData} = useGameBySlug(param.id, () => param.ruleId);
 	const authState = useAuth(auth);
 
 	const [description, setDescription] = createSignal<string>('');

@@ -112,7 +112,7 @@ const ReferenceRecordDetail = () => {
 																			<LinkUi
 																				component={A}
 																				underline="hover"
-																				href={`/athlons/${param.id}/referenceRecords/${param.recordId}/${rule.id}`}
+																				href={`/athlons/${param.id}/referenceRecords/${param.recordId}/${game.slug ?? rule.id}`}
 																			>
 																				{rule.name}
 																			</LinkUi>

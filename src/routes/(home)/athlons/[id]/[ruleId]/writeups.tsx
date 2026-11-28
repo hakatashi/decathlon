@@ -1,15 +1,16 @@
 import {A, useParams} from '@solidjs/router';
 import {Breadcrumbs, Button, Container, Link as LinkUi, Dialog, TextField, Typography, DialogContent, DialogContentText, DialogActions, Alert} from '@suid/material';
 import {getAuth} from 'firebase/auth';
-import {CollectionReference, DocumentReference, collection, deleteDoc, doc, getFirestore, query, serverTimestamp, setDoc, updateDoc, where} from 'firebase/firestore';
+import {CollectionReference, DocumentReference, collection, deleteDoc, doc, getFirestore, serverTimestamp, setDoc, updateDoc} from 'firebase/firestore';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, Show} from 'solid-js';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import MarkdownWithMath from '~/components/MarkdownWithMath';
 import Username from '~/components/Username';
-import type {Game, GameRule, Writeup} from '~/lib/schema';
+import type {Writeup} from '~/lib/schema';
 import useAthlon from '~/lib/useAthlon';
+import useGameBySlug from '~/lib/useGameBySlug';
 
 interface WriteupProps {
 	title: string;
@@ -34,21 +35,13 @@ const AthlonWriteups = () => {
 	const authState = useAuth(auth);
 	const athlonData = useAthlon(param.id);
 
-	const ruleRef = doc(db, 'gameRules', param.ruleId) as DocumentReference<GameRule>;
-	const ruleData = useFirestore(ruleRef);
 
 	const [myWriteup, setMyWriteup] = createSignal<{content: string, title: string}>({content: '', title: ''});
 	const [hasMyWriteupChange, setHasMyWriteupChange] = createSignal<boolean>(false);
 	const [isMyWriteupExist, setIsMyWriteupExist] = createSignal<boolean>(false);
 	const [isDeletionDialogOpen, setIsDeletionDialogOpen] = createSignal<boolean>(false);
 
-	const gameData = useFirestore(
-		query(
-			collection(db, 'games') as CollectionReference<Game>,
-			where('athlon', '==', doc(db, 'athlons', param.id)),
-			where('rule', '==', ruleRef),
-		),
-	);
+	const {gameData, ruleData} = useGameBySlug(param.id, () => param.ruleId);
 
 	const handleClickSubmit = async (gameId: string) => {
 		if (authState.data === null) {

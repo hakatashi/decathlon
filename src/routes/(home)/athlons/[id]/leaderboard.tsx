@@ -12,6 +12,7 @@ import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import PageTitle from '~/components/PageTitle';
 import Username from '~/components/Username';
+import {getGamePath} from '~/lib/const';
 import type {Game, RankingEntry, ReferenceRecord, User} from '~/lib/schema';
 import useAthlon from '~/lib/useAthlon';
 
@@ -126,7 +127,7 @@ const RankingTable = (props: RankingTableProps) => {
 													underline="hover"
 													color="inherit"
 													component={A}
-													href={`/athlons/${props.athlonId}/${rule.id}`}
+													href={getGamePath(props.athlonId, game)}
 												>
 													{rule.name}
 												</Link>

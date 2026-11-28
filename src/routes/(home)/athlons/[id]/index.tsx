@@ -10,7 +10,7 @@ import Doc from '~/components/Doc';
 import MarkdownWithMath from '~/components/MarkdownWithMath';
 import PageTitle from '~/components/PageTitle';
 import RankingSummary from '~/components/RankingSummary';
-import {getAthlonName} from '~/lib/const';
+import {getAthlonName, getGamePath} from '~/lib/const';
 import type {Game, RankingEntry} from '~/lib/schema';
 import useAthlon from '~/lib/useAthlon';
 
@@ -92,7 +92,7 @@ const Home = () => {
 							const ruleData = useFirestore(game.rule);
 
 							return (
-								<ListItem component={A} href={`/athlons/${param.id}/${game.rule.id}`}>
+								<ListItem component={A} href={getGamePath(param.id, game)}>
 									<ListItemAvatar>
 										<Avatar>
 											{index() + 1}

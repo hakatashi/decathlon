@@ -2,7 +2,7 @@ import {A, useParams} from '@solidjs/router';
 import {Typography, Container, Breadcrumbs, Link, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Stack, Chip} from '@suid/material';
 import {blue, grey} from '@suid/material/colors';
 import {getAuth} from 'firebase/auth';
-import {collection, CollectionReference, doc, DocumentReference, getFirestore, query, where} from 'firebase/firestore';
+import {collection, CollectionReference, getFirestore} from 'firebase/firestore';
 import {floor} from 'remeda';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createMemo, For, Show} from 'solid-js';
@@ -11,8 +11,9 @@ import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import PageTitle from '~/components/PageTitle';
 import Username from '~/components/Username';
-import type {Game, GameRule, RankingEntry, ReferenceRecord, Score} from '~/lib/schema';
+import type {RankingEntry, ReferenceRecord, Score} from '~/lib/schema';
 import useAthlon from '~/lib/useAthlon';
+import useGameBySlug from '~/lib/useGameBySlug';
 
 const Leaderboard = () => {
 	const param = useParams<{id: string, ruleId: string}>();
@@ -21,16 +22,8 @@ const Leaderboard = () => {
 	const db = getFirestore(app);
 	const auth = getAuth(app);
 
-	const ruleRef = doc(db, 'gameRules', param.ruleId) as DocumentReference<GameRule>;
 
-	const ruleData = useFirestore(ruleRef);
-	const gameData = useFirestore(
-		query(
-			collection(db, 'games') as CollectionReference<Game>,
-			where('athlon', '==', doc(db, 'athlons', param.id)),
-			where('rule', '==', ruleRef),
-		),
-	);
+	const {gameData, ruleData, ruleId} = useGameBySlug(param.id, () => param.ruleId);
 	const athlonRankingsData = useFirestore(
 		collection(db, 'athlons', param.id, 'rankings') as CollectionReference<RankingEntry>,
 	);
@@ -189,7 +182,7 @@ const Leaderboard = () => {
 																			<Stack direction="row" alignItems="center" gap={1}>
 																				<Link
 																					component={A}
-																					href={`/athlons/${param.id}/referenceRecords/${ranking.referenceRecordId}/${param.ruleId}`}
+																					href={`/athlons/${param.id}/referenceRecords/${ranking.referenceRecordId}/${ruleId()}`}
 																					underline="hover"
 																					color="inherit"
 																				>

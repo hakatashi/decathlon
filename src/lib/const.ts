@@ -260,3 +260,10 @@ export const codegolfLanguageAllowList: [string, string][] = [
 ];
 
 codegolfLanguageAllowList.sort(([, nameA], [, nameB]) => nameA.localeCompare(nameB));
+
+/**
+ * ゲームページへのパスを返す。slug があれば slug を、なければ rule の ID を使う。
+ */
+export const getGamePath = (athlonId: string, game: {slug?: string, rule: {id: string}}) => (
+	`/athlons/${athlonId}/${game.slug ?? game.rule.id}`
+);

@@ -15,6 +15,7 @@ import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createMemo, For, Match, Show, Switch} from 'solid-js';
 import Doc from '~/components/Doc';
 import PageTitle from '~/components/PageTitle';
+import {getGamePath} from '~/lib/const';
 import type {Athlon, AthlonRanking, Game, GameRule, User} from '~/lib/schema';
 
 const getRankColor = (rank: number) => {
@@ -143,7 +144,7 @@ const AthlonResultCard = (props: AthlonResultCardProps) => {
 														<Doc data={ruleData}>
 															{(rule) => (
 																<A
-																	href={`/athlons/${props.ranking.athlonId}/${rule.id}`}
+																	href={getGamePath(props.ranking.athlonId, game)}
 																	style={{color: 'inherit', 'text-decoration': 'none'}}
 																>
 																	<Typography

@@ -3,7 +3,7 @@ import {A, useParams} from '@solidjs/router';
 import {Typography, Container, Breadcrumbs, Link as LinkUi, Button, Chip, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Stack, TextField, Grid, Box, Checkbox, FormControlLabel} from '@suid/material';
 import dayjs from 'dayjs';
 import {getAuth} from 'firebase/auth';
-import {collection, CollectionReference, doc, DocumentReference, getFirestore, query, setDoc, where} from 'firebase/firestore';
+import {doc, DocumentReference, getFirestore, setDoc} from 'firebase/firestore';
 import {getFunctions, httpsCallable} from 'firebase/functions';
 import {getStorage, ref} from 'firebase/storage';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
@@ -15,9 +15,10 @@ import Doc from '~/components/Doc';
 import MarkdownWithMath from '~/components/MarkdownWithMath';
 import PageTitle from '~/components/PageTitle';
 import {useStorageBytes} from '~/lib/firebase';
-import type {Game, GameRule, Rule, Score} from '~/lib/schema';
+import type {Game, Rule, Score} from '~/lib/schema';
 import 'tippy.js/dist/tippy.css';
 import useAthlon from '~/lib/useAthlon';
+import useGameBySlug from '~/lib/useGameBySlug';
 import {reset as resetCnnReversing} from '~/routes/arenas/cnn-reversing';
 import {reset as resetTypingJapanese} from '~/routes/arenas/typing-japanese';
 
@@ -254,20 +255,12 @@ const AthlonGame = () => {
 	const storage = getStorage(app);
 	const auth = getAuth(app);
 
-	const ruleRef = doc(db, 'gameRules', param.ruleId) as DocumentReference<GameRule>;
 
 	const [myScore, setMyScore] = createSignal<string>('N/A');
 	const [scoreRecordDialogOpen, setScoreRecordDialogOpen] = createSignal<boolean>(false);
 	const [resetDialogOpen, setResetDialogOpen] = createSignal<boolean>(false);
 
-	const ruleData = useFirestore(ruleRef);
-	const gameData = useFirestore(
-		query(
-			collection(db, 'games') as CollectionReference<Game>,
-			where('athlon', '==', doc(db, 'athlons', param.id)),
-			where('rule', '==', ruleRef),
-		),
-	);
+	const {gameData, ruleData} = useGameBySlug(param.id, () => param.ruleId);
 	const authState = useAuth(auth);
 
 	const scoreRecordErrorMessage = createMemo(() => {

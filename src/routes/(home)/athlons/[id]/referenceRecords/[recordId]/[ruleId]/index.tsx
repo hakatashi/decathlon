@@ -8,8 +8,9 @@ import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import MarkdownWithMath from '~/components/MarkdownWithMath';
 import PageTitle from '~/components/PageTitle';
-import type {AthlonRanking, Game, GameRule, ReferenceRecord} from '~/lib/schema';
+import type {AthlonRanking, ReferenceRecord} from '~/lib/schema';
 import useAthlon from '~/lib/useAthlon';
+import useGameBySlug from '~/lib/useGameBySlug';
 
 const ReferenceRecordGameDetail = () => {
 	const param = useParams<{id: string, recordId: string, ruleId: string}>();
@@ -17,20 +18,11 @@ const ReferenceRecordGameDetail = () => {
 	const db = getFirestore(app);
 	const athlonData = useAthlon(param.id);
 
-	const ruleRef = doc(db, 'gameRules', param.ruleId) as DocumentReference<GameRule>;
-	const ruleData = useFirestore(ruleRef);
-
 	const recordData = useFirestore(
 		doc(db, 'athlons', param.id, 'referenceRecords', param.recordId) as DocumentReference<ReferenceRecord>,
 	);
 
-	const gameData = useFirestore(
-		query(
-			collection(db, 'games') as CollectionReference<Game>,
-			where('athlon', '==', doc(db, 'athlons', param.id)),
-			where('rule', '==', ruleRef),
-		),
-	);
+	const {gameData, ruleData} = useGameBySlug(param.id, () => param.ruleId);
 
 	const rankingData = useFirestore(
 		query(

@@ -1,13 +1,14 @@
 import {useParams} from '@solidjs/router';
 import {getAuth} from 'firebase/auth';
-import {CollectionReference, DocumentReference, collection, doc, getFirestore, query, updateDoc, where} from 'firebase/firestore';
+import {DocumentReference, doc, getFirestore, updateDoc} from 'firebase/firestore';
 import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, For, Match, Show, Switch} from 'solid-js';
 import styles from './index.module.scss';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import Username from '~/components/Username';
-import type {Game, GameRule, ItQuizShowcase} from '~/lib/schema';
+import type {Game, ItQuizShowcase} from '~/lib/schema';
+import useGameBySlug from '~/lib/useGameBySlug';
 
 
 interface GameShowcaseProps {
@@ -233,18 +234,7 @@ const GameShowcase = (props: GameShowcaseProps) => {
 
 const GameShowcaseWrapper = () => {
 	const param = useParams<Params>();
-	const app = useFirebaseApp();
-	const db = getFirestore(app);
-
-	const ruleRef = doc(db, 'gameRules', param.ruleId) as DocumentReference<GameRule>;
-
-	const gameData = useFirestore(
-		query(
-			collection(db, 'games') as CollectionReference<Game>,
-			where('athlon', '==', doc(db, 'athlons', param.id)),
-			where('rule', '==', ruleRef),
-		),
-	);
+	const {gameData} = useGameBySlug(param.id, () => param.ruleId);
 
 	return (
 		<Collection data={gameData}>

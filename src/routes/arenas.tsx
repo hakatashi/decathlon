@@ -3,13 +3,13 @@ import {AppBar, Avatar, IconButton, Toolbar, Typography} from '@suid/material';
 import {getAuth} from 'firebase/auth';
 import type {User as AuthUser} from 'firebase/auth';
 import {doc, DocumentReference, getFirestore} from 'firebase/firestore';
-import {last} from 'remeda';
 import {useFirebaseApp, useAuth, useFirestore} from 'solid-firebase';
 import {createContext, createEffect, createMemo, createSignal, Show} from 'solid-js';
 import styles from './arenas.module.css';
 import Doc from '~/components/Doc';
 import LoginRequiredDialog from '~/components/LoginRequiredDialog';
 import PageNotFoundError from '~/lib/PageNotFoundError';
+import {getGamePath} from '~/lib/const';
 import type {Game, UseFireStoreReturn, User} from '~/lib/schema';
 
 const UserContext = createContext<AuthUser>();
@@ -45,14 +45,14 @@ const ArenasLayout = (props: RouteSectionProps) => {
 
 	const athlonId = createMemo(() => {
 		if (gameData.data?.athlon) {
-			return last(gameData.data.athlon.path.split('/'));
+			return gameData.data.athlon.id;
 		}
 		return '';
 	});
 
-	const ruleId = createMemo(() => {
-		if (gameData.data?.rule) {
-			return last(gameData.data.rule.path.split('/'));
+	const gamePath = createMemo(() => {
+		if (gameData.data) {
+			return getGamePath(athlonId(), gameData.data);
 		}
 		return '';
 	});
@@ -62,7 +62,7 @@ const ArenasLayout = (props: RouteSectionProps) => {
 			<AppBar position="static" class={styles.header}>
 				<Toolbar variant="dense">
 					<Typography variant="h6" color="inherit" component="h1">
-						<A href={`/athlons/${athlonId()}/${ruleId()}`}>
+						<A href={gamePath()}>
 							{arenaTitle()}
 						</A>
 					</Typography>
