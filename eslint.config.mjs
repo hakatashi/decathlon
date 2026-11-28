@@ -2,7 +2,7 @@ import hakatashiEslintConfig from '@hakatashi/eslint-config/typescript.js';
 
 export default [
 	{
-		ignores: ['.vinxi/', '.output/', 'dist/', '.solid/', 'test-results/', 'playwright-report/', 'functions/'],
+		ignores: ['.vinxi/', '.output/', 'dist/', '.solid/', 'test-results/', 'playwright-report/', 'functions/', '.claude/', '.github/'],
 	},
 	...hakatashiEslintConfig,
 	{
