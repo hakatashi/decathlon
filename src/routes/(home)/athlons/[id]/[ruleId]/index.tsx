@@ -10,6 +10,8 @@ import {useAuth, useFirebaseApp, useFirestore} from 'solid-firebase';
 import {createEffect, createMemo, createSignal, For, Match, Show, Switch} from 'solid-js';
 import {tippy} from 'solid-tippy';
 import styles from './index.module.scss';
+import {isGamePublished} from '~/../lib/advent';
+import AdventGameInfo from '~/components/AdventGameInfo';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import MarkdownWithMath from '~/components/MarkdownWithMath';
@@ -395,6 +397,7 @@ const AthlonGame = () => {
 																target="_blank"
 																rel="noopener noreferer"
 																href={link.url}
+																disabled={!isGamePublished(game, Date.now())}
 															>
 																{link.label}
 															</Button>
@@ -467,6 +470,9 @@ const AthlonGame = () => {
 				<Collection data={gameData}>
 					{(game) => (
 						<>
+							<Doc data={athlonData}>
+								{(athlon) => <AdventGameInfo athlon={athlon} game={game}/>}
+							</Doc>
 							<MarkdownWithMath content={game.description}/>
 							<ScoreDescriptionSection game={game}/>
 						</>
