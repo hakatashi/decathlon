@@ -52,6 +52,21 @@ export interface Athlon {
 	description: string,
 	id: string,
 	rookieThresholdId: string | null,
+	type?: 'advent-calendar',
+	weeks?: AthlonWeek[],
+}
+
+export interface AthlonWeek {
+	index: number,
+	label: string,
+	startAt: Timestamp,
+	freezeAt: Timestamp,
+}
+
+export interface GameParticipation extends DocumentData {
+	startedAt: Timestamp,
+	finishedAt: Timestamp | null,
+	status: 'playing' | 'finished',
 }
 
 export type AthlonRanking = DocumentData & RankingEntry;
@@ -106,6 +121,12 @@ export interface Game extends DocumentData {
 		url: string,
 		isMain: boolean,
 	}[],
+	slug?: string,
+	day?: number,
+	week?: number,
+	kind?: 'weekday' | 'weekend',
+	publishAt?: Timestamp,
+	duration?: number | null,
 }
 
 export interface Score extends DocumentData {

@@ -69,6 +69,16 @@ service cloud.firestore {
         return request.auth != null && request.auth.uid in gameData().admins;
       }
 
+      match /participations/{userId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null
+                      && request.auth.uid == userId
+                      && request.resource.data.keys().hasOnly(['startedAt', 'finishedAt', 'status'])
+                      && request.resource.data.startedAt == request.time
+                      && request.resource.data.finishedAt == null
+                      && request.resource.data.status == 'playing';
+      }
+
       match /scores/{userId} {
         allow read;
         allow write: if request.auth != null
