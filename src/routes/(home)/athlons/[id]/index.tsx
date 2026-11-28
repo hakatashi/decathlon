@@ -5,6 +5,7 @@ import {collection, CollectionReference, doc, getFirestore, orderBy, query, wher
 import {useFirebaseApp, useFirestore} from 'solid-firebase';
 import {For, JSX, Show} from 'solid-js';
 import styles from './index.module.css';
+import AdventCalendar from '~/components/AdventCalendar';
 import Collection from '~/components/Collection';
 import Doc from '~/components/Doc';
 import MarkdownWithMath from '~/components/MarkdownWithMath';
@@ -80,34 +81,49 @@ const Home = () => {
 						<MarkdownWithMath content={athlon.description}/>
 					)}
 				</Doc>
-				<Head>
-					競技一覧
-				</Head>
-				<List
-					sx={{bgcolor: 'background.paper', m: '0 auto'}}
-					style={{'max-width': '480px'}}
-				>
-					<Collection data={gamesData}>
-						{(game, index) => {
-							const ruleData = useFirestore(game.rule);
+				<Doc data={athlonData}>
+					{(athlon) => (
+						<Show
+							when={athlon.type === 'advent-calendar'}
+							fallback={(
+								<>
+									<Head>
+										競技一覧
+									</Head>
+									<List
+										sx={{bgcolor: 'background.paper', m: '0 auto'}}
+										style={{'max-width': '480px'}}
+									>
+										<Collection data={gamesData}>
+											{(game, index) => {
+												const ruleData = useFirestore(game.rule);
 
-							return (
-								<ListItem component={A} href={getGamePath(param.id, game)}>
-									<ListItemAvatar>
-										<Avatar>
-											{index() + 1}
-										</Avatar>
-									</ListItemAvatar>
-									<Doc data={ruleData}>
-										{(rule) => (
-											<ListItemText primary={rule.name} secondary={`${game.maxPoint * (game.weight ?? 1)}点`}/>
-										)}
-									</Doc>
-								</ListItem>
-							);
-						}}
-					</Collection>
-				</List>
+												return (
+													<ListItem component={A} href={getGamePath(param.id, game)}>
+														<ListItemAvatar>
+															<Avatar>
+																{index() + 1}
+															</Avatar>
+														</ListItemAvatar>
+														<Doc data={ruleData}>
+															{(rule) => (
+																<ListItemText primary={rule.name} secondary={`${game.maxPoint * (game.weight ?? 1)}点`}/>
+															)}
+														</Doc>
+													</ListItem>
+												);
+											}}
+										</Collection>
+									</List>
+								</>
+							)}
+						>
+							<Doc data={gamesData}>
+								{(games) => <AdventCalendar athlonId={param.id} athlon={athlon} games={games}/>}
+							</Doc>
+						</Show>
+					)}
+				</Doc>
 				<Head>
 					成績上位者
 				</Head>

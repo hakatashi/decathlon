@@ -1,0 +1,377 @@
+.todayBox {
+	border: 2px solid #1976d2;
+	background: #e3f2fd;
+	border-radius: 8px;
+	padding: 16px 20px;
+	display: flex;
+	align-items: center;
+	gap: 20px;
+}
+
+.todayLabel {
+	font-size: 12px;
+	font-weight: 700;
+	color: #1565c0;
+	letter-spacing: 0.1em;
+}
+
+.todayDate {
+	font-size: 34px;
+	line-height: 1;
+	color: #0d47a1;
+	margin-top: 2px;
+}
+
+.todayName {
+	flex-grow: 1;
+	font-size: 20px;
+	font-weight: 500;
+	color: #0d47a1;
+}
+
+.desktop {
+	display: block;
+}
+
+.mobile {
+	display: none;
+}
+
+@media (max-width: 720px) {
+	.desktop {
+		display: none;
+	}
+
+	.mobile {
+		display: block;
+	}
+
+	.todayBox {
+		padding: 14px 16px;
+		gap: 12px;
+	}
+
+	.todayDate {
+		font-size: 26px;
+	}
+
+	.todayName {
+		font-size: 16px;
+	}
+}
+
+.headRow,
+.weekRow {
+	display: grid;
+	grid-template-columns: 88px repeat(7, minmax(0, 1fr));
+	gap: 8px;
+}
+
+.headRow {
+	margin-bottom: 8px;
+}
+
+.weekRows {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.dayHead {
+	text-align: center;
+	font-size: 13px;
+	font-weight: 700;
+	padding: 6px 0;
+	border-radius: 4px;
+	background: #eceff1;
+	color: #455a64;
+}
+
+.dayHeadWeekend {
+	background: #37474f;
+	color: #fff;
+}
+
+.weekLabel {
+	padding: 6px 0;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.weekName {
+	font-size: 22px;
+	font-weight: 500;
+	color: #263238;
+	line-height: 1.1;
+}
+
+.weekLink {
+	font-size: 12px;
+	color: #1976d2;
+	font-weight: 500;
+}
+
+.blankCell {
+	min-height: 156px;
+	border-radius: 8px;
+	background: #fafafa;
+	border: 1px dashed #e0e0e0;
+}
+
+.cell {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-height: 156px;
+	box-sizing: border-box;
+	padding: 12px;
+	border-radius: 8px;
+	background: #fff;
+	border: 1px solid #e0e0e0;
+	color: #263238;
+	text-decoration: none;
+}
+
+.cellLocked {
+	background: #fafafa;
+	color: #616161;
+}
+
+.cellToday {
+	background: #e3f2fd;
+	border: 2px solid #1976d2;
+}
+
+.cellWeekend {
+	background: #37474f;
+	border-color: #37474f;
+	color: #fff;
+}
+
+.cellHead {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.cellDay {
+	font-size: 22px;
+	font-weight: 700;
+	line-height: 1;
+}
+
+.todayChip {
+	font-size: 10px;
+	font-weight: 700;
+	background: #1976d2;
+	color: #fff;
+	border-radius: 10px;
+	padding: 2px 7px;
+}
+
+.cellPoints {
+	margin-left: auto;
+	font-size: 12px;
+	font-weight: 700;
+	color: #546e7a;
+}
+
+.cellWeekend .cellPoints {
+	color: #ffcc80;
+}
+
+.cellName {
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 1.4;
+	flex-grow: 1;
+}
+
+.cellSub {
+	font-size: 12px;
+	color: #546e7a;
+}
+
+.cellWeekend .cellSub {
+	color: #cfd8dc;
+}
+
+.cellDone {
+	font-size: 13px;
+	font-weight: 700;
+	color: #2e7d32;
+}
+
+.cellWeekend .cellDone {
+	color: #a5d6a7;
+}
+
+.cellDone span {
+	font-weight: 500;
+}
+
+.cellButton {
+	font-size: 13px;
+	font-weight: 500;
+	text-align: center;
+	border-radius: 4px;
+	padding: 7px 0;
+	letter-spacing: 0.04em;
+	color: #1565c0;
+	border: 1px solid #1976d2;
+}
+
+.cellToday .cellButton {
+	background: #1976d2;
+	color: #fff;
+}
+
+.weekHeader {
+	all: unset;
+	cursor: pointer;
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 64px;
+	padding: 10px 16px;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	background: #f5f7f8;
+}
+
+.weekHeaderText {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	min-width: 0;
+}
+
+.weekHeaderTitle {
+	font-size: 17px;
+	font-weight: 500;
+	color: #263238;
+}
+
+.weekHeaderRange {
+	font-size: 12px;
+	color: #546e7a;
+	margin-top: 2px;
+}
+
+.weekSummary {
+	font-size: 12px;
+	color: #546e7a;
+	text-align: right;
+}
+
+.weekSection {
+	border-top: 1px solid #e0e0e0;
+}
+
+.row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	min-height: 64px;
+	box-sizing: border-box;
+	padding: 8px 16px;
+	border-top: 1px solid #eee;
+	background: #fff;
+	color: #263238;
+	text-decoration: none;
+}
+
+.rowLocked {
+	background: #fafafa;
+	color: #616161;
+}
+
+.rowToday {
+	background: #e3f2fd;
+}
+
+.rowWeekend {
+	background: #37474f;
+	color: #fff;
+	border-top-color: #455a64;
+}
+
+.rowDate {
+	width: 44px;
+	text-align: center;
+	flex-shrink: 0;
+}
+
+.rowWeekday {
+	font-size: 11px;
+	color: #546e7a;
+}
+
+.rowWeekend .rowWeekday,
+.rowWeekend .cellSub {
+	color: #cfd8dc;
+}
+
+.rowDay {
+	font-size: 22px;
+	font-weight: 700;
+	line-height: 1.1;
+}
+
+.rowBody {
+	flex-grow: 1;
+	min-width: 0;
+}
+
+.rowName {
+	font-size: 15px;
+	font-weight: 500;
+	line-height: 1.35;
+}
+
+.rowPoints {
+	font-weight: 700;
+}
+
+.rowWeekend .rowPoints {
+	color: #ffcc80;
+}
+
+.rowStatus {
+	text-align: right;
+	flex-shrink: 0;
+	max-width: 96px;
+	font-size: 12px;
+}
+
+.rowAction {
+	font-weight: 700;
+	background: #1976d2;
+	color: #fff;
+	border-radius: 4px;
+	padding: 6px 10px;
+}
+
+.rowDone {
+	font-size: 15px;
+	font-weight: 700;
+	color: #2e7d32;
+}
+
+.rowWeekend .rowDone {
+	color: #a5d6a7;
+}
+
+.notes {
+	margin: 24px 0 0;
+	font-size: 12px;
+	color: #546e7a;
+	line-height: 1.7;
+}
+
+.mobile .notes {
+	padding: 16px;
+	margin: 0;
+	border-top: 1px solid #e0e0e0;
+}
